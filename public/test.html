@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Page</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 50px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        .bio-section {
+            background: rgba(26, 26, 46, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 60px;
+            margin: 40px auto;
+            max-width: 1200px;
+            border-radius: 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .essay-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+        .essay-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .essay-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                0 40px 80px -20px rgba(255, 200, 150, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <h1>Shanmu Raja</h1>
+    <p>Advanced Glass Physics Portfolio</p>
+    
+    <section class="bio-section">
+        <p>I'm an aspiring medical student with a Master's in Healthcare Economics and Legal Policy at UCSF. My interests include surgical research, healthcare economics, and creative medical writing.</p>
+        <img src="/profile.svg" alt="Shanmu Raja" style="width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255, 255, 255, 0.2);" />
+    </section>
+    
+    <div class="essay-grid">
+        <div class="essay-card">
+            <h3>The Art of Medicine</h3>
+            <p class="date">March 2024</p>
+            <p>Exploring the intersection of clinical practice and human connection in modern healthcare...</p>
+        </div>
+        <div class="essay-card">
+            <h3>Economics of Care</h3>
+            <p class="date">January 2024</p>
+            <p>A critical analysis of value-based care models and their impact on patient outcomes...</p>
+        </div>
+        <div class="essay-card">
+            <h3>Surgical Precision in Policy</h3>
+            <p class="date">November 2023</p>
+            <p>Drawing parallels between surgical methodology and healthcare policy development...</p>
+        </div>
+    </div>
+</body>
+</html>
