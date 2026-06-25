@@ -4,74 +4,18 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Shanmu Raja - Glass Physics Portfolio</title>
+    <meta name="description" content="Shanmu Raja — researcher and writer at the intersection of medicine, healthcare economics, and policy." />
+    <title>Shanmu Raja — Index</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Black&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    <script>
-      // Add smooth scrolling functionality and morphing header
-      document.addEventListener('DOMContentLoaded', function() {
-        const morphingHeader = document.getElementById('morphing-header')
-        const navMenu = document.getElementById('nav-menu')
-        const nameText = document.querySelector('.name-text')
-        
-        // Handle scroll-based morphing
-        function handleScroll() {
-          const scrollY = window.scrollY
-          const windowHeight = window.innerHeight
-          const documentHeight = document.documentElement.scrollHeight - windowHeight
-          const progress = Math.min(scrollY / (documentHeight * 0.3), 1) // Complete morph in first 30% of scroll
-          
-          // Phase 1: Vertical stretch (0-40%)
-          if (progress < 0.4) {
-            const stretchFactor = 1 + progress * 5
-            nameText.style.transform = `scaleY(${stretchFactor})`
-            nameText.style.opacity = '1'
-            navMenu.style.opacity = '0'
-            navMenu.style.transform = 'translateY(20px)'
-            morphingHeader.classList.remove('nav-mode')
-          }
-          // Phase 2: Move up and converge (40-70%)
-          else if (progress < 0.7) {
-            const convergeProgress = (progress - 0.4) / 0.3
-            const targetY = windowHeight / 2 - 100
-            
-            nameText.style.transform = `scaleY(${1 + (1 - convergeProgress) * 4}) translateY(${-convergeProgress * targetY}px)`
-            nameText.style.opacity = 1 - convergeProgress * 0.5
-            navMenu.style.opacity = convergeProgress
-            navMenu.style.transform = `translateY(${20 - convergeProgress * 20}px)`
-            morphingHeader.classList.remove('nav-mode')
-          }
-          // Phase 3: Form navigation bar (70-100%)
-          else {
-            const morphProgress = (progress - 0.7) / 0.3
-            nameText.style.opacity = 1 - morphProgress
-            nameText.style.transform = `scale(${1 - morphProgress * 0.5})`
-            navMenu.style.opacity = '1'
-            navMenu.style.transform = 'translateY(0)'
-            morphingHeader.classList.add('nav-mode')
-          }
-        }
-        
-        // Handle all anchor links
-        document.addEventListener('click', function(e) {
-          if (e.target.tagName === 'A' && e.target.getAttribute('href') && e.target.getAttribute('href').startsWith('#')) {
-            e.preventDefault()
-            const targetId = e.target.getAttribute('href').substring(1)
-            const targetElement = document.getElementById(targetId)
-            if (targetElement) {
-              targetElement.scrollIntoView({ behavior: 'smooth' })
-            }
-          }
-        })
-        
-        // Add scroll listener
-        window.addEventListener('scroll', handleScroll)
-        
-        // Initial call
-        handleScroll()
-      })
-    </script>
   </body>
 </html>
