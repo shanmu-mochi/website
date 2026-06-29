@@ -19,9 +19,10 @@
   --line-2:  rgba(0, 0, 0, 0.34);
   --red:     #0b0b0b;   /* monochrome — Cargo is pure black/white */
 
-  --black: 'Fraunces', 'Archivo Black', Georgia, serif;   /* sophisticated display serif */
-  --sans:  'Archivo', system-ui, -apple-system, sans-serif;
-  --mono:  ui-monospace, Menlo, monospace;
+  /* all Garamond: Cormorant Garamond for titles/headings (finer), EB Garamond for body & labels */
+  --black: 'Cormorant Garamond', 'EB Garamond', Georgia, serif;
+  --sans:  'EB Garamond', Georgia, 'Times New Roman', serif;
+  --mono:  'EB Garamond', Georgia, 'Times New Roman', serif;
 
   --maxw: 1600px;
   --gutter: clamp(1.25rem, 3vw, 3rem);
@@ -177,7 +178,7 @@ a { color: inherit; text-decoration: none; }
 .row { display: grid; grid-template-columns: 2.75rem 1fr auto; gap: clamp(0.75rem, 3vw, 2.5rem); padding: 1.4rem 0.3rem; border-bottom: 1px solid var(--line); color: inherit; transition: background .3s, padding-left .3s; }
 .row[href]:hover { background: var(--paper-2); padding-left: 1rem; }
 .row .num { font-family: var(--mono); font-size: 0.74rem; color: var(--muted); padding-top: 0.45rem; }
-.row .title { font-family: var(--sans); font-weight: 700; font-size: clamp(1.2rem, 2.6vw, 1.7rem); line-height: 1.12; letter-spacing: -0.01em; }
+.row .title { font-family: var(--black); font-weight: 600; font-size: clamp(1.3rem, 2.7vw, 1.85rem); line-height: 1.12; letter-spacing: 0; }
 .row[href]:hover .title { color: var(--red); }
 .row .excerpt { font-size: 0.98rem; color: var(--soft); margin-top: 0.45rem; max-width: 64ch; }
 .row .excerpt em { font-style: italic; color: var(--ink); }
@@ -208,7 +209,7 @@ a { color: inherit; text-decoration: none; }
 .awards-list { border-top: 1px solid var(--line); }
 .award { display: grid; grid-template-columns: 2.75rem 1fr; gap: clamp(0.75rem, 3vw, 2.5rem); padding: 1.7rem 0.3rem; border-bottom: 1px solid var(--line); }
 .award .rn { font-family: var(--black); font-size: 1.4rem; color: var(--red); line-height: 1; }
-.award h4 { font-family: var(--sans); font-weight: 700; font-size: clamp(1.2rem, 2.8vw, 1.7rem); line-height: 1.12; margin-bottom: 0.45rem; letter-spacing: -0.01em; }
+.award h4 { font-family: var(--black); font-weight: 600; font-size: clamp(1.3rem, 2.8vw, 1.85rem); line-height: 1.12; margin-bottom: 0.45rem; letter-spacing: 0; }
 .award p { color: var(--soft); max-width: 64ch; font-size: 0.98rem; }
 .award p em { font-style: italic; color: var(--ink); }
 
@@ -332,7 +333,7 @@ a { color: inherit; text-decoration: none; }
 /* veil only (no blur — the moving painting is the focus); fades independently of the card */
 .lb-scrim { position: absolute; inset: 0; z-index: 0; background: rgba(250, 249, 246, 0.47); animation: lb-fade .4s ease both; }
 .lightbox.closing .lb-scrim { animation: lb-fade .32s ease reverse forwards; }
-.lightbox-fig { position: relative; z-index: 1; margin: 0; max-width: min(560px, 88vw); display: flex; flex-direction: column; align-items: center; gap: 1rem; cursor: default; }
+.lightbox-fig { position: relative; z-index: 1; margin: 0; max-width: min(1500px, 94vw); display: flex; flex-direction: column; align-items: center; gap: 1rem; cursor: default; }
 /* the painting sits on a slab of clear liquid glass that FORMS on open and DISSOLVES on close */
 .lb-card { position: relative; padding: 16px; will-change: transform; }
 .lb-glass {                                   /* the whole glass treatment; its opacity is animated 0<->1 */
@@ -350,10 +351,10 @@ a { color: inherit; text-decoration: none; }
   position: absolute; inset: 0; z-index: 2; overflow: hidden;
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.95), inset 0 -1px 2px rgba(255, 255, 255, 0.55), inset 2px 0 2px rgba(255, 255, 255, 0.4), inset -2px 0 2px rgba(255, 255, 255, 0.4);
 }
-.lb-card img { position: relative; z-index: 1; display: block; max-width: 100%; max-height: 56vh; width: auto; height: auto; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22); }
+.lb-card img { position: relative; z-index: 1; display: block; max-width: 100%; max-height: 82vh; width: auto; height: auto; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22); }
 .lb-cap { text-align: center; display: flex; flex-direction: column; gap: 0.3rem; text-shadow: 0 0 10px rgba(253, 252, 250, 0.9), 0 1px 2px rgba(253, 252, 250, 0.8); animation: cap-in .4s ease .18s both; }
 .lightbox.closing .lb-cap { animation: none; opacity: 0; transition: opacity .14s ease; }
-.lb-title { font-family: var(--sans); font-weight: 700; font-size: 1.08rem; letter-spacing: -0.01em; color: var(--ink); }
+.lb-title { font-family: var(--black); font-weight: 600; font-size: 1.25rem; letter-spacing: 0; color: var(--ink); }
 .lb-artist { font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.74rem; color: var(--soft); }
 .lightbox-close { position: fixed; top: clamp(1rem, 3vh, 1.8rem); right: clamp(1rem, 3vw, 2rem); display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; padding: 0; cursor: pointer; font-size: 1.55rem; line-height: 1; color: var(--soft); border: 1px solid rgba(255, 255, 255, 0.45); background: rgba(255, 255, 255, 0.16); -webkit-backdrop-filter: blur(8px) saturate(1.5); backdrop-filter: blur(6px) saturate(1.5) url(#liquid-glass-soft); box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.9), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 4px 16px rgba(0, 0, 0, 0.14); transition: color .2s, background .2s; z-index: 2; }
 .lightbox-close:hover { color: var(--ink); background: rgba(255, 255, 255, 0.3); }
@@ -361,16 +362,17 @@ a { color: inherit; text-decoration: none; }
 @keyframes lb-pop { from { opacity: 0; transform: scale(0.93) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 @keyframes cap-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-/* Fraunces display: weight + relaxed tracking (serif needs less negative tracking) */
+/* Cormorant Garamond display: lighter weight, relaxed tracking (finer serif, not thick) */
 .display, .hero-title, .section-title, .masthead h1, .feature-title, .thesis-title,
-.contact-title, .about-body p.lead, .stat .n, .award .rn, .g-blank span { font-weight: 600; font-optical-sizing: auto; }
-.masthead h1, .section-title, .hero-title, .feature-title, .thesis-title, .contact-title { letter-spacing: -0.018em; }
+.contact-title, .about-body p.lead, .stat .n, .award .rn, .g-blank span { font-weight: 500; font-optical-sizing: auto; }
+.masthead h1, .section-title, .hero-title, .feature-title, .thesis-title, .contact-title { letter-spacing: -0.01em; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } html { scroll-behavior: auto; } .scroll-cue { opacity: 1 !important; } }
 
 /* ---------- responsive ---------- */
 @media (max-width: 900px) {
   .marquee-track { animation-duration: 55s; }
+  .m-item img { height: 85%; }   /* paintings 15% smaller on mobile */
   .mh-dateline span:nth-child(2) { display: none; }
   .about-grid { grid-template-columns: 1fr; }
   .plate { max-width: 240px; }
@@ -397,3 +399,4 @@ a { color: inherit; text-decoration: none; }
   .colo-social { gap: 1rem; }
   .colo-social svg { width: 19px; height: 19px; }
 }
+

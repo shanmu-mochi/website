@@ -71,6 +71,46 @@ const META = {
   'vangogh-ward.jpg':   { title: 'Ward in the Hospital at Arles', artist: 'Vincent van Gogh', year: '1889', minH: 48 },
   'vangogh-courtyard.jpg': { title: 'Courtyard of the Hospital at Arles', artist: 'Vincent van Gogh', year: '1889', minH: 48 },
   'artist-model.jpg':   { title: 'The Studio', artist: '', year: '', minH: 46 },
+  // — pool widened: more of the collection in rotation —
+  'blue-morning.jpg':     { title: 'Blue Morning', artist: 'George Bellows', year: '1909', minH: 46 },
+  'boar-lane.jpg':        { title: 'Boar Lane, Leeds', artist: 'John Atkinson Grimshaw', year: '1881', minH: 46 },
+  'homer-hurricane.jpg':  { title: 'After the Hurricane, Bahamas', artist: 'Winslow Homer', year: '1899', minH: 44 },
+  'simplon.jpg':          { title: 'Simplon Pass', artist: 'John Singer Sargent', year: 'c. 1911', minH: 44 },
+  'klimt-beech.jpg':      { title: 'Beech Grove I', artist: 'Gustav Klimt', year: '1902' },
+  'friedrich-abbey.jpg':  { title: 'The Abbey in the Oakwood', artist: 'Caspar David Friedrich', year: 'c. 1810', minH: 44 },
+  'turner-rain.jpg':      { title: 'Rain, Steam and Speed', artist: 'J. M. W. Turner', year: '1844', minH: 46 },
+  'monet-poppies.jpg':    { title: 'Poppies', artist: 'Claude Monet', year: '1873', minH: 46 },
+  'monet-parliament.jpg': { title: 'Houses of Parliament, Sunset', artist: 'Claude Monet', year: '1903', minH: 46 },
+  'monet-waterloo.jpg':   { title: 'Waterloo Bridge, Grey Day', artist: 'Claude Monet', year: '1903', minH: 46 },
+  'matisse-conv.jpg':     { title: 'The Conversation', artist: 'Henri Matisse', year: 'c. 1909', minH: 48 },
+  'hitchcock-tulip.jpg':  { title: 'Tulip Culture', artist: 'George Hitchcock', year: '1889', minH: 46 },
+  'bellows-newyork.jpg':  { title: 'New York', artist: 'George Bellows', year: '1911', minH: 48 },
+  'bellows-summernight.jpg': { title: 'Summer Night, Riverside Drive', artist: 'George Bellows', year: '1909', minH: 46 },
+  'mondrian-tableau.jpg': { title: 'Tableau I', artist: 'Piet Mondrian', year: '1921', minH: 44 },
+  'kandinsky-akhtyrka.jpg': { title: 'Akhtyrka', artist: 'Wassily Kandinsky', year: '1901', minH: 46 },
+  'klimt-hygieia.jpg':    { title: 'Hygieia', artist: 'Gustav Klimt', year: 'c. 1907' },
+  'ravivarma-mirror.jpg': { title: 'Looking into the Mirror', artist: 'Raja Ravi Varma', year: 'c. 1890' },
+  // — second wave: more of the collection catalogued (vision-identified) —
+  'ryder-racetrack.jpg':    { title: 'The Race Track (Death on a Pale Horse)', artist: 'Albert Pinkham Ryder', year: 'c. 1896–1908', minH: 46 },
+  'hitchcock-vanquished.jpg': { title: 'Vanquished', artist: 'George Hitchcock', year: '1895', minH: 46 },
+  'wyeth-bluedoor.jpg':     { title: 'The Blue Door', artist: 'Andrew Wyeth', year: '1952', minH: 46 },
+  'mondrian-castle.jpg':    { title: 'Spring Sun: Castle Ruin, Brederode', artist: 'Piet Mondrian', year: 'c. 1909–10', minH: 44 },
+  'munch-horsecart.jpg':    { title: 'Horse and Cart on a Country Road', artist: 'Edvard Munch', year: 'c. 1881', minH: 44 },
+  'hitchcock-flight.jpg':   { title: 'The Flight into Egypt', artist: 'George Hitchcock', year: '1892', minH: 46 },
+  'hopper-intermission.jpg':{ title: 'Intermission', artist: 'Edward Hopper', year: '1963', minH: 48 },
+  'kandinsky-composition.jpg': { title: 'Composition VIII', artist: 'Wassily Kandinsky', year: '1923', minH: 46 },
+  'hopper-paintermodel.jpg':{ title: 'Painter and Model', artist: 'Edward Hopper', year: 'c. 1903', minH: 46 },
+  'hopper-railroad.jpg':    { title: 'Railroad Train', artist: 'Edward Hopper', year: '1908', minH: 46 },
+  'hopper-sundaymorning.jpg': { title: 'Early Sunday Morning', artist: 'Edward Hopper', year: '1930', minH: 46 },
+  'rojas-miseria.jpg':      { title: 'La Miseria', artist: 'Cristóbal Rojas', year: '1886', minH: 46 },
+  'wyeth-floodplain.jpg':   { title: 'Flood Plain', artist: 'Andrew Wyeth', year: '1986', minH: 44 },
+  'wyeth-perpetualcare.jpg':{ title: 'Perpetual Care', artist: 'Andrew Wyeth', year: '1961', minH: 48 },
+  'vallotton-wind.jpg':     { title: 'The Wind', artist: 'Félix Vallotton', year: '1910', minH: 46 },
+  'henri-volendam.jpg':     { title: 'Volendam Street Scene', artist: 'Robert Henri', year: '1910', minH: 46 },
+  'sargent-olive.jpg':      { title: 'Wild Olive, Majorca', artist: 'John Singer Sargent', year: 'c. 1908', minH: 46 },
+  'monadnock.jpg':          { title: 'Mount Monadnock', artist: 'Abbott Handerson Thayer', year: 'c. 1914', minH: 46 },
+  'lake-nemi.jpg':          { title: 'View of Lake Nemi', artist: 'Jules Coignet', year: '1843', minH: 46 },
+  'seine.jpg':              { title: 'The Seine', artist: 'Henry Ossawa Tanner', year: 'c. 1902', minH: 46 },
 }
 
 /* which way the subject faces: 'L' looks toward viewer-left, 'R' toward viewer-right,
@@ -141,7 +181,7 @@ const SETS = [
   ['ravivarma2.jpg', 'caitlins-world.jpg', 'peschka.jpg', 'hammershoi.jpg', 'lautrec.jpg'], // 49 Portrait of a woman
 ]
 
-const SHOWN = 10                     // paintings per gallery
+const SHOWN = 14                     // paintings per gallery
 const LEAD = 'ravivarma2.jpg'        // the Indian lady leads the first gallery
 const AREA = 2600, GMIN = 34, GMAX = 76         // Cargo-flavored ribbon: moderate size range
 const RHY = [1.28, 0.82, 1.08, 0.92, 1.2, 0.8, 1.0, 0.95, 1.15, 0.86]   // size cadence by position (big -> small rhythm)
@@ -217,6 +257,17 @@ const POOL = [
   'labsinthe.jpg', 'lautrec.jpg', 'manet-bar.jpg', 'cezanne-cards.jpg', 'ensor.jpg', 'monet-parasol.jpg', 'magritte.jpg', 'whistler-nocturne.jpg',
   'vangogh-oldman.jpg', 'vangogh-ward.jpg', 'vangogh-courtyard.jpg', 'pollock-west.jpg', 'blume-head.jpg', 'artist-model.jpg', 'russian-couple.jpg',
   'bellei.jpg', 'bastien.jpg', 'paolo.jpg', 'tanner-sick.jpg', 'millet.jpg', 'calypso.jpg', 'kollwitz.jpg', 'hammershoi.jpg', 'repin.jpg', 'apothecary.jpg', 'tiger.jpg',
+  // — newly catalogued, widening the pool —
+  'blue-morning.jpg', 'boar-lane.jpg', 'homer-hurricane.jpg', 'simplon.jpg',
+  'klimt-beech.jpg', 'friedrich-abbey.jpg', 'turner-rain.jpg', 'monet-poppies.jpg', 'monet-parliament.jpg', 'monet-waterloo.jpg',
+  'matisse-conv.jpg', 'hitchcock-tulip.jpg', 'bellows-newyork.jpg', 'bellows-summernight.jpg',
+  'mondrian-tableau.jpg', 'kandinsky-akhtyrka.jpg', 'klimt-hygieia.jpg', 'ravivarma-mirror.jpg',
+  // — second wave —
+  'ryder-racetrack.jpg', 'hitchcock-vanquished.jpg', 'wyeth-bluedoor.jpg', 'mondrian-castle.jpg', 'munch-horsecart.jpg',
+  'hitchcock-flight.jpg', 'hopper-intermission.jpg', 'kandinsky-composition.jpg',
+  'hopper-paintermodel.jpg', 'hopper-railroad.jpg', 'hopper-sundaymorning.jpg', 'rojas-miseria.jpg',
+  'wyeth-floodplain.jpg', 'wyeth-perpetualcare.jpg', 'vallotton-wind.jpg', 'henri-volendam.jpg', 'sargent-olive.jpg',
+  'monadnock.jpg', 'lake-nemi.jpg', 'seine.jpg',
 ].filter((s) => DIMS[s])
 
 /* choose SHOWN paintings, unseen ones first (novelty); opener leads with Ravi Varma */
@@ -364,8 +415,12 @@ export default function App() {
       const s = track.children[N]            // exact loop width each frame -> wrap is perfectly seamless
       if (s && s.offsetLeft) copyW = s.offsetLeft
       if (!dragging) {
-        vel += (AUTO - vel) * 0.06           // friction: fling fast, then decelerate (momentum)
-        vel = Math.max(-32, Math.min(32, vel))
+        if (Math.abs(vel) > Math.abs(AUTO) + 0.4) {
+          vel *= 0.96                          // after a fling: smooth exponential glide, easing toward a stop
+        } else {
+          vel += (AUTO - vel) * 0.05           // near rest: settle gently back into the slow drift
+        }
+        vel = Math.max(-60, Math.min(60, vel))
         offset += vel
       }
       offset = ((offset % copyW) + copyW) % copyW - copyW   // seamless loop
@@ -373,7 +428,7 @@ export default function App() {
       raf = requestAnimationFrame(tick)
     }
     const onWheel = (e) => {
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) { vel += -e.deltaX * 0.08; e.preventDefault() }
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) { vel += -e.deltaX * 0.12; e.preventDefault() }
     }
     const onDown = (e) => {
       down = true; dragging = false; lastX = e.clientX; moved = 0; dragVel = 0; draggedRef.current = false
@@ -392,7 +447,7 @@ export default function App() {
       if (dragging) {                                    // it was a drag -> release with momentum
         dragging = false; gal.classList.remove('grabbing')
         draggedRef.current = moved > 6
-        vel = Math.max(-42, Math.min(42, dragVel))
+        vel = Math.max(-68, Math.min(68, dragVel))
       }
       // a plain click leaves vel untouched, so the gallery keeps drifting without a pause
     }
@@ -425,13 +480,24 @@ export default function App() {
   const redo = () => {
     if (fading) return
     setFading(true)
-    setTimeout(() => {
-      if (seenRef.current.size >= POOL.length) seenRef.current = new Set()   // all seen -> refresh novelty
-      const g = buildGallery(seenRef.current, false)   // 10 fresh paintings, no forced first
-      g.forEach((x) => seenRef.current.add(x.src))
+    if (seenRef.current.size >= POOL.length) seenRef.current = new Set()   // all seen -> refresh novelty
+    const g = buildGallery(seenRef.current, false)   // fresh paintings, no forced first
+    g.forEach((x) => seenRef.current.add(x.src))
+    // PRELOAD the new paintings during the fade-out so they don't pop in / make the strip jump
+    // after the swap. Reveal only once BOTH the fade-out is done AND the images are decoded.
+    let faded = false, ready = false, done = false
+    const reveal = () => {
+      if (done || !(faded && ready)) return
+      done = true
       setGallery(g)
       requestAnimationFrame(() => requestAnimationFrame(() => setFading(false)))
-    }, 340)
+    }
+    setTimeout(() => { faded = true; reveal() }, 340)            // let the fade-out finish
+    const imgs = g.map((x) => { const im = new Image(); im.src = `/paintings/${x.src}`; return im })
+    let left = imgs.length || 1
+    const tick = () => { if (--left <= 0) { ready = true; reveal() } }
+    imgs.forEach((im) => { im.complete ? tick() : (im.onload = im.onerror = tick) })
+    setTimeout(() => { ready = true; reveal() }, 2500)           // safety: never hang on a slow image
   }
   const loop = [...gallery, ...gallery]
 
@@ -550,6 +616,7 @@ export default function App() {
           <feDisplacementMap in="SourceGraphic" in2="smooth" scale="72" xChannelSelector="R" yChannelSelector="G" />
         </filter>
       </svg>
+
       <header className={`nav${scrolled ? ' scrolled' : ''}`}>
         <div className="lg-effect" aria-hidden="true" />
         <div className="lg-tint" aria-hidden="true" />
@@ -572,7 +639,7 @@ export default function App() {
                 style={{ height: `${p.h}vh`, marginRight: `${p.gap}vw`, transform: `translateY(${p.y}vh)` }}
                 onClick={(e) => openItem(p, e)}
               >
-                <img src={`/paintings/${p.src}`} alt={p.title} loading="eager" />
+                <img src={`/paintings/${p.src}`} alt={p.title} loading="eager" decoding="async" />
               </figure>
             ))}
           </div>
