@@ -1,0 +1,10 @@
+# Cloudflare Workers static-assets headers (https://developers.cloudflare.com/workers/static-assets/headers/)
+# Paintings and hashed bundles are content-addressed -> cache for a year.
+/paintings/*
+  Cache-Control: public, max-age=31536000, immutable
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/headshot.jpg
+  Cache-Control: public, max-age=604800
+/papers/*
+  Cache-Control: public, max-age=86400

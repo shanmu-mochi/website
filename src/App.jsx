@@ -55,8 +55,7 @@ const META = {
   'magritte.jpg':       { title: 'The Lovers', artist: 'René Magritte', year: '1928', minH: 46 },
   'bellei.jpg':         { title: 'An Embrace', artist: 'Gaetano Bellei', year: 'c. 1900', minH: 44 },
   'bastien.jpg':        { title: 'Rural Love', artist: 'Jules Bastien-Lepage', year: '1882', minH: 46 },
-  'paolo.jpg':          { title: 'Paolo and Francesca', artist: '', year: '', minH: 42 },
-  'tanner-sick.jpg':    { title: 'The Sick Child', artist: 'Henry Ossawa Tanner', year: 'c. 1893', minH: 48 },
+  'paolo.jpg':          { title: 'Paolo and Francesca', artist: 'Alexandre Cabanel', year: '1870', minH: 42 },
   'millet.jpg':         { title: 'The Angelus', artist: 'Jean-François Millet', year: 'c. 1859', minH: 46 },
   'calypso.jpg':        { title: "Calypso's Isle", artist: 'Herbert Draper', year: 'c. 1897', minH: 44 },
   'vangogh-oldman.jpg': { title: 'At Eternity’s Gate', artist: 'Vincent van Gogh', year: '1890' },
@@ -70,7 +69,6 @@ const META = {
   'blume-head.jpg':     { title: 'Going West', artist: 'Jackson Pollock', year: 'c. 1934' },
   'vangogh-ward.jpg':   { title: 'Ward in the Hospital at Arles', artist: 'Vincent van Gogh', year: '1889', minH: 48 },
   'vangogh-courtyard.jpg': { title: 'Courtyard of the Hospital at Arles', artist: 'Vincent van Gogh', year: '1889', minH: 48 },
-  'artist-model.jpg':   { title: 'The Studio', artist: '', year: '', minH: 46 },
   // — pool widened: more of the collection in rotation —
   'blue-morning.jpg':     { title: 'Blue Morning', artist: 'George Bellows', year: '1909', minH: 46 },
   'boar-lane.jpg':        { title: 'Boar Lane, Leeds', artist: 'John Atkinson Grimshaw', year: '1881', minH: 46 },
@@ -97,7 +95,6 @@ const META = {
   'mondrian-castle.jpg':    { title: 'Spring Sun: Castle Ruin, Brederode', artist: 'Piet Mondrian', year: 'c. 1909–10', minH: 44 },
   'munch-horsecart.jpg':    { title: 'Horse and Cart on a Country Road', artist: 'Edvard Munch', year: 'c. 1881', minH: 44 },
   'hitchcock-flight.jpg':   { title: 'The Flight into Egypt', artist: 'George Hitchcock', year: '1892', minH: 46 },
-  'hopper-intermission.jpg':{ title: 'Intermission', artist: 'Edward Hopper', year: '1963', minH: 48 },
   'kandinsky-composition.jpg': { title: 'Composition VIII', artist: 'Wassily Kandinsky', year: '1923', minH: 46 },
   'hopper-paintermodel.jpg':{ title: 'Painter and Model', artist: 'Edward Hopper', year: 'c. 1903', minH: 46 },
   'hopper-railroad.jpg':    { title: 'Railroad Train', artist: 'Edward Hopper', year: '1908', minH: 46 },
@@ -111,6 +108,13 @@ const META = {
   'monadnock.jpg':          { title: 'Mount Monadnock', artist: 'Abbott Handerson Thayer', year: 'c. 1914', minH: 46 },
   'lake-nemi.jpg':          { title: 'View of Lake Nemi', artist: 'Jules Coignet', year: '1843', minH: 46 },
   'seine.jpg':              { title: 'The Seine', artist: 'Henry Ossawa Tanner', year: 'c. 1902', minH: 46 },
+  // — third wave (2026-09): from ~/Desktop/Paintings —
+  'vangogh-irises.jpg':     { title: 'Irises', artist: 'Vincent van Gogh', year: '1889', minH: 46 },
+  'vangogh-poppyfield.jpg': { title: 'Poppy Field', artist: 'Vincent van Gogh', year: '1890', minH: 46 },
+  'matisse-goldfish.jpg':   { title: 'The Goldfish', artist: 'Henri Matisse', year: '1912' },
+  'pollock-bluepoles.jpg':  { title: 'Blue Poles', artist: 'Jackson Pollock', year: '1952', minH: 40 },
+  'sargent-jaleo.jpg':      { title: 'El Jaleo', artist: 'John Singer Sargent', year: '1882', minH: 50 },
+  'munch-landscape.jpg':    { title: 'Landscape', artist: 'Edvard Munch', year: '', minH: 44 },
 }
 
 /* which way the subject faces: 'L' looks toward viewer-left, 'R' toward viewer-right,
@@ -118,11 +122,11 @@ const META = {
    consecutive figures tend to look toward each other or out to opposite sides. */
 const GAZE = {
   'ravivarma2.jpg': 'R', 'ravivarma.jpg': 'R', 'ravivarma3.jpg': 'R',
-  'barracoon.jpg': 'L', 'caitlins-world.jpg': 'L', 'christinas.jpg': 'R', 'wyeth-nude.jpg': 'L',
+  'barracoon.jpg': 'L', 'caitlins-world.jpg': 'L', 'christinas.jpg': 'R',
   'nonchaloir.jpg': 'L', 'eljaleo.jpg': 'L', 'sargent-gassed.jpg': 'R',
   'hopper-elevenam.jpg': 'L', 'hopper-nymovie.jpg': 'R', 'hopper-gas.jpg': 'L',
   'munch-sick.jpg': 'L', 'peschka.jpg': 'R', 'labsinthe.jpg': 'R', 'monet-parasol.jpg': 'L',
-  'calypso.jpg': 'L', 'repin.jpg': 'L', 'tiger.jpg': 'L', 'artist-model.jpg': 'L',
+  'calypso.jpg': 'L', 'repin.jpg': 'L', 'tiger.jpg': 'L',
 }
 const gazeOf = (s) => GAZE[s] || 'F'
 
@@ -139,20 +143,42 @@ const NUDGE = [0, -6, 5, 7, -4, 6, -7, 4, -5, 6]                          // sub
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 const shuffle = (a) => { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[r[i], r[j]] = [r[j], r[i]] } return r }
 
-/* equal-area sizing x a size cadence; whitespace + a small vertical nudge follow their own cadences */
+/* WebP variants live at /paintings/<name>-<width>.webp (see scripts/build-paintings.cjs).
+   Pick the smallest one that covers how large the painting is drawn (CSS px x device pixels, capped:
+   paintings don't need full 2-3x density, and it keeps a 14-painting gallery to ~1-3 MB instead of ~10). */
+const DPR_CAP = 1.6
+const fileBase = (src) => src.replace(/\.jpe?g$/i, '')
+function variantFor(src, cssWidthPx) {
+  const d = DIMS[src]
+  if (!d) return ''
+  const dpr = Math.min((typeof window !== 'undefined' && window.devicePixelRatio) || 1, DPR_CAP)
+  const need = cssWidthPx * dpr
+  const w = d.widths.find((x) => x >= need) || d.widths[d.widths.length - 1]
+  return `/paintings/${fileBase(src)}-${w}.webp`
+}
+const largestSrc = (src) => { const d = DIMS[src]; return d ? `/paintings/${fileBase(src)}-${d.widths[d.widths.length - 1]}.webp` : '' }
+const placeholderOf = (src) => { const c = COLORS[src] && COLORS[src][0]; return c ? `rgb(${c[0]}, ${c[1]}, ${c[2]})` : 'var(--paper-2)' }
+
+/* equal-area sizing x a size cadence; whitespace + a small vertical nudge follow their own cadences.
+   Every slot gets an explicit width AND height (vh) so the strip has its final footprint before any
+   image arrives: no layout shift, and the dominant-colour placeholder shows the painting's shape. */
 function sizeSet(srcs) {
   const vhPx = (typeof window !== 'undefined' && window.innerHeight) || 900
+  const vwPx = (typeof window !== 'undefined' && window.innerWidth) || 1400
   const dpr = Math.min((typeof window !== 'undefined' && window.devicePixelRatio) || 1, 2)
+  const scale = vwPx <= 900 ? 0.85 : 1                // phones: paintings 15% smaller
   return srcs.filter((s) => DIMS[s]).map((src, i) => {
     const d = DIMS[src]
     const ar = d.w / d.h                              // computed from real pixels
     const qMax = (d.h * 100) / (dpr * vhPx)           // never upscale past native resolution
     const meta = META[src] || { title: '', artist: '' }
     // equal visual area x a repeating cadence -> structured big/small variation
-    const h = clamp(Math.sqrt(AREA / ar) * RHY[i % RHY.length], Math.max(GMIN, meta.minH || 0), Math.min(GMAX, qMax))
-    const tallness = clamp((h - GMIN) / (GMAX - GMIN), 0, 1)
+    const base = clamp(Math.sqrt(AREA / ar) * RHY[i % RHY.length], Math.max(GMIN, meta.minH || 0), Math.min(GMAX, qMax))
+    const h = base * scale, w = h * ar
+    const tallness = clamp((base - GMIN) / (GMAX - GMIN), 0, 1)
     const y = NUDGE[i % NUDGE.length] * (1 - tallness)   // small pieces nudged up/down, big ones stay centred
-    return { src, title: meta.title, artist: meta.artist, year: meta.year, h, y, gap: GAPS[i % GAPS.length] }
+    const url = variantFor(src, (w / 100) * vhPx)
+    return { src, url, title: meta.title, artist: meta.artist, year: meta.year, h, w, y, gap: GAPS[i % GAPS.length], bg: placeholderOf(src) }
   })
 }
 /* category = artist (so 3 Ravi Varmas / 3 Hoppers never stack); blanks stay unique */
@@ -170,8 +196,8 @@ const POOL = [
   'schiele.jpg', 'schiele2.jpg', 'peschka.jpg',
   'bellows-club.jpg', 'bellows-stag.jpg',
   'labsinthe.jpg', 'lautrec.jpg', 'manet-bar.jpg', 'cezanne-cards.jpg', 'ensor.jpg', 'monet-parasol.jpg', 'magritte.jpg', 'whistler-nocturne.jpg',
-  'vangogh-oldman.jpg', 'vangogh-ward.jpg', 'vangogh-courtyard.jpg', 'pollock-west.jpg', 'blume-head.jpg', 'artist-model.jpg', 'russian-couple.jpg',
-  'bellei.jpg', 'bastien.jpg', 'paolo.jpg', 'tanner-sick.jpg', 'millet.jpg', 'calypso.jpg', 'kollwitz.jpg', 'hammershoi.jpg', 'repin.jpg', 'apothecary.jpg', 'tiger.jpg',
+  'vangogh-oldman.jpg', 'vangogh-ward.jpg', 'vangogh-courtyard.jpg', 'pollock-west.jpg', 'blume-head.jpg', 'russian-couple.jpg',
+  'bellei.jpg', 'bastien.jpg', 'paolo.jpg', 'millet.jpg', 'calypso.jpg', 'kollwitz.jpg', 'hammershoi.jpg', 'repin.jpg', 'apothecary.jpg', 'tiger.jpg',
   // — newly catalogued, widening the pool —
   'blue-morning.jpg', 'boar-lane.jpg', 'homer-hurricane.jpg', 'simplon.jpg',
   'klimt-beech.jpg', 'friedrich-abbey.jpg', 'turner-rain.jpg', 'monet-poppies.jpg', 'monet-parliament.jpg', 'monet-waterloo.jpg',
@@ -179,10 +205,12 @@ const POOL = [
   'mondrian-tableau.jpg', 'kandinsky-akhtyrka.jpg', 'klimt-hygieia.jpg', 'ravivarma-mirror.jpg',
   // — second wave —
   'ryder-racetrack.jpg', 'hitchcock-vanquished.jpg', 'wyeth-bluedoor.jpg', 'mondrian-castle.jpg', 'munch-horsecart.jpg',
-  'hitchcock-flight.jpg', 'hopper-intermission.jpg', 'kandinsky-composition.jpg',
+  'hitchcock-flight.jpg', 'kandinsky-composition.jpg',
   'hopper-paintermodel.jpg', 'hopper-railroad.jpg', 'hopper-sundaymorning.jpg', 'rojas-miseria.jpg',
   'wyeth-floodplain.jpg', 'wyeth-perpetualcare.jpg', 'vallotton-wind.jpg', 'henri-volendam.jpg', 'sargent-olive.jpg',
   'monadnock.jpg', 'lake-nemi.jpg', 'seine.jpg',
+  // — third wave —
+  'vangogh-irises.jpg', 'vangogh-poppyfield.jpg', 'matisse-goldfish.jpg', 'pollock-bluepoles.jpg', 'sargent-jaleo.jpg', 'munch-landscape.jpg',
 ].filter((s) => DIMS[s])
 
 /* choose SHOWN paintings, unseen ones first (novelty); opener leads with Ravi Varma */
@@ -252,14 +280,6 @@ const STORIES = [
   { title: 'Got Your Toe!', kind: 'Essay · A skilled nursing facility', venue: 'Medium', excerpt: 'At the nursing home, the body keeps a longer memory than the mind.', href: 'https://shanmuraja.medium.com/got-your-toe-472b0e2a74cb' },
 ]
 
-/* a muted painting per story, revealed on hover (cursor-following) */
-const STORY_IMG = [
-  '/paintings/seine.jpg', '/paintings/nonchaloir.jpg', '/paintings/monadnock.jpg',
-  '/paintings/hammershoi.jpg', '/paintings/homer-hurricane.jpg', '/paintings/venice.jpg',
-  '/paintings/blue-morning.jpg', '/paintings/lake-nemi.jpg', '/paintings/simplon.jpg',
-  '/paintings/caitlins-world.jpg', '/paintings/boar-lane.jpg', '/paintings/tiger.jpg',
-]
-
 const PAPERS = [
   { title: 'Same Result, Different Price', sub: 'Compounded vs branded tirzepatide: no effectiveness gap, conditional savings', authors: 'Erly & Raja · Mochi Health · 2026', href: '/papers/same-result-different-price-tirzepatide.pdf', badge: 'PDF' },
   { title: 'Off-Trial: Real-World Weight Loss on Tirzepatide & Semaglutide', sub: '13,507-patient telehealth cohort, propensity-score matched', authors: 'Erly & Raja · 2026', href: '/papers/off-trial-real-world-glp1.pdf', badge: 'PDF' },
@@ -307,6 +327,8 @@ export default function App() {
   const [closing, setClosing] = useState(false)
   const [fading, setFading] = useState(false)
   const [scrolled, setScrolled] = useState(false)   // nav: newspaper masthead -> floating pill on scroll
+  const [hiddenSrc, setHiddenSrc] = useState(null)  // painting currently lifted into the lightbox (its gallery copies hide)
+  const [hiRes, setHiRes] = useState(null)          // full-size variant, swapped into the lightbox once decoded
   const trackRef = useRef(null)
   const cardRef = useRef(null)        // lightbox glass card (animated from the clicked painting)
   const glassRef = useRef(null)       // the glass overlay (fades in on open, out on close)
@@ -407,36 +429,33 @@ export default function App() {
       requestAnimationFrame(() => requestAnimationFrame(() => setFading(false)))
     }
     setTimeout(() => { faded = true; reveal() }, 340)            // let the fade-out finish
-    const imgs = g.map((x) => { const im = new Image(); im.src = `/paintings/${x.src}`; return im })
+    const imgs = g.map((x) => { const im = new Image(); im.src = x.url; return im })
     let left = imgs.length || 1
     const tick = () => { if (--left <= 0) { ready = true; reveal() } }
-    imgs.forEach((im) => { im.complete ? tick() : (im.onload = im.onerror = tick) })
-    setTimeout(() => { ready = true; reveal() }, 2500)           // safety: never hang on a slow image
+    imgs.forEach((im) => { (im.decode ? im.decode() : Promise.resolve()).then(tick, tick) })   // a failed image counts too
+    setTimeout(() => { ready = true; reveal() }, 6000)           // safety: never hang on a slow connection
   }
   const loop = [...gallery, ...gallery]
 
-  // hide/show every gallery copy of a painting so the original doesn't sit behind the lightbox
-  const hideTwins = (src, hidden) => {
-    document.querySelectorAll('.m-item').forEach((it) => {
-      const im = it.querySelector('img')
-      if (im && im.getAttribute('src') === src) it.style.visibility = hidden ? 'hidden' : ''
-    })
-  }
   const openItem = (p, e) => {
     if (draggedRef.current) { draggedRef.current = false; return }   // ignore the click that ends a drag
-    const r = e.currentTarget.querySelector('img').getBoundingClientRect()
-    hideTwins(`/paintings/${p.src}`, true)         // hide the original(s) -> only the rising card shows
+    const fig = e.currentTarget
+    if (fig.classList.contains('broken')) return                       // image never loaded: nothing to show
+    const img = fig.querySelector('img')
+    const r = img.getBoundingClientRect()
+    if (!r.width || !r.height) return
+    setHiddenSrc(p.src)                            // hide the original(s) -> only the rising card shows
     setClosing(false)
-    setActive({ ...p, rect: { left: r.left, top: r.top, width: r.width, height: r.height } })
+    setActive({ ...p, shown: img.currentSrc || p.url, rect: { left: r.left, top: r.top, width: r.width, height: r.height } })
   }
   // find the most-centered on-screen copy of a painting (the strip keeps drifting), as an img rect
   const liveRect = (src) => {
     let best = null, bestD = Infinity
     document.querySelectorAll('.m-item').forEach((it) => {
+      if (it.dataset.src !== src) return
       const im = it.querySelector('img')
-      if (!im || im.getAttribute('src') !== src) return
       const r = it.getBoundingClientRect()
-      if (r.right < 4 || r.left > window.innerWidth - 4) return
+      if (!im || r.right < 4 || r.left > window.innerWidth - 4) return
       const d = Math.abs((r.left + r.width / 2) - window.innerWidth / 2)
       if (d < bestD) { bestD = d; const ir = im.getBoundingClientRect(); best = { left: ir.left, top: ir.top, width: ir.width, height: ir.height } }
     })
@@ -458,8 +477,8 @@ export default function App() {
   const closeItem = () => {
     if (closing) return
     const el = cardRef.current, glass = glassRef.current
-    const src = active && `/paintings/${active.src}`
-    const finish = () => { if (src) hideTwins(src, false); setActive(null); setClosing(false) }
+    const src = active && active.src
+    const finish = () => { setHiddenSrc(null); setActive(null); setClosing(false) }
     if (!el || !active) { finish(); return }
     setClosing(true)
     if (openAnimRef.current) { openAnimRef.current.forEach((a) => a.cancel()); openAnimRef.current = null }   // hand off cleanly
@@ -496,6 +515,18 @@ export default function App() {
     document.body.style.overflow = 'hidden'
     return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = prev }
   }, [active, closing])  // eslint-disable-line react-hooks/exhaustive-deps
+  // the card opens with the (cached) gallery variant, then swaps in the full-size one once it has decoded
+  useEffect(() => {
+    setHiRes(null)
+    if (!active) return
+    const big = largestSrc(active.src)
+    if (!big || big === active.shown) return
+    let alive = true
+    const im = new Image(); im.src = big
+    const done = () => { if (alive) setHiRes(big) }
+    if (im.decode) im.decode().then(done, () => {}); else im.onload = done
+    return () => { alive = false }
+  }, [active])
 
   return (
     <>
@@ -510,7 +541,8 @@ export default function App() {
                 <div className="lb-glass-tint" />
                 <div className="lb-glass-shine" />
               </div>
-              <img src={`/paintings/${active.src}`} alt={active.title} />
+              <img src={hiRes || active.shown} alt={active.title} width={DIMS[active.src].w} height={DIMS[active.src].h}
+                style={{ '--ar': DIMS[active.src].w / DIMS[active.src].h, background: active.bg }} decoding="async" />
             </div>
             <figcaption className="lb-cap">
               <span className="lb-title">{active.title}</span>
@@ -556,15 +588,23 @@ export default function App() {
         {/* LANDING GALLERY — full-viewport horizontal montage, Cargo-style */}
         <section className="gallery" aria-label="Selected paintings">
           <div className={`marquee-track${fading ? ' fading' : ''}`} ref={trackRef}>
-            {loop.map((p, i) => (
-              <figure
-                className="m-item" key={i} aria-hidden={i >= gallery.length}
-                style={{ height: `${p.h}vh`, marginRight: `${p.gap}vw`, transform: `translateY(${p.y}vh)` }}
-                onClick={(e) => openItem(p, e)}
-              >
-                <img src={`/paintings/${p.src}`} alt={p.title} loading="eager" decoding="async" />
-              </figure>
-            ))}
+            {loop.map((p, i) => {
+              const copy = i >= gallery.length          // 2nd copy makes the loop seamless; it is decorative
+              return (
+                <figure
+                  className="m-item" key={`${p.src}:${copy ? 'b' : 'a'}`} data-src={p.src}
+                  aria-hidden={copy || undefined} role={copy ? undefined : 'button'} tabIndex={copy ? -1 : 0}
+                  aria-label={copy ? undefined : ([p.title, p.artist].filter(Boolean).join(', ') || 'Painting')}
+                  style={{ width: `${p.w}vh`, height: `${p.h}vh`, marginRight: `${p.gap}vw`, transform: `translateY(${p.y}vh)`, background: p.bg, visibility: hiddenSrc === p.src ? 'hidden' : '' }}
+                  onClick={(e) => openItem(p, e)}
+                  onKeyDown={(e) => { if (!copy && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openItem(p, e) } }}
+                >
+                  <img src={p.url} alt={p.title} loading="eager" decoding="async"
+                    onLoad={(e) => e.currentTarget.classList.add('ok')}
+                    onError={(e) => e.currentTarget.closest('figure').classList.add('broken')} />
+                </figure>
+              )
+            })}
           </div>
           <button className="gallery-redo" onClick={redo} aria-label="Show another gallery">
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20 11a8 8 0 1 0-.6 4M20 4v5h-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
