@@ -600,7 +600,6 @@ export default function App() {
                   onKeyDown={(e) => { if (!copy && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openItem(p, e) } }}
                 >
                   <img src={p.url} alt={p.title} loading="eager" decoding="async"
-                    onLoad={(e) => e.currentTarget.classList.add('ok')}
                     onError={(e) => e.currentTarget.closest('figure').classList.add('broken')} />
                 </figure>
               )
