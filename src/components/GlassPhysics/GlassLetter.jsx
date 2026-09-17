@@ -13,7 +13,7 @@ export default function GlassLetter({
   // Calculate initial position
   const initialX = (index - total / 2) * 1.2
   
-  useFrame((state, delta) => {
+  useFrame((state) => {
     if (!meshRef.current) return
     
     const time = state.clock.elapsedTime

@@ -126,61 +126,6 @@ const GAZE = {
 }
 const gazeOf = (s) => GAZE[s] || 'F'
 
-/* 50 cohesive galleries. SET 0 is the opener (leads with Ravi Varma on first load).
-   After that, redo picks the gallery with the most not-yet-seen paintings. */
-const SETS = [
-  ['ravivarma2.jpg', 'ravivarma.jpg', 'granada.jpg', 'caitlins-world.jpg', 'hammershoi.jpg'], // 0 OPENER · Ravi Varma & Indian warmth
-  ['barracoon.jpg', 'caitlins-world.jpg', 'christinas.jpg', 'wyeth-adrift.jpg', 'dying-bird.jpg'], // 1 Wyeth quiet
-  ['wyeth-nude.jpg', 'wyeth-maypole.jpg', 'barracoon.jpg', 'christinas.jpg'],             // 2 Wyeth figures
-  ['venice.jpg', 'nonchaloir.jpg', 'carnation.jpg', 'granada.jpg', 'sargent-dinner.jpg'], // 3 Sargent society
-  ['eljaleo.jpg', 'sargent-gassed.jpg', 'venice.jpg', 'sargent-dinner.jpg'],              // 4 Sargent spectacle
-  ['automat.jpg', 'hopper-roomny.jpg', 'hopper-elevenam.jpg', 'hopper-soirbleu.jpg'],     // 5 Hopper interiors
-  ['hopper-nymovie.jpg', 'hopper-nyinterior.jpg', 'hopper-gas.jpg', 'hopper-hotelrr.jpg'], // 6 Hopper city
-  ['munch-sick.jpg', 'munch-kiss.jpg', 'munch-peonies.jpg', 'kollwitz.jpg'],              // 7 Munch
-  ['schiele.jpg', 'schiele2.jpg', 'peschka.jpg', 'kollwitz.jpg'],                         // 8 Schiele
-  ['bellows-club.jpg', 'bellows-stag.jpg', 'hopper-soirbleu.jpg', 'automat.jpg'],         // 9 Bellows: ring & city
-  ['labsinthe.jpg', 'lautrec.jpg', 'manet-bar.jpg', 'monet-parasol.jpg'],                 // 10 Degas & Lautrec
-  ['manet-bar.jpg', 'cezanne-cards.jpg', 'ensor.jpg', 'labsinthe.jpg'],                   // 11 Manet, Cézanne, Ensor
-  ['magritte.jpg', 'munch-kiss.jpg', 'bellei.jpg', 'paolo.jpg', 'bastien.jpg'],           // 12 Lovers & embraces
-  ['kollwitz.jpg', 'munch-sick.jpg', 'tanner-sick.jpg', 'millet.jpg'],                    // 13 Mother & the sickbed
-  ['calypso.jpg', 'paolo.jpg', 'millet.jpg', 'monet-parasol.jpg'],                        // 14 Myth & romance
-  ['vangogh-oldman.jpg', 'hopper-elevenam.jpg', 'hammershoi.jpg', 'tanner-sick.jpg'],     // 15 Solitary melancholy
-  ['nonchaloir.jpg', 'barracoon.jpg', 'calypso.jpg', 'wyeth-nude.jpg'],                   // 16 Repose / reclining
-  ['caitlins-world.jpg', 'hammershoi.jpg', 'peschka.jpg', 'ravivarma.jpg'],               // 17 Profile & portrait
-  ['tiger.jpg', 'repin.jpg', 'eljaleo.jpg', 'ensor.jpg', 'apothecary.jpg'],               // 18 Wild & dramatic
-  ['barracoon.jpg', 'caitlins-world.jpg', 'granada.jpg', 'ravivarma3.jpg', 'monet-parasol.jpg'], // 19 Warm sepia & earth
-  ['hammershoi.jpg', 'munch-sick.jpg', 'lautrec.jpg', 'nonchaloir.jpg'],                  // 20 Nordic quiet
-  ['sargent-dinner.jpg', 'manet-bar.jpg', 'bellei.jpg', 'repin.jpg'],                     // 21 Crimson & candlelight
-  ['hammershoi.jpg', 'hopper-nyinterior.jpg', 'lautrec.jpg', 'nonchaloir.jpg'],           // 22 Women from behind
-  ['labsinthe.jpg', 'manet-bar.jpg', 'automat.jpg', 'hopper-roomny.jpg'],                 // 23 Café & glass
-  ['hopper-elevenam.jpg', 'hopper-hotelrr.jpg', 'wyeth-nude.jpg', 'hammershoi.jpg'],      // 24 Bedside & window
-  ['dying-bird.jpg', 'hammershoi.jpg', 'wyeth-adrift.jpg', 'caitlins-world.jpg'],         // 25 Slate & cream
-  ['eljaleo.jpg', 'bellows-club.jpg', 'bellows-stag.jpg', 'ensor.jpg'],                   // 26 Dance & crowd
-  ['ravivarma3.jpg', 'munch-kiss.jpg', 'bellei.jpg', 'bastien.jpg', 'kollwitz.jpg'],      // 27 Tenderness
-  ['hopper-elevenam.jpg', 'lautrec.jpg', 'hammershoi.jpg', 'ravivarma.jpg'],              // 28 The lone woman
-  ['sargent-gassed.jpg', 'repin.jpg', 'tanner-sick.jpg', 'vangogh-oldman.jpg'],           // 29 War & grief
-  ['ravivarma2.jpg', 'ravivarma.jpg', 'caitlins-world.jpg', 'barracoon.jpg'],             // 30 Maroon & gold
-  ['hopper-soirbleu.jpg', 'hopper-gas.jpg', 'hopper-nymovie.jpg', 'bellows-club.jpg'],    // 31 Twilight & lamplight
-  ['cezanne-cards.jpg', 'bellei.jpg', 'magritte.jpg', 'hopper-roomny.jpg', 'hopper-hotelrr.jpg'], // 32 Two figures
-  ['ravivarma2.jpg', 'peschka.jpg', 'caitlins-world.jpg', 'lautrec.jpg'],                 // 33 The painted woman
-  ['automat.jpg', 'bellows-stag.jpg', 'christinas.jpg', 'wyeth-maypole.jpg'],             // 34 American scene
-  ['vangogh-oldman.jpg', 'hammershoi.jpg', 'nonchaloir.jpg', 'munch-sick.jpg'],           // 35 The contemplative
-  ['granada.jpg', 'venice.jpg', 'carnation.jpg', 'sargent-dinner.jpg'],                   // 36 Sargent warmth
-  ['calypso.jpg', 'monet-parasol.jpg', 'ravivarma.jpg', 'christinas.jpg'],                // 37 Reverie & nature
-  ['barracoon.jpg', 'wyeth-nude.jpg', 'nonchaloir.jpg', 'schiele.jpg'],                   // 38 Bodies & drapery
-  ['hopper-roomny.jpg', 'hopper-soirbleu.jpg', 'sargent-dinner.jpg', 'hopper-hotelrr.jpg'], // 39 Night windows
-  ['ravivarma2.jpg', 'granada.jpg', 'ravivarma3.jpg', 'monet-parasol.jpg', 'caitlins-world.jpg'], // 40 Indian & jewel tones
-  ['venice.jpg', 'eljaleo.jpg', 'bellows-stag.jpg', 'hopper-gas.jpg'],                    // 41 The street
-  ['hammershoi.jpg', 'hopper-nyinterior.jpg', 'sargent-dinner.jpg', 'lautrec.jpg'],       // 42 Quiet interiors
-  ['repin.jpg', 'tanner-sick.jpg', 'kollwitz.jpg', 'vangogh-oldman.jpg'],                 // 43 Grief & the body
-  ['magritte.jpg', 'munch-kiss.jpg', 'hopper-soirbleu.jpg', 'bellei.jpg'],                // 44 Dusk & desire
-  ['schiele.jpg', 'peschka.jpg', 'ravivarma2.jpg', 'lautrec.jpg', 'vangogh-oldman.jpg'],  // 45 The seated figure
-  ['bastien.jpg', 'millet.jpg', 'monet-parasol.jpg', 'christinas.jpg'],                   // 46 Pastoral figures
-  ['eljaleo.jpg', 'bellows-club.jpg', 'lautrec.jpg', 'ensor.jpg'],                        // 47 The performers
-  ['barracoon.jpg', 'wyeth-nude.jpg', 'wyeth-adrift.jpg', 'nonchaloir.jpg'],              // 48 White linen & light
-  ['ravivarma2.jpg', 'caitlins-world.jpg', 'peschka.jpg', 'hammershoi.jpg', 'lautrec.jpg'], // 49 Portrait of a woman
-]
-
 const SHOWN = 14                     // paintings per gallery
 const LEAD = 'ravivarma2.jpg'        // the Indian lady leads the first gallery
 const AREA = 2600, GMIN = 34, GMAX = 76         // Cargo-flavored ribbon: moderate size range
@@ -193,7 +138,6 @@ const NUDGE = [0, -6, 5, 7, -4, 6, -7, 4, -5, 6]                          // sub
    the mid-line, with a small fixed vertical nudge eased onto the smaller pieces. Never upscaled. */
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v))
 const shuffle = (a) => { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[r[i], r[j]] = [r[j], r[i]] } return r }
-const ALL_SRCS = new Set(SETS.flat())
 
 /* equal-area sizing x a size cadence; whitespace + a small vertical nudge follow their own cadences */
 function sizeSet(srcs) {
@@ -213,38 +157,9 @@ function sizeSet(srcs) {
 }
 /* category = artist (so 3 Ravi Varmas / 3 Hoppers never stack); blanks stay unique */
 const catOf = (s) => (META[s] && META[s].artist) || s
-/* order so the same category never appears within 2 of itself (gap >= 2): if A is Ravi Varma,
-   the next two paintings can't be Ravi Varma. Cooldown blocks the last two categories placed;
-   falls back gracefully only when a gallery is too concentrated to space. */
+/* the same category never appears within 2 of itself (gap >= 2): if A is Ravi Varma,
+   the next two paintings can't be Ravi Varma. */
 const COOLDOWN = 2
-function orderNoRuns(srcs, lead) {
-  const byCat = {}
-  shuffle(srcs.filter((s) => s !== lead)).forEach((s) => { (byCat[catOf(s)] = byCat[catOf(s)] || []).push(s) })
-  const res = []
-  if (lead) res.push(lead)
-  let remaining = Object.values(byCat).reduce((n, a) => n + a.length, 0)
-  while (remaining > 0) {
-    const recent = res.slice(-COOLDOWN).map(catOf)          // categories on cooldown
-    let best = null, bestN = 0
-    for (const c in byCat) {
-      if (!byCat[c].length || recent.includes(c)) continue
-      if (byCat[c].length > bestN) { bestN = byCat[c].length; best = c }
-    }
-    if (best === null) {                                    // forced: pick most-plentiful, avoid the immediate last
-      const lastCat = res.length ? catOf(res[res.length - 1]) : null
-      for (const c in byCat) {
-        if (!byCat[c].length) continue
-        if (best === null || (c !== lastCat && byCat[c].length > byCat[best].length)) best = c
-      }
-    }
-    res.push(byCat[best].pop()); remaining--
-  }
-  return res
-}
-function buildSet(idx, opts = {}) {
-  const srcs = SETS[idx].filter((s) => DIMS[s])
-  return sizeSet(orderNoRuns(srcs, opts.lead))
-}
 /* the whole cohesive pool (muted figure / scene paintings), drawn from for every gallery */
 const POOL = [
   'ravivarma2.jpg', 'ravivarma.jpg', 'ravivarma3.jpg',
@@ -324,7 +239,7 @@ function buildGallery(seen, opener) {
 /* excerpt = draft opening line (placeholder voice; edit freely or I can pull the real first lines) */
 const STORIES = [
   { title: 'Burnt Red Tongues', kind: 'Historical Fiction', venue: 'Medium', excerpt: 'The fire came for the temple first, and the language second.', href: 'https://shanmuraja.medium.com/burnt-red-tongues-e5647e67d243' },
-  { title: 'Fugue State', kind: 'Short Story', venue: 'Substack', excerpt: 'She woke in a city she had never agreed to live in.', href: 'https://open.substack.com/pub/shanmuraja/p/fugue-state?r=1hai5c&utm_medium=web' },
+  { title: 'Fugue State', kind: 'Short Story', venue: 'Unpublished', excerpt: 'She woke in a city she had never agreed to live in.' },
   { title: 'A Pound of Flesh', kind: 'Short Story', venue: 'Substack', excerpt: 'Everyone wanted their share, and the body was only so large.', href: 'https://open.substack.com/pub/shanmuraja/p/a-pound-of-flesh?r=1hai5c&utm_medium=web' },
   { title: 'a boring call', kind: 'A Short', venue: 'Substack', excerpt: 'Nothing happened on the call, which was the whole of it.', href: 'https://open.substack.com/pub/shanmuraja/p/a-boring-call?r=1hai5c&utm_medium=web' },
   { title: 'The Sound and the Fury', kind: 'Essay · Legacy, ethics, and the cost of progress', venue: 'Medium', excerpt: 'Progress keeps a ledger, and someone always settles it.', href: 'https://shanmuraja.medium.com/the-sound-and-the-fury-b688bde9e526' },
@@ -376,8 +291,7 @@ const SOCIALS = [
   ['Medium', 'medium', 'https://shanmuraja.medium.com/'],
   ['Substack', 'substack', 'https://shanmuraja.substack.com/'],
   ['Instagram', 'instagram', 'https://instagram.com/shanmuraja_'],
-  ['LinkedIn', 'linkedin', 'https://linkedin.com/'],
-  ['X', 'x', 'https://x.com/'],
+  ['LinkedIn', 'linkedin', 'https://www.linkedin.com/in/shanmuraja'],
 ]
 
 const NAVLINKS = [['Stories', '#stories'], ['Papers', '#papers'], ['Awards', '#awards'], ['Features', '#features'], ['Contact', '#bio']]
@@ -573,6 +487,15 @@ export default function App() {
     const el = cardRef.current
     if (el && active.rect) openAnimRef.current = openFlip(el, glassRef.current, active.rect)
   }, [active, closing])
+  // Escape closes the lightbox, and the page can't scroll behind it while it's open
+  useEffect(() => {
+    if (!active) return
+    const onKey = (e) => { if (e.key === 'Escape') closeItem() }
+    window.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = prev }
+  }, [active, closing])  // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
@@ -652,19 +575,22 @@ export default function App() {
         <section className="section" id="stories">
           <div className="section-head"><h2 className="section-title">Stories</h2><p className="section-lead">Fiction &amp; essays on medicine and humanity.</p></div>
           <div className="contents">
-            {STORIES.map((s, i) => (
-              <a className="story" href={s.href} target="_blank" rel="noreferrer" key={s.title}>
-                <span className="st-num">{String(i + 1).padStart(2, '0')}</span>
-                <div className="st-body">
-                  <div className="st-kicker">{s.kind}</div>
-                  <div className="st-head">
-                    <span className="st-title">{s.title}</span>
-                    <span className="st-leader" aria-hidden="true" />
-                    <span className="st-venue">{s.venue}</span>
+            {STORIES.map((s, i) => {
+              const Tag = s.href ? 'a' : 'div'   // unlinked pieces (unpublished / in submission) are plain rows
+              return (
+                <Tag className="story" key={s.title} {...(s.href ? { href: s.href, target: '_blank', rel: 'noreferrer' } : {})}>
+                  <span className="st-num">{String(i + 1).padStart(2, '0')}</span>
+                  <div className="st-body">
+                    <div className="st-kicker">{s.kind}</div>
+                    <div className="st-head">
+                      <span className="st-title">{s.title}</span>
+                      <span className="st-leader" aria-hidden="true" />
+                      <span className="st-venue">{s.venue}</span>
+                    </div>
                   </div>
-                </div>
-              </a>
-            ))}
+                </Tag>
+              )
+            })}
           </div>
           <div className="archive-line">Full archive on <a href="https://shanmuraja.medium.com/" target="_blank" rel="noreferrer">Medium</a> · <a href="https://shanmuraja.substack.com/" target="_blank" rel="noreferrer">Substack</a></div>
         </section>
@@ -712,7 +638,7 @@ export default function App() {
             <h3 className="feature-title">Healthcare’s AI Trap</h3>
             <p className="feature-sub">When automation skims the cream and starves the pipeline at once.</p>
             <p className="feature-byline">Shanmugesh Raja, MS · Mochi Health · June 2026</p>
-            <p className="feature-summary">Routine cases do double duty: under a flat fee they cross-subsidize complex care, and they are the cases on which junior clinicians become senior. AI automates them first, creaming the easy cases. As <em>θ</em> climbs from the easy cases toward the hard ones, the leftover pool's profit crosses zero at the unraveling threshold <em>θ̄ ≈ 0.32</em>, strictly before the social break-even <em>c† = 0.50</em>. The entrant over-skims, dumping the rescue cost of the abandoned tail onto everyone else.</p>
+            <p className="feature-summary">Routine cases do double duty: under a flat fee they cross-subsidize complex care, and they are the cases on which junior clinicians become senior. AI automates them first, creaming the easy cases. As <em>θ</em> climbs from the easy cases toward the hard ones, the leftover pool’s profit crosses zero at the unraveling threshold <em>θ̄ ≈ 0.32</em>, strictly before the social break-even <em>c† = 0.50</em>. The entrant over-skims, dumping the rescue cost of the abandoned tail onto everyone else.</p>
             <AITrapFig2 />
             <a className="feature-cta" href="/papers/healthcares-ai-trap.pdf" target="_blank" rel="noreferrer">Read the paper <span className="arrow">→</span></a>
           </article>
@@ -740,7 +666,7 @@ export default function App() {
           <div className="about-grid">
             <div className="plate"><figure><img src="/headshot.jpg" alt="Shanmu Raja" /></figure></div>
             <div className="about-body">
-              <p className="lead">I'm a writer who works in medicine, or a medical person who writes. The order keeps changing.</p>
+              <p className="lead">I’m a writer who works in medicine, or a medical person who writes. The order keeps changing.</p>
               <p>I write fiction, essays, and the occasional poem.</p>
               <p>I have a master’s from UCSF in healthcare economics and health policy. My thesis looked at access deserts in Medi-Cal. My research lives in clinical medicine and surgery.</p>
               <p>My fiction has been recognized by <em>The New Yorker</em>, the Paul Kalanithi Writing Competition, and the Massachusetts Undergraduate Poetry Festival. My research has appeared in <em>The Journal of Thoracic and Cardiovascular Surgery</em> and <em>Journal of Vascular Surgery</em>.</p>

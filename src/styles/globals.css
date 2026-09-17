@@ -113,7 +113,7 @@ a { color: inherit; text-decoration: none; }
    gliding left continuously — the name lives below the fold */
 .gallery {
   position: relative; width: 100vw; left: 50%; transform: translateX(-50%);
-  height: 100vh; min-height: 480px; overflow: hidden;
+  height: 100vh; height: 100svh; min-height: 480px; overflow: hidden;
   display: flex; align-items: center;
   cursor: grab; touch-action: pan-y;   /* drag to scrub; vertical page scroll still works on touch */
   user-select: none; -webkit-user-select: none;
@@ -168,7 +168,7 @@ a { color: inherit; text-decoration: none; }
 .st-head { display: flex; align-items: baseline; gap: 0.6rem; }
 .st-title { position: relative; font-family: var(--black); font-weight: 500; font-size: clamp(1.4rem, 3vw, 2.1rem); line-height: 1.05; letter-spacing: -0.015em; white-space: nowrap; transition: font-style 0s; }
 .st-title::after { content: ''; position: absolute; left: 0; bottom: -0.1em; height: 1px; width: 100%; background: var(--ink); transform: scaleX(0); transform-origin: left; transition: transform .45s cubic-bezier(.22, 1, .36, 1); }
-.story:hover .st-title::after { transform: scaleX(1); }
+.story[href]:hover .st-title::after { transform: scaleX(1); }
 .st-leader { flex: 1 1 auto; min-width: 2rem; border-bottom: 1px dotted var(--line-2); transform: translateY(-0.28em); }
 .st-venue { font-family: var(--mono); font-size: 0.64rem; color: var(--muted); white-space: nowrap; }
 .st-excerpt { font-family: var(--black); font-style: italic; font-weight: 400; font-size: clamp(0.98rem, 1.6vw, 1.18rem); line-height: 1.45; color: var(--soft); margin-top: 0.6rem; max-width: 62ch; }
@@ -371,7 +371,7 @@ a { color: inherit; text-decoration: none; }
 
 /* ---------- responsive ---------- */
 @media (max-width: 900px) {
-  .marquee-track { animation-duration: 55s; }
+  .m-item { display: flex; align-items: center; }   /* keep the smaller image on the mid-line */
   .m-item img { height: 85%; }   /* paintings 15% smaller on mobile */
   .mh-dateline span:nth-child(2) { display: none; }
   .about-grid { grid-template-columns: 1fr; }
@@ -398,5 +398,11 @@ a { color: inherit; text-decoration: none; }
   .colo-contact { font-size: 0.6rem; }
   .colo-social { gap: 1rem; }
   .colo-social svg { width: 19px; height: 19px; }
+}
+/* very small phones (<=360px): tighten the bar so all five links stay visible */
+@media (max-width: 360px) {
+  .nav-inner { padding: 0.5rem 0.75rem; }
+  .nav-left { font-size: 0.9rem; }
+  .nav-right { gap: 0.3rem; font-size: 0.64rem; }
 }
 
