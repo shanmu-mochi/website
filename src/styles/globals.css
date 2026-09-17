@@ -19,10 +19,10 @@
   --line-2:  rgba(0, 0, 0, 0.34);
   --red:     #0b0b0b;   /* monochrome — Cargo is pure black/white */
 
-  /* all Garamond: Cormorant Garamond for titles/headings (finer), EB Garamond for body & labels */
-  --black: 'Cormorant Garamond', 'EB Garamond', Georgia, serif;
-  --sans:  'EB Garamond', Georgia, 'Times New Roman', serif;
-  --mono:  'EB Garamond', Georgia, 'Times New Roman', serif;
+  /* Palatino throughout — classic humanist serif (system font; graceful fallbacks) */
+  --black: 'Palatino', 'Palatino Linotype', 'Book Antiqua', 'URW Palladio L', Georgia, serif;
+  --sans:  'Palatino', 'Palatino Linotype', 'Book Antiqua', 'URW Palladio L', Georgia, serif;
+  --mono:  'Palatino', 'Palatino Linotype', 'Book Antiqua', 'URW Palladio L', Georgia, serif;
 
   --maxw: 1600px;
   --gutter: clamp(1.25rem, 3vw, 3rem);
