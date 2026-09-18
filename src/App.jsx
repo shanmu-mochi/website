@@ -745,7 +745,7 @@ export default function App() {
             <p className="feature-byline">Shanmugesh Raja, MS · Mochi Health · June 2026</p>
             <p className="feature-summary">Routine cases do double duty: under a flat fee they cross-subsidize complex care, and they are the cases on which junior clinicians become senior. AI automates them first, creaming the easy cases. As <em>θ</em> climbs from the easy cases toward the hard ones, the leftover pool’s profit crosses zero at the unraveling threshold <em>θ̄ ≈ 0.32</em>, strictly before the social break-even <em>c† = 0.50</em>. The entrant over-skims, dumping the rescue cost of the abandoned tail onto everyone else.</p>
             <AITrapFig2 />
-            <a className="feature-cta" href="https://substack.com/@shanmuraja/note/p-216330131?r=1hai5c&utm_source=notes-share-action&utm_medium=web" target="_blank" rel="noreferrer">Read the paper <span className="arrow">→</span></a>
+            <a className="feature-cta" href="https://shanmuraja.substack.com/p/healthcares-ai-trap?r=1hai5c&utm_medium=web" target="_blank" rel="noreferrer">Read the paper <span className="arrow">→</span></a>
           </article>
 
           <article className="thesis-card">
