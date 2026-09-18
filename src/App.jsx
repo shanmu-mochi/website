@@ -336,39 +336,65 @@ export default function App() {
   const openAnimRef = useRef(null)    // the open (rise) animations, cancelled before the close tracking
   const draggedRef = useRef(false)   // true right after a drag, so it doesn't open the modal
 
-  // gallery drift: slow auto-scroll + momentum from horizontal wheel AND click/touch drag.
-  // works with mouse and touch (Pointer Events), and re-measures on resize for any screen size.
+  // gallery drift: slow auto-scroll + weighted momentum from horizontal wheel AND click/touch drag.
+  // physics is time-based (px/second), so the weight feels identical at 60 and 120 Hz.
   useEffect(() => {
     const track = trackRef.current
     if (!track) return
     const gal = track.parentElement
-    const AUTO = -0.35                       // px/frame, slow leftward drift
-    let offset = 0, vel = AUTO, copyW = 1, raf
-    let down = false, dragging = false, lastX = 0, moved = 0, dragVel = 0
+    const AUTO = -21           // px/s, resting leftward drift
+    // exponential decay, the model iOS/Framer/Lenis all use. TAU sits between UIScrollView
+    // normal (0.50s) and Framer's inertia (0.70s); POWER is Framer's release scaling.
+    const TAU = 0.55           // s, coast time constant: raise for a longer glide
+    const POWER = 0.8          // fling launches at this share of hand speed
+    const MAX = 3800           // px/s, only a genuinely hard flick ever gets near this
+    const STOP = 25            // px/s, below this it's indistinguishable from the drift, so just settle
+    const SAMPLE_MS = 110      // release speed is averaged over this much of the drag
+    const REF = 1200           // px/s, the hand speed treated as an ordinary swipe
+    const GAMMA = 1.5          // >1 so an aggressive flick gains more than proportionally
+    const clamp = (v) => Math.max(-MAX, Math.min(MAX, v))
+    // pressure: map hand speed to launch speed on a curve, so a soft swipe stays soft and a
+    // hard one is rewarded well beyond proportional. Shared by trackpad and touch for one feel.
+    const pressure = (v) => {
+      const m = Math.abs(v)
+      return m < 1 ? 0 : clamp(Math.sign(v) * REF * Math.pow(m / REF, GAMMA) * POWER)
+    }
+    let offset = 0, vel = AUTO, copyW = 1, raf, last = performance.now()
+    let down = false, dragging = false, lastX = 0, moved = 0
+    let wheelV = 0, wheelT = 0
+    const samples = []
     const N = gallery.length                 // first painting of the 2nd copy = exactly one loop wide
     const measure = () => { const s = track.children[N]; copyW = (s && s.offsetLeft) || track.scrollWidth / 2 || 1 }
     measure()
-    const tick = () => {
+    const tick = (now) => {
+      const dt = Math.min((now - last) / 1000, 0.05)   // clamp so a backgrounded tab doesn't teleport the track
+      last = now
       const s = track.children[N]            // exact loop width each frame -> wrap is perfectly seamless
       if (s && s.offsetLeft) copyW = s.offsetLeft
       if (!dragging) {
-        if (Math.abs(vel) > Math.abs(AUTO) + 0.4) {
-          vel *= 0.96                          // after a fling: smooth exponential glide, easing toward a stop
-        } else {
-          vel += (AUTO - vel) * 0.05           // near rest: settle gently back into the slow drift
-        }
-        vel = Math.max(-60, Math.min(60, vel))
-        offset += vel
+        const rel = (vel - AUTO) * Math.exp(-dt / TAU)            // speed measured against the resting drift
+        vel = AUTO + (Math.abs(rel) < STOP ? 0 : rel)             // snap the last crawl away, no endless tail
+        offset += vel * dt
       }
       offset = ((offset % copyW) + copyW) % copyW - copyW   // seamless loop
       track.style.transform = `translateX(${offset.toFixed(2)}px)`
       raf = requestAnimationFrame(tick)
     }
     const onWheel = (e) => {
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) { vel += -e.deltaX * 0.12; e.preventDefault() }
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return
+      e.preventDefault()
+      const now = performance.now()
+      const fresh = now - wheelT > 140            // a pause means a new gesture, don't inherit the old speed
+      const dt = fresh ? 0.016 : Math.max(0.008, Math.min(0.05, (now - wheelT) / 1000))
+      wheelT = now
+      const inst = -e.deltaX / dt                 // the px/s this event represents
+      wheelV = fresh ? inst : wheelV * 0.7 + inst * 0.3   // smooth the event stream into a hand speed
+      const p = pressure(wheelV)
+      if (Math.abs(p) > Math.abs(vel) || Math.sign(p) !== Math.sign(vel)) vel = p
     }
     const onDown = (e) => {
-      down = true; dragging = false; lastX = e.clientX; moved = 0; dragVel = 0; draggedRef.current = false
+      down = true; dragging = false; lastX = e.clientX; moved = 0; draggedRef.current = false
+      samples.length = 0; samples.push({ t: performance.now(), x: e.clientX })
       // don't touch velocity yet: a plain click must NOT stop the drift
     }
     const onMove = (e) => {
@@ -376,7 +402,12 @@ export default function App() {
       const dx = e.clientX - lastX
       moved += Math.abs(dx); lastX = e.clientX
       if (!dragging && moved > 4) { dragging = true; gal.classList.add('grabbing') }   // real drag begins
-      if (dragging) { offset += dx; dragVel = dx }
+      if (dragging) {
+        offset += dx
+        const t = performance.now()
+        samples.push({ t, x: e.clientX })
+        while (samples.length > 2 && t - samples[0].t > SAMPLE_MS) samples.shift()
+      }
     }
     const onUp = () => {
       if (!down) return
@@ -384,7 +415,14 @@ export default function App() {
       if (dragging) {                                    // it was a drag -> release with momentum
         dragging = false; gal.classList.remove('grabbing')
         draggedRef.current = moved > 6
-        vel = Math.max(-68, Math.min(68, dragVel))
+        // speed over the tail of the drag, not one frame: a stall before lift really does stop it
+        const t = performance.now()
+        while (samples.length > 2 && t - samples[0].t > SAMPLE_MS) samples.shift()
+        const a = samples[0], b = samples[samples.length - 1]
+        const span = a && b ? (b.t - a.t) / 1000 : 0
+        const stale = !b || t - b.t > SAMPLE_MS
+        const v = (!stale && span > 0.008) ? (b.x - a.x) / span : 0
+        vel = pressure(v)   // no ramp: the response is instant, the curve decides how hard it launches
       }
       // a plain click leaves vel untouched, so the gallery keeps drifting without a pause
     }
@@ -449,16 +487,35 @@ export default function App() {
     setClosing(false)
     setActive({ ...p, shown: img.currentSrc || p.url, rect: { left: r.left, top: r.top, width: r.width, height: r.height } })
   }
-  // find the most-centered on-screen copy of a painting (the strip keeps drifting), as an img rect
-  const liveRect = (src) => {
-    let best = null, bestD = Infinity
+  // every laid-out copy of a painting as an img rect (the strip renders two copies for the seamless loop)
+  const copyRects = (src) => {
+    const out = []
     document.querySelectorAll('.m-item').forEach((it) => {
       if (it.dataset.src !== src) return
       const im = it.querySelector('img')
-      const r = it.getBoundingClientRect()
-      if (!im || r.right < 4 || r.left > window.innerWidth - 4) return
+      if (!im) return
+      const r = im.getBoundingClientRect()
+      if (r.width) out.push({ left: r.left, top: r.top, width: r.width, height: r.height })
+    })
+    return out
+  }
+  // find the most-centered on-screen copy of a painting (the strip keeps drifting), as an img rect
+  const liveRect = (src) => {
+    let best = null, bestD = Infinity
+    copyRects(src).forEach((r) => {
+      if (r.left + r.width < 4 || r.left > window.innerWidth - 4) return
       const d = Math.abs((r.left + r.width / 2) - window.innerWidth / 2)
-      if (d < bestD) { bestD = d; const ir = im.getBoundingClientRect(); best = { left: ir.left, top: ir.top, width: ir.width, height: ir.height } }
+      if (d < bestD) { bestD = d; best = r }
+    })
+    return best
+  }
+  // the copy nearest a point: on a wrap the other copy is already sitting where this one was,
+  // so following the nearest one hands over silently instead of lurching a whole loop width.
+  const nearestRect = (src, cx, cy) => {
+    let best = null, bestD = Infinity
+    copyRects(src).forEach((r) => {
+      const d = Math.hypot((r.left + r.width / 2) - cx, (r.top + r.height / 2) - cy)
+      if (d < bestD) { bestD = d; best = r }
     })
     return best
   }
@@ -488,10 +545,12 @@ export default function App() {
     const base = el.querySelector('img').getBoundingClientRect()   // centred image rect (fixed)
     const D = 480, ease = (t) => 1 - Math.pow(1 - t, 3)            // easeOutCubic
     let startT = null
+    let aim = liveRect(src) || active.rect            // lock on once, then follow the same copy as it drifts
     const step = (now) => {
       if (startT === null) startT = now
       const t = Math.min(1, (now - startT) / D), e = ease(t)
-      const tr = liveRect(src) || active.rect
+      aim = nearestRect(src, aim.left + aim.width / 2, aim.top + aim.height / 2) || aim
+      const tr = aim
       const s = base.width ? tr.width / base.width : 1
       const dx = (tr.left + tr.width / 2) - (base.left + base.width / 2)
       const dy = (tr.top + tr.height / 2) - (base.top + base.height / 2)
@@ -686,7 +745,7 @@ export default function App() {
             <p className="feature-byline">Shanmugesh Raja, MS · Mochi Health · June 2026</p>
             <p className="feature-summary">Routine cases do double duty: under a flat fee they cross-subsidize complex care, and they are the cases on which junior clinicians become senior. AI automates them first, creaming the easy cases. As <em>θ</em> climbs from the easy cases toward the hard ones, the leftover pool’s profit crosses zero at the unraveling threshold <em>θ̄ ≈ 0.32</em>, strictly before the social break-even <em>c† = 0.50</em>. The entrant over-skims, dumping the rescue cost of the abandoned tail onto everyone else.</p>
             <AITrapFig2 />
-            <a className="feature-cta" href="/papers/healthcares-ai-trap.pdf" target="_blank" rel="noreferrer">Read the paper <span className="arrow">→</span></a>
+            <a className="feature-cta" href="https://substack.com/@shanmuraja/note/p-216330131?r=1hai5c&utm_source=notes-share-action&utm_medium=web" target="_blank" rel="noreferrer">Read the paper <span className="arrow">→</span></a>
           </article>
 
           <article className="thesis-card">
