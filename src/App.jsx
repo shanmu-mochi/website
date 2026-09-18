@@ -266,6 +266,7 @@ function buildGallery(seen, opener) {
 
 /* excerpt = draft opening line (placeholder voice; edit freely or I can pull the real first lines) */
 const STORIES = [
+  { title: 'How to Be Thanked', kind: 'Short Story', venue: 'Substack', excerpt: 'The onions were distractingly pungent. But he kept reading.', href: 'https://open.substack.com/pub/shanmuraja/p/how-to-be-thanked?r=1hai5c&utm_medium=web', latest: true },
   { title: 'Burnt Red Tongues', kind: 'Historical Fiction', venue: 'Medium', excerpt: 'The fire came for the temple first, and the language second.', href: 'https://shanmuraja.medium.com/burnt-red-tongues-e5647e67d243' },
   { title: 'Fugue State', kind: 'Short Story', venue: 'Unpublished', excerpt: 'She woke in a city she had never agreed to live in.' },
   { title: 'A Pound of Flesh', kind: 'Short Story', venue: 'Substack', excerpt: 'Everyone wanted their share, and the body was only so large.', href: 'https://open.substack.com/pub/shanmuraja/p/a-pound-of-flesh?r=1hai5c&utm_medium=web' },
@@ -623,6 +624,12 @@ export default function App() {
                     <div className="st-kicker">{s.kind}</div>
                     <div className="st-head">
                       <span className="st-title">{s.title}</span>
+                      {s.latest && (
+                        <span className="st-new">
+                          <i className="st-new-dot" aria-hidden="true" />
+                          Just Published
+                        </span>
+                      )}
                       <span className="st-leader" aria-hidden="true" />
                       <span className="st-venue">{s.venue}</span>
                     </div>
