@@ -3,6 +3,7 @@ import { ThesisLines, AITrapFig2 } from './components/Charts'
 import { PAPERS } from './data/papers'
 import DIMS from './paintingsData'
 import COLORS from './colorsData'
+import { pickAccent } from './lib/accent'
 import './styles/globals.css'
 
 /* ============================================================
@@ -322,6 +323,37 @@ export default function App() {
   const glassRef = useRef(null)       // the glass overlay (fades in on open, out on close)
   const openAnimRef = useRef(null)    // the open (rise) animations, cancelled before the close tracking
   const draggedRef = useRef(false)   // true right after a drag, so it doesn't open the modal
+
+  // accent: whichever painting is nearest the middle of the screen lends the page its one colour
+  useEffect(() => {
+    const track = trackRef.current
+    if (!track) return
+    const gal = track.parentElement
+    let raf = 0, current = null, running = false
+    const step = () => {
+      const mid = window.innerWidth / 2
+      let nearest = null, best = Infinity
+      track.querySelectorAll('.m-item').forEach((it) => {
+        const r = it.getBoundingClientRect()
+        const d = Math.abs((r.left + r.right) / 2 - mid)
+        if (d < best) { best = d; nearest = it.dataset.src }
+      })
+      if (nearest && nearest !== current) {
+        current = nearest
+        const accent = pickAccent(COLORS[nearest])
+        if (accent) document.documentElement.style.setProperty('--accent', accent)
+      }
+      if (running) raf = requestAnimationFrame(step)
+    }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting && !running) { running = true; raf = requestAnimationFrame(step) }
+        else if (!e.isIntersecting && running) { running = false; cancelAnimationFrame(raf) }
+      })
+    }, { threshold: 0 })
+    io.observe(gal)
+    return () => { running = false; cancelAnimationFrame(raf); io.disconnect() }
+  }, [])
 
   // gallery drift: slow auto-scroll + weighted momentum from horizontal wheel AND click/touch drag.
   // physics is time-based (px/second), so the weight feels identical at 60 and 120 Hz.
