@@ -1,5 +1,6 @@
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react'
 import { ThesisLines, AITrapFig2 } from './components/Charts'
+import { PAPERS } from './data/papers'
 import DIMS from './paintingsData'
 import COLORS from './colorsData'
 import './styles/globals.css'
@@ -281,20 +282,6 @@ const STORIES = [
   { title: 'Got Your Toe!', kind: 'Essay · A skilled nursing facility', venue: 'Medium', excerpt: 'At the nursing home, the body keeps a longer memory than the mind.', href: 'https://shanmuraja.medium.com/got-your-toe-472b0e2a74cb' },
 ]
 
-const PAPERS = [
-  { title: 'Same Result, Different Price', sub: 'Compounded vs branded tirzepatide: no effectiveness gap, conditional savings', authors: 'Erly & Raja · Mochi Health · 2026', href: '/papers/same-result-different-price-tirzepatide.pdf', badge: 'PDF' },
-  { title: 'Off-Trial: Real-World Weight Loss on Tirzepatide & Semaglutide', sub: '13,507-patient telehealth cohort, propensity-score matched', authors: 'Erly & Raja · 2026', href: '/papers/off-trial-real-world-glp1.pdf', badge: 'PDF' },
-  { title: 'Escalate or Switch? The Post-Titration GLP-1 Non-Responder', sub: 'Target-trial emulation, 68,969 patients, dose-equivalence reclassification', authors: 'Erly & Raja · 2026', href: '/papers/escalate-or-switch-glp1.pdf', badge: 'PDF' },
-  { title: 'What Week 8 Knows: Forecasting Six-Month GLP-1 Outcomes', sub: 'Calibrated decision-support tool, 22,538 patients', authors: 'Erly & Raja · 2026', href: '/papers/what-week-8-knows.pdf', badge: 'PDF' },
-  { title: 'Helical Classification of Type B Aortic Dissections', sub: 'The Journal of Thoracic and Cardiovascular Surgery', authors: 'Bondesson J, Raja S, Suh G-Y, Ullery BW, Dake MD, Lee JT, Cheng CP', badge: 'Pub.' },
-  { title: 'Geometric Analysis of Aortic Remodeling After PETTICOAT (Type B Dissection)', sub: 'Journal of Vascular Surgery, Vol. 79(6), e149–e150', authors: 'Ullery BW, Suh G-Y, Bondesson J, Raja S, Cheng CP', badge: 'Pub.' },
-  { title: 'Longitudinal Mapping of True Lumen Morphology for Endograft Oversizing', sub: 'Journal of Vascular Surgery, Vol. 77(4), 64S–65S', authors: 'Suh G-Y, Bondesson J, Raja S, Naqvi K, Cheng CP, Ullery BW', badge: 'Pub.' },
-  { title: 'Aortic Remodeling after TEVAR and PETTICOAT (Complicated Type B Dissection)', sub: 'Journal of Vascular Surgery Cases, Innovations and Techniques', authors: 'Suh G-Y, Bondesson J, Raja S, Naqvi K, Cheng CP, Ullery BW', badge: 'Pub.' },
-  { title: 'Concordance of LLMs with Guidelines at the Week-8 GLP-1 Follow-Up', sub: '714 telehealth encounters. Claude, GPT-4o, Gemini vs FDA & AGA guidance. Mochi Health.', authors: 'Raja S, et al. · in preparation', badge: 'WIP' },
-  { title: 'Branded Wegovy™ vs. Compounded Semaglutide + Cyanocobalamin', sub: 'Retrospective observational study, Mochi Health. ACPM 2026 Finalist', authors: 'Raja S, Locke T', badge: 'WIP' },
-  { title: 'Variation of Reimbursements within DRGs in Orthopedic Trauma', sub: 'Healthcare Economics and Policy', authors: 'Raja S, Wixted J', badge: 'WIP' },
-]
-
 const AWARDS = [
   { rn: 'I', title: 'Shortlist · The New Yorker', desc: <>For the historical short fiction <em>“Burnt Red Tongues.”</em></> },
   { rn: 'II', title: 'Shortlist · Paul Kalanithi Writing Competition', desc: <>Stanford’s national essay prize, in memory of the late neurosurgeon and author of <em>When Breath Becomes Air.</em></> },
@@ -315,7 +302,7 @@ const SOCIALS = [
   ['LinkedIn', 'linkedin', 'https://www.linkedin.com/in/shanmuraja'],
 ]
 
-const NAVLINKS = [['Stories', '#stories'], ['Papers', '#papers'], ['Awards', '#awards'], ['Features', '#features'], ['Contact', '#bio']]
+const NAVLINKS = [['Stories', '#stories'], ['Papers', '#papers'], ['Awards', '#awards'], ['Deep dives', '#features'], ['Contact', '#bio']]
 
 export default function App() {
   const seenRef = useRef(new Set())          // paintings the visitor has already seen
@@ -736,22 +723,37 @@ export default function App() {
 
         {/* FEATURES — illustrated deep-dives with the real figures */}
         <section className="section" id="features">
-          <div className="section-head"><h2 className="section-title">Features</h2><p className="section-lead">Two pieces, explained with their figures.</p></div>
+          <div className="section-head"><h2 className="section-title">Deep dives</h2><p className="section-lead">Two papers, taken apart and explained end to end. Click through for the full walkthrough.</p></div>
 
           <article className="feature-card">
             <div className="feature-tag"><span className="dot" /><span>Economics</span></div>
             <h3 className="feature-title">Healthcare’s AI Trap</h3>
             <p className="feature-sub">When automation skims the cream and starves the pipeline at once.</p>
+            <a className="deep-cta" href="/papers/ai-trap">
+              <span className="deep-cta-t">Read the white paper here</span>
+              <span className="deep-cta-arrow">→</span>
+            </a>
+            <div className="sub-links">
+              <a href="/papers/healthcares-ai-trap.pdf">The paper (PDF)</a>
+              <a href="https://shanmuraja.substack.com/p/healthcares-ai-trap?r=1hai5c&utm_medium=web" target="_blank" rel="noreferrer">Essay version</a>
+            </div>
             <p className="feature-byline">Shanmugesh Raja, MS · Mochi Health · June 2026</p>
             <p className="feature-summary">Routine cases do double duty: under a flat fee they cross-subsidize complex care, and they are the cases on which junior clinicians become senior. AI automates them first, creaming the easy cases. As <em>θ</em> climbs from the easy cases toward the hard ones, the leftover pool’s profit crosses zero at the unraveling threshold <em>θ̄ ≈ 0.32</em>, strictly before the social break-even <em>c† = 0.50</em>. The entrant over-skims, dumping the rescue cost of the abandoned tail onto everyone else.</p>
             <AITrapFig2 />
-            <a className="feature-cta" href="https://shanmuraja.substack.com/p/healthcares-ai-trap?r=1hai5c&utm_medium=web" target="_blank" rel="noreferrer">Read the paper <span className="arrow">→</span></a>
           </article>
 
           <article className="thesis-card">
             <div className="thesis-eyebrow">UCSF · Health Policy & Law · April 2026 · Master’s Thesis</div>
             <h3 className="thesis-title">Mapping Medi-Cal Deserts in California</h3>
             <p className="thesis-desc">Provider shortages, preventable hospitalizations, and the limits of workforce policy in Medi-Cal: an empirical study of California’s 58 counties, with five causal identification strategies and a portfolio policy response.</p>
+            <a className="deep-cta" href="/papers/medi-cal-deserts">
+              <span className="deep-cta-t">Read the white paper here</span>
+              <span className="deep-cta-arrow">→</span>
+            </a>
+            <div className="sub-links">
+              <a href="/papers/medi-cal-deserts.pdf">The thesis (PDF)</a>
+              <a href="mailto:shanmur@uclawsf.edu">Ask me about it</a>
+            </div>
             <div className="stat-grid">
               <div className="stat"><div className="n">+37%</div><div className="l">Preventable hospitalization gap, desert vs. non-desert counties</div></div>
               <div className="stat"><div className="n">$82M</div><div className="l">Annual excess Medi-Cal cost attributable to the access deficit</div></div>
@@ -760,7 +762,6 @@ export default function App() {
             <ThesisLines />
             <p className="fig-caption">The post-2017 narrowing is concentrated in the Prop 56 payment-increase window: 81.8% of the eventual gap closure occurs after 2016.</p>
             <div className="signature">Shanmugesh Raja · UCSF Health Policy & Law · MMXXVI</div>
-            <a className="feature-cta" href="mailto:shanmur@uclawsf.edu">Request the full report <span className="arrow">→</span></a>
           </article>
         </section>
 
