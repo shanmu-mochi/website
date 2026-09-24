@@ -28,6 +28,9 @@ export function pickAccent(palette) {
     const score = s * 1.6 + Math.max(0, usable)
     if (score > bestScore) { bestScore = score; best = [h, s, l] }
   })
-  const [h, s] = best
-  return `hsl(${h.toFixed(0)} ${(clamp(s, 0.34, 0.74) * 100).toFixed(0)}% ${(clamp(best[2], 0.3, 0.44) * 100).toFixed(0)}%)`
+  const [h, s, l] = best
+  /* A near-monochrome painting has no colour to lend. Clamping its saturation up
+     would invent one, so hand back a neutral instead and let the page stay ink. */
+  if (s < 0.12) return `hsl(${h.toFixed(0)} 6% ${(clamp(l, 0.22, 0.34) * 100).toFixed(0)}%)`
+  return `hsl(${h.toFixed(0)} ${(clamp(s, 0.34, 0.74) * 100).toFixed(0)}% ${(clamp(l, 0.3, 0.44) * 100).toFixed(0)}%)`
 }

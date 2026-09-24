@@ -4,6 +4,7 @@ import { PAPERS } from './data/papers'
 import DIMS from './paintingsData'
 import COLORS from './colorsData'
 import { pickAccent } from './lib/accent'
+import { register } from './lib/scroll'
 import './styles/globals.css'
 
 /* ============================================================
@@ -131,6 +132,11 @@ const GAZE = {
   'hopper-elevenam.jpg': 'L', 'hopper-nymovie.jpg': 'R', 'hopper-gas.jpg': 'L',
   'munch-sick.jpg': 'L', 'peschka.jpg': 'R', 'labsinthe.jpg': 'R', 'monet-parasol.jpg': 'L',
   'vangogh-girlinwhite.jpg': 'L',
+  /* added after looking at all 102: only these have a single unambiguous facing
+     direction. The rest are landscapes, abstractions, frontal portraits, or
+     two-figure scenes already facing each other, where 'F' is the right answer. */
+  'wyeth-adrift.jpg': 'R', 'sargent-jaleo.jpg': 'L', 'munch-kiss.jpg': 'L', 'munch-peonies.jpg': 'L',
+  'vangogh-oldman.jpg': 'L', 'rojas-miseria.jpg': 'R', 'ryder-racetrack.jpg': 'L',
   'calypso.jpg': 'L', 'repin.jpg': 'L', 'tiger.jpg': 'L',
 }
 const gazeOf = (s) => GAZE[s] || 'F'
@@ -162,7 +168,18 @@ function variantFor(src, cssWidthPx) {
   return `/paintings/${fileBase(src)}-${w}.webp`
 }
 const largestSrc = (src) => { const d = DIMS[src]; return d ? `/paintings/${fileBase(src)}-${d.widths[d.widths.length - 1]}.webp` : '' }
-const placeholderOf = (src) => { const c = COLORS[src] && COLORS[src][0]; return c ? `rgb(${c[0]}, ${c[1]}, ${c[2]})` : 'var(--paper-2)' }
+/* The dominant colour holds each slot before its image decodes, but a handful of
+   near-white paintings produce a chip that vanishes against the paper. Those get
+   walked toward the ink until the slot is visible. */
+const placeholderOf = (src) => {
+  const c = COLORS[src] && COLORS[src][0]
+  if (!c) return 'var(--paper-2)'
+  const lum = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+  if (lum < 196) return `rgb(${c[0]}, ${c[1]}, ${c[2]})`
+  const k = Math.min(1, (lum - 196) / 60) * 0.34
+  const mix = (v) => Math.round(v * (1 - k) + 11 * k)
+  return `rgb(${mix(c[0])}, ${mix(c[1])}, ${mix(c[2])})`
+}
 
 /* equal-area sizing x a size cadence; whitespace + a small vertical nudge follow their own cadences.
    Every slot gets an explicit width AND height (vh) so the strip has its final footprint before any
@@ -342,6 +359,13 @@ export default function App() {
   const glassRef = useRef(null)       // the glass overlay (fades in on open, out on close)
   const openAnimRef = useRef(null)    // the open (rise) animations, cancelled before the close tracking
   const draggedRef = useRef(false)   // true right after a drag, so it doesn't open the modal
+
+  // one motion model across the whole site: everything marked .rv is driven by
+  // scroll position, same as the paper pages, so it rewinds when you scroll back
+  useEffect(() => {
+    const offs = Array.from(document.querySelectorAll('.rv')).map((el) => register(el, { span: 0.3 }))
+    return () => offs.forEach((off) => off())
+  }, [gallery])
 
   // the reshuffle button is easy to miss, so point at it once per visitor and never again
   const retireHint = () => {
@@ -626,7 +650,18 @@ export default function App() {
   // Escape closes the lightbox, and the page can't scroll behind it while it's open
   useEffect(() => {
     if (!active) return
-    const onKey = (e) => { if (e.key === 'Escape') closeItem() }
+    const onKey = (e) => {
+      if (e.key === 'Escape') { closeItem(); return }
+      const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0
+      if (!step) return
+      e.preventDefault()
+      const i = gallery.findIndex((p) => p.src === active.src)
+      if (i < 0) return
+      const next = gallery[(i + step + gallery.length) % gallery.length]
+      const el = document.querySelector(`.m-item[data-src="${next.src}"]`)
+      setHiRes(null)
+      setActive({ ...next, rect: el ? el.getBoundingClientRect() : active.rect })
+    }
     window.addEventListener('keydown', onKey)
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -732,12 +767,12 @@ export default function App() {
 
         {/* STORIES */}
         <section className="section" id="stories">
-          <div className="section-head"><h2 className="section-title">Stories</h2><p className="section-lead">Fiction &amp; essays on medicine and humanity.</p></div>
+          <div className="section-head rv"><h2 className="section-title">Stories</h2><p className="section-lead">Fiction &amp; essays on medicine and humanity.</p></div>
           <div className="contents">
             {STORIES.map((s, i) => {
               const Tag = s.href ? 'a' : 'div'   // unlinked pieces (unpublished / in submission) are plain rows
               return (
-                <Tag className="story" key={s.title} {...(s.href ? { href: s.href, target: '_blank', rel: 'noreferrer' } : {})}>
+                <Tag className="story rv" key={s.title} {...(s.href ? { href: s.href, target: '_blank', rel: 'noreferrer' } : {})}>
                   <span className="st-num">{String(i + 1).padStart(2, '0')}</span>
                   <div className="st-body">
                     <div className="st-kicker">{s.kind}</div>
@@ -764,12 +799,12 @@ export default function App() {
 
         {/* PAPERS */}
         <section className="section" id="papers">
-          <div className="section-head"><h2 className="section-title">Papers</h2><p className="section-lead">Peer-reviewed and working papers.</p></div>
+          <div className="section-head rv"><h2 className="section-title">Papers</h2><p className="section-lead">Peer-reviewed and working papers.</p></div>
           <div className="index-list">
             {PAPERS.map((p, i) => {
               const Tag = p.href ? 'a' : 'div'
               return (
-                <Tag className="row" key={p.title} {...(p.href ? { href: p.href, target: '_blank', rel: 'noreferrer' } : { style: { cursor: 'default' } })}>
+                <Tag className="row rv" key={p.title} {...(p.href ? { href: p.href, target: '_blank', rel: 'noreferrer' } : { style: { cursor: 'default' } })}>
                   <span className="num">{String(i + 1).padStart(2, '0')}</span>
                   <div>
                     <div className="title" style={{ fontSize: 'clamp(1.05rem,2.3vw,1.4rem)' }}>{p.title}</div>
@@ -788,17 +823,17 @@ export default function App() {
 
         {/* AWARDS */}
         <section className="section" id="awards">
-          <div className="section-head"><h2 className="section-title">Awards</h2><p className="section-lead">A small archive of luck.</p></div>
-          <div className="awards-list">{AWARDS.map((a) => <div className="award" key={a.rn}><span className="rn">{a.rn}</span><div><h4>{a.title}</h4><p>{a.desc}</p></div></div>)}</div>
+          <div className="section-head rv"><h2 className="section-title">Awards</h2><p className="section-lead">A small archive of luck.</p></div>
+          <div className="awards-list">{AWARDS.map((a) => <div className="award rv" key={a.rn}><span className="rn">{a.rn}</span><div><h4>{a.title}</h4><p>{a.desc}</p></div></div>)}</div>
         </section>
 
         <div className="prairie" />
 
         {/* FEATURES — illustrated deep-dives with the real figures */}
         <section className="section" id="features">
-          <div className="section-head"><h2 className="section-title">Deep dives</h2><p className="section-lead">Two papers, taken apart and explained end to end. Click through for the full walkthrough.</p></div>
+          <div className="section-head rv"><h2 className="section-title">Deep dives</h2><p className="section-lead">Two papers, taken apart and explained end to end. Click through for the full walkthrough.</p></div>
 
-          <article className="feature-card">
+          <article className="feature-card rv">
             <div className="feature-tag"><span className="dot" /><span>Economics</span></div>
             <h3 className="feature-title">Healthcare’s AI Trap</h3>
             <p className="feature-sub">When automation skims the cream and starves the pipeline at once.</p>
@@ -815,7 +850,7 @@ export default function App() {
             <AITrapFig2 />
           </article>
 
-          <article className="thesis-card">
+          <article className="thesis-card rv">
             <div className="thesis-eyebrow">UCSF · Health Policy & Law · April 2026 · Master’s Thesis</div>
             <h3 className="thesis-title">Mapping Medi-Cal Deserts in California</h3>
             <p className="thesis-desc">Provider shortages, preventable hospitalizations, and the limits of workforce policy in Medi-Cal: an empirical study of California’s 58 counties, with five causal identification strategies and a portfolio policy response.</p>
@@ -842,7 +877,7 @@ export default function App() {
 
         {/* BIO */}
         <section className="section" id="bio">
-          <div className="about-grid">
+          <div className="about-grid rv">
             <div className="plate"><figure><img src="/headshot.jpg" alt="Shanmu Raja" /></figure></div>
             <div className="about-body">
               <p className="lead">I’m a writer who works in medicine, or a medical person who writes. The order keeps changing.</p>

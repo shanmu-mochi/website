@@ -281,3 +281,31 @@ a.pp-row:hover h4 { text-decoration: underline; text-decoration-color: var(--lin
   .pp-aside-anchor { height: auto; }
   .pp-aside { position: static; width: auto; max-width: 34rem; margin: 2rem 0 0; }
 }
+
+/* ============================================================
+   Print: the paper pages are whitepapers, so let them be printed.
+   ============================================================ */
+@media print {
+  .pp-progress, .pp-top, .pp-rail, .pp-toc, .pp-aside-anchor { display: none !important; }
+  .pp-shell { display: block; padding: 0; max-width: none; }
+  .pp-hero, .pp-abstract, .pp-end, .pp-art { max-width: none; padding-left: 0; padding-right: 0; }
+  .pp-hero { padding-top: 0; }
+  body { background: #fff; }
+  .pp-rv { opacity: 1 !important; transform: none !important; }
+  .figure .cr-area, .figure .cr-fade, .figure .fade-line, .figure .lift, .figure .ar-head { opacity: 1 !important; }
+  .figure .gbar, .figure .gbar-v, .figure .pop { transform: none !important; }
+  .figure .draw { stroke-dashoffset: 0 !important; stroke-dasharray: none !important; }
+  .pp-title { font-size: 34pt; }
+  .pp-h2 { font-size: 20pt; }
+  .pp-p, .pp-list li, .pp-abstract p { font-size: 10.5pt; line-height: 1.5; max-width: none; }
+  .pp-cap, .pp-tnote { font-size: 8.5pt; max-width: none; }
+  .pp-sec { padding-bottom: 1.4rem; }
+  .pp-sec-head { break-after: avoid-page; }
+  .pp-fig, .pp-art .figure, .pp-tw, .pp-stepfig, .pp-stat { break-inside: avoid; max-width: none; }
+  .pp-t { font-size: 9pt; }
+  /* a printed page has no hyperlinks, so spell the destinations out */
+  .pp-endlinks a::after, .pp-rail-foot a::after { content: ' (' attr(href) ')'; font-size: 8pt; color: #555; }
+  .pp-stepfig .pp-pills { display: none; }
+  .pp-panel { break-inside: avoid; }
+  @page { margin: 18mm 16mm; }
+}
