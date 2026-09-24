@@ -16,3 +16,11 @@
 /papers/*.pdf
   X-Robots-Tag: noindex, nofollow
   Cache-Control: public, max-age=86400
+
+# Plain-text mirrors for AI crawlers that do not run JavaScript. Served as
+# markdown and kept out of the search index so they never compete with the
+# HTML pages they mirror.
+/papers/*.md
+  Content-Type: text/markdown; charset=utf-8
+  X-Robots-Tag: noindex
+  Cache-Control: public, max-age=86400

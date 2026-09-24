@@ -98,7 +98,7 @@ export function Stat({ n, l }) {
   }, [n])
   return (
     <Rv className="pp-stat">
-      <div className="pp-stat-n" ref={ref}>{shown}</div>
+      <div className="pp-stat-n" ref={ref} data-n={n}>{shown}</div>
       <div className="pp-stat-l">{l}</div>
     </Rv>
   )

@@ -1,0 +1,27 @@
+# Shanmu Raja
+
+> Product manager at Mochi Health and health-economics researcher. Writes on
+> GLP-1 outcomes at scale, the economics of automating clinical work, and
+> Medicaid access. ORCID 0009-0009-8068-7239.
+
+## White papers
+
+- [Healthcare's AI Trap](https://shanmuraja.com/papers/ai-trap): Automating routine clinical care withdraws the cross-subsidy that funds complex care, so incumbents fail before AI can treat the patients they were carrying. Full text: https://shanmuraja.com/papers/ai-trap.md · DOI 10.2139/ssrn.7119078
+- [Mapping Medi-Cal Deserts](https://shanmuraja.com/papers/medi-cal-deserts): Eleven California counties where 1.7 million Medi-Cal enrollees cannot reliably find a primary care doctor, and preventable hospitalizations run 37% higher. Full text: https://shanmuraja.com/papers/medi-cal-deserts.md
+
+## Peer-reviewed and working papers
+
+- [Same Result, Different Price](https://doi.org/10.64898/2026.07.14.26357505): Compounded vs branded tirzepatide, no effectiveness gap, conditional savings.
+- [Off-Trial: Real-World Weight Loss on Tirzepatide and Semaglutide](https://doi.org/10.64898/2026.07.14.26357502): 13,507-patient telehealth cohort, propensity-score matched.
+- [Escalate or Switch? The Post-Titration GLP-1 Non-Responder](https://doi.org/10.64898/2026.07.14.26357491): Target-trial emulation, 68,969 patients.
+- [What Week 8 Knows: Forecasting Six-Month GLP-1 Outcomes](https://doi.org/10.64898/2026.07.14.26357506): Calibrated decision-support tool, 22,538 patients.
+- [Helical Classification of Type B Aortic Dissections](https://doi.org/10.1016/j.xjse.2025.100069): J Thorac Cardiovasc Surg.
+- [Geometric Analysis of Aortic Remodeling After PETTICOAT](https://doi.org/10.1016/j.jvs.2024.03.183): J Vasc Surg.
+- [Longitudinal Mapping of True Lumen Morphology for Endograft Oversizing](https://doi.org/10.1016/j.jvs.2023.01.171): J Vasc Surg.
+- [Aortic Remodeling after TEVAR and PETTICOAT](https://doi.org/10.1016/j.jvscit.2026.102363): J Vasc Surg Cases Innov Tech.
+
+## Optional
+
+- [All papers](https://shanmuraja.com/papers/): Index of white papers and publications.
+- [Home](https://shanmuraja.com/): Stories, papers, and awards.
+- [ORCID](https://orcid.org/0009-0009-8068-7239): Verified author identity.

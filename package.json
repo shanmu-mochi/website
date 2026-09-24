@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "paintings": "node scripts/build-paintings.cjs",
     "prebuild": "node scripts/build-paintings.cjs",
-    "og": "node scripts/build-og.cjs"
+    "og": "node scripts/build-og.cjs",
+    "prerender": "node scripts/prerender.cjs",
+    "postbuild": "node scripts/prerender.cjs"
   },
   "dependencies": {
     "@react-three/drei": "^9.88.13",
