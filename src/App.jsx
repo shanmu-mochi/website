@@ -810,7 +810,7 @@ export default function App() {
                 <Tag className="row rv" key={p.title} {...(p.href ? { href: p.href, target: '_blank', rel: 'noreferrer' } : { style: { cursor: 'default' } })}>
                   <span className="num">{String(i + 1).padStart(2, '0')}</span>
                   <div>
-                    <div className="title" style={{ fontSize: 'clamp(1.05rem,2.3vw,1.4rem)' }}>{p.title}</div>
+                    <div className="title">{p.title}</div>
                     <div className="excerpt"><em>{p.sub}</em></div>
                     <div className="rkick" style={{ marginTop: '0.5rem', marginBottom: 0 }}>{p.authors}</div>
                     {p.href && <span className="go">Read PDF <span className="arrow">→</span></span>}
