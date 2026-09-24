@@ -47,7 +47,7 @@ export default function AiTrap() {
       <Hero
         eyebrow="Working paper · Health economics"
         title={<>Healthcare&rsquo;s<br />AI Trap</>}
-        deck="Automating routine care is efficient and pays for itself. The way a competitive market captures that gain is what defunds complex care."
+        deck="Automating routine clinical care is efficient and pays for itself. The way a competitive market captures that gain withdraws the cross-subsidy that funds complex care."
         facts={[
           { k: 'Author', v: 'Shanmugesh Raja, MS' },
           { k: 'Affiliation', v: 'UCSF' },

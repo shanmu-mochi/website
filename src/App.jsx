@@ -818,6 +818,17 @@ export default function App() {
                     <div className="excerpt"><em>{p.sub}</em></div>
                     <div className="rkick" style={{ marginTop: '0.5rem', marginBottom: 0 }}>{p.authors}</div>
                     {p.href && <span className="go">Read PDF <span className="arrow">→</span></span>}
+                    {p.doi && (
+                      <span
+                        className="doi"
+                        role="link"
+                        tabIndex={0}
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://doi.org/' + p.doi, '_blank', 'noopener') }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); window.open('https://doi.org/' + p.doi, '_blank', 'noopener') } }}
+                      >
+                        doi.org/{p.doi} · {p.doiVia}
+                      </span>
+                    )}
                   </div>
                   <span className="meta">{p.badge}</span>
                 </Tag>

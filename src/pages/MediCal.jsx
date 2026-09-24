@@ -46,7 +46,7 @@ export default function MediCal() {
       <Hero
         eyebrow="Master's thesis · UCSF Health Policy and Law"
         title={<>Mapping<br />Medicaid Deserts</>}
-        deck="Eleven California counties where 1.7 million people hold a Medi-Cal card and cannot reliably find a doctor."
+        deck="Eleven California counties where 1.7 million people hold a Medi-Cal card and cannot reliably find a primary care doctor. Preventable hospitalizations there run 37% higher."
         facts={[
           { k: 'Author', v: 'Shanmugesh Raja' },
           { k: 'Program', v: 'UCSF Health Policy and Law' },
@@ -57,7 +57,8 @@ export default function MediCal() {
       <Abstract>
         <p>
           California solved coverage. Enrollment went from 8 million to more than 14 million, and one in three Californians is now on
-          Medi-Cal. It did not solve supply.
+          Medi-Cal. It did not solve supply. I call these counties Medi-Cal deserts: the bottom quintile of a county-level access
+          index built from primary care physician density and federal shortage scores.
         </p>
         <p>
           In eleven counties there are not enough primary care doctors for the people enrolled. Preventable hospitalizations run 37%

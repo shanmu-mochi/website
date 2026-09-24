@@ -267,6 +267,12 @@ a { color: inherit; text-decoration: none; }
 .row .excerpt em { font-style: italic; color: var(--ink); }
 .row .rkick { font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.16em; font-size: 0.62rem; color: var(--muted); margin-bottom: 0.45rem; }
 .row .meta { font-family: var(--mono); font-size: 0.64rem; color: var(--muted); text-align: right; white-space: nowrap; padding-top: 0.45rem; }
+.row .doi {
+  display: inline-block; margin-top: 0.5rem; margin-left: 0.9rem; cursor: pointer;
+  font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.06em; color: var(--muted);
+  border-bottom: 1px solid var(--line); padding-bottom: 1px; transition: color .25s, border-color .25s;
+}
+.row .doi:hover { color: var(--ink); border-bottom-color: var(--ink); }
 .row .go { display: inline-block; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.62rem; color: var(--red); margin-top: 0.5rem; padding: 0.35rem 0.7rem; border-radius: 999px; border: 1px solid transparent; transition: background .25s, border-color .25s, box-shadow .25s; }
 .row[href]:hover .go { background: rgba(255, 255, 255, 0.45); border-color: rgba(0, 0, 0, 0.1); -webkit-backdrop-filter: blur(6px) saturate(1.3); backdrop-filter: blur(5px) saturate(1.3) url(#liquid-glass-soft); box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.9), 0 2px 8px rgba(0, 0, 0, 0.05); }
 .row .go .arrow, .feature-cta .arrow { display: inline-block; transition: transform .3s; }
