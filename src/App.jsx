@@ -831,7 +831,7 @@ export default function App() {
 
         {/* FEATURES — illustrated deep-dives with the real figures */}
         <section className="section" id="features">
-          <div className="section-head rv"><h2 className="section-title">Deep dives</h2><p className="section-lead">Two papers, taken apart and explained end to end. Click through for the full walkthrough.</p></div>
+          <div className="section-head rv"><h2 className="section-title">Deep dives</h2></div>
 
           <article className="feature-card rv">
             <div className="feature-tag"><span className="dot" /><span>Economics</span></div>
@@ -841,11 +841,6 @@ export default function App() {
               <span className="deep-cta-t">Read the white paper here</span>
               <span className="deep-cta-arrow">→</span>
             </a>
-            <div className="sub-links">
-              <a href="/papers/healthcares-ai-trap.pdf">The paper (PDF)</a>
-              <a href="https://shanmuraja.substack.com/p/healthcares-ai-trap?r=1hai5c&utm_medium=web" target="_blank" rel="noreferrer">Essay version</a>
-            </div>
-            <p className="feature-byline">Shanmugesh Raja, MS · Mochi Health · June 2026</p>
             <p className="feature-summary">Routine cases do double duty: under a flat fee they cross-subsidize complex care, and they are the cases on which junior clinicians become senior. AI automates them first, creaming the easy cases. As <em>θ</em> climbs from the easy cases toward the hard ones, the leftover pool’s profit crosses zero at the unraveling threshold <em>θ̄ ≈ 0.32</em>, strictly before the social break-even <em>c† = 0.50</em>. The entrant over-skims, dumping the rescue cost of the abandoned tail onto everyone else.</p>
             <AITrapFig2 />
           </article>
@@ -858,10 +853,6 @@ export default function App() {
               <span className="deep-cta-t">Read the white paper here</span>
               <span className="deep-cta-arrow">→</span>
             </a>
-            <div className="sub-links">
-              <a href="/papers/medi-cal-deserts.pdf">The thesis (PDF)</a>
-              <a href="mailto:shanmur@uclawsf.edu">Ask me about it</a>
-            </div>
             <div className="stat-grid">
               <div className="stat"><div className="n">+37%</div><div className="l">Preventable hospitalization gap, desert vs. non-desert counties</div></div>
               <div className="stat"><div className="n">$82M</div><div className="l">Annual excess Medi-Cal cost attributable to the access deficit</div></div>
