@@ -318,6 +318,8 @@ export default function App() {
   const [active, setActive] = useState(null) // lightbox target (+ origin rect)
   const [closing, setClosing] = useState(false)
   const [fading, setFading] = useState(false)
+  const [hint, setHint] = useState('none')          // one-time nudge toward the reshuffle button
+  const hintSpent = useRef(false)
   const [scrolled, setScrolled] = useState(false)   // nav: newspaper masthead -> floating pill on scroll
   const [hiddenSrc, setHiddenSrc] = useState(null)  // painting currently lifted into the lightbox (its gallery copies hide)
   const [hiRes, setHiRes] = useState(null)          // full-size variant, swapped into the lightbox once decoded
@@ -326,6 +328,24 @@ export default function App() {
   const glassRef = useRef(null)       // the glass overlay (fades in on open, out on close)
   const openAnimRef = useRef(null)    // the open (rise) animations, cancelled before the close tracking
   const draggedRef = useRef(false)   // true right after a drag, so it doesn't open the modal
+
+  // the reshuffle button is easy to miss, so point at it once per visitor and never again
+  const retireHint = () => {
+    hintSpent.current = true
+    try { localStorage.setItem('sr-gallery-hint', '1') } catch (e) { /* private mode */ }
+    setHint((h) => (h === 'in' ? 'out' : 'none'))
+  }
+  useEffect(() => {
+    let spent = true
+    try { spent = localStorage.getItem('sr-gallery-hint') === '1' } catch (e) { spent = true }
+    if (spent) { hintSpent.current = true; return }
+    const show = setTimeout(() => { if (!hintSpent.current) setHint('in') }, 3200)
+    return () => clearTimeout(show)
+  }, [])
+  useEffect(() => {
+    if (hint === 'in') { const t = setTimeout(retireHint, 6500); return () => clearTimeout(t) }
+    if (hint === 'out') { const t = setTimeout(() => setHint('none'), 420); return () => clearTimeout(t) }
+  }, [hint])
 
   // accent: whichever painting is nearest the middle of the screen lends the page its one colour
   useEffect(() => {
@@ -476,6 +496,7 @@ export default function App() {
   // smooth redo: fade out, pick a gallery with the most unseen paintings, fade the new one in
   const redo = () => {
     if (fading) return
+    if (!hintSpent.current) retireHint()
     setFading(true)
     if (seenRef.current.size >= POOL.length) seenRef.current = new Set()   // all seen -> refresh novelty
     const g = buildGallery(seenRef.current, false)   // fresh paintings, no forced first
@@ -687,6 +708,9 @@ export default function App() {
               )
             })}
           </div>
+          {hint !== 'none' && (
+            <div className={`gallery-hint${hint === 'in' ? ' gh-on' : ''}`} role="status" aria-live="polite">Explore more paintings</div>
+          )}
           <button className="gallery-redo" onClick={redo} aria-label="Show another gallery">
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20 11a8 8 0 1 0-.6 4M20 4v5h-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
