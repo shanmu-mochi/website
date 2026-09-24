@@ -213,6 +213,10 @@ a.pp-row:hover h4 { text-decoration: underline; text-decoration-color: var(--lin
 .figure .clab { font-family: var(--sans); font-size: 11.5px; fill: var(--ink); }
 .figure .clab-mute { font-family: var(--sans); font-size: 11px; fill: var(--muted); }
 
+.pp-title, .pp-h2, .pp-h2-sub, .pp-deck, .pp-h3, .pp-feat-card h3, .pp-feat-card p,
+.pp-toc-t, .pp-stat-l, .pp-cap { text-wrap: balance; }
+.pp-p, .pp-abstract p, .pp-list li, .pp-cite, .pp-tnote, .pp-aside-body p, .pp-panel-note { text-wrap: pretty; }
+
 /* ---------- narrow screens ---------- */
 @media (max-width: 720px) {
   .pp-h2 { font-size: clamp(1.9rem, 9vw, 2.6rem); }

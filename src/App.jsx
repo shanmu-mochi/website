@@ -787,6 +787,9 @@ export default function App() {
                       <span className="st-leader" aria-hidden="true" />
                       <span className="st-venue">{s.venue}</span>
                     </div>
+                    {s.excerpt && (
+                      <div className="st-excerpt-wrap"><p className="st-excerpt">{s.excerpt}</p></div>
+                    )}
                   </div>
                 </Tag>
               )
