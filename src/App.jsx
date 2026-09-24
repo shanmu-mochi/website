@@ -111,9 +111,11 @@ const META = {
   'lake-nemi.jpg':          { title: 'View of Lake Nemi', artist: 'Jules Coignet', year: '1843', minH: 46 },
   'seine.jpg':              { title: 'The Seine', artist: 'Henry Ossawa Tanner', year: 'c. 1902', minH: 46 },
   // — third wave (2026-09): from ~/Desktop/Paintings —
+  'vangogh-girlinwhite.jpg': { title: 'Girl in White', artist: 'Vincent van Gogh', year: '1890' },
   'vangogh-irises.jpg':     { title: 'Irises', artist: 'Vincent van Gogh', year: '1889', minH: 46 },
   'vangogh-poppyfield.jpg': { title: 'Poppy Field', artist: 'Vincent van Gogh', year: '1890', minH: 46 },
   'matisse-goldfish.jpg':   { title: 'The Goldfish', artist: 'Henri Matisse', year: '1912' },
+  'matisse-redstudio.jpg':  { title: 'The Red Studio', artist: 'Henri Matisse', year: '1911', minH: 46 },
   'pollock-bluepoles.jpg':  { title: 'Blue Poles', artist: 'Jackson Pollock', year: '1952', minH: 40 },
   'sargent-jaleo.jpg':      { title: 'El Jaleo', artist: 'John Singer Sargent', year: '1882', minH: 50 },
   'munch-landscape.jpg':    { title: 'Landscape', artist: 'Edvard Munch', year: '', minH: 44 },
@@ -128,6 +130,7 @@ const GAZE = {
   'nonchaloir.jpg': 'L', 'eljaleo.jpg': 'L', 'sargent-gassed.jpg': 'R',
   'hopper-elevenam.jpg': 'L', 'hopper-nymovie.jpg': 'R', 'hopper-gas.jpg': 'L',
   'munch-sick.jpg': 'L', 'peschka.jpg': 'R', 'labsinthe.jpg': 'R', 'monet-parasol.jpg': 'L',
+  'vangogh-girlinwhite.jpg': 'L',
   'calypso.jpg': 'L', 'repin.jpg': 'L', 'tiger.jpg': 'L',
 }
 const gazeOf = (s) => GAZE[s] || 'F'
@@ -198,12 +201,12 @@ const POOL = [
   'schiele.jpg', 'schiele2.jpg', 'peschka.jpg',
   'bellows-club.jpg', 'bellows-stag.jpg',
   'labsinthe.jpg', 'lautrec.jpg', 'manet-bar.jpg', 'cezanne-cards.jpg', 'ensor.jpg', 'monet-parasol.jpg', 'magritte.jpg', 'whistler-nocturne.jpg',
-  'vangogh-oldman.jpg', 'vangogh-ward.jpg', 'vangogh-courtyard.jpg', 'pollock-west.jpg', 'blume-head.jpg', 'russian-couple.jpg',
+  'vangogh-oldman.jpg', 'vangogh-girlinwhite.jpg', 'vangogh-ward.jpg', 'vangogh-courtyard.jpg', 'pollock-west.jpg', 'blume-head.jpg', 'russian-couple.jpg',
   'bellei.jpg', 'bastien.jpg', 'paolo.jpg', 'millet.jpg', 'calypso.jpg', 'kollwitz.jpg', 'hammershoi.jpg', 'repin.jpg', 'apothecary.jpg', 'tiger.jpg',
   // — newly catalogued, widening the pool —
   'blue-morning.jpg', 'boar-lane.jpg', 'homer-hurricane.jpg', 'simplon.jpg',
   'klimt-beech.jpg', 'friedrich-abbey.jpg', 'turner-rain.jpg', 'monet-poppies.jpg', 'monet-parliament.jpg', 'monet-waterloo.jpg',
-  'matisse-conv.jpg', 'hitchcock-tulip.jpg', 'bellows-newyork.jpg', 'bellows-summernight.jpg',
+  'matisse-conv.jpg', 'matisse-redstudio.jpg', 'hitchcock-tulip.jpg', 'bellows-newyork.jpg', 'bellows-summernight.jpg',
   'mondrian-tableau.jpg', 'kandinsky-akhtyrka.jpg', 'klimt-hygieia.jpg', 'ravivarma-mirror.jpg',
   // — second wave —
   'ryder-racetrack.jpg', 'hitchcock-vanquished.jpg', 'wyeth-bluedoor.jpg', 'mondrian-castle.jpg', 'munch-horsecart.jpg',
