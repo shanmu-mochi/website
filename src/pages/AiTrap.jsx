@@ -41,7 +41,7 @@ export default function AiTrap() {
         actions={[
           { label: 'PDF', href: '/papers/healthcares-ai-trap.pdf' },
           { label: 'Essay', href: 'https://shanmuraja.substack.com/p/healthcares-ai-trap?r=1hai5c&utm_medium=web' },
-          { label: 'All papers', href: '/papers' },
+          { label: 'All papers', href: '/papers/' },
         ]}
       />
       <Hero

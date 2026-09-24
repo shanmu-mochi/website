@@ -40,7 +40,7 @@ export default function MediCal() {
       <TopBar
         actions={[
           { label: 'PDF', href: '/papers/medi-cal-deserts.pdf' },
-          { label: 'All papers', href: '/papers' },
+          { label: 'All papers', href: '/papers/' },
         ]}
       />
       <Hero
