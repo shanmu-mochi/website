@@ -187,6 +187,20 @@ function sizeSet(srcs) {
   })
 }
 /* category = artist (so 3 Ravi Varmas / 3 Hoppers never stack); blanks stay unique */
+/* No browser exposes "the user bypassed the cache", so infer it: a reload whose
+   immutable /assets/* came back over the wire instead of out of the disk cache.
+   Only ever gates the hint, so a false positive costs one extra pill. */
+function hardReloaded() {
+  try {
+    const nav = performance.getEntriesByType('navigation')[0]
+    if (!nav || nav.type !== 'reload') return false
+    return performance.getEntriesByType('resource')
+      .some((r) => r.name.includes('/assets/') && r.transferSize > 0)
+  } catch (e) {
+    return false
+  }
+}
+
 const catOf = (s) => (META[s] && META[s].artist) || s
 /* the same category never appears within 2 of itself (gap >= 2): if A is Ravi Varma,
    the next two paintings can't be Ravi Varma. */
@@ -338,7 +352,7 @@ export default function App() {
   useEffect(() => {
     let spent = true
     try { spent = localStorage.getItem('sr-gallery-hint') === '1' } catch (e) { spent = true }
-    if (spent) { hintSpent.current = true; return }
+    if (spent && !hardReloaded() && window.location.hash !== '#hint') { hintSpent.current = true; return }
     const show = setTimeout(() => { if (!hintSpent.current) setHint('in') }, 3200)
     return () => clearTimeout(show)
   }, [])
