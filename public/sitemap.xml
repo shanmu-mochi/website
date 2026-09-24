@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- The paper PDFs are deliberately noindex, so they are not listed here. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://shanmuraja.com/</loc>
@@ -23,41 +24,5 @@
     <lastmod>2026-09-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://shanmuraja.com/papers/escalate-or-switch-glp1.pdf</loc>
-    <lastmod>2026-09-24</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://shanmuraja.com/papers/healthcares-ai-trap.pdf</loc>
-    <lastmod>2026-09-24</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://shanmuraja.com/papers/medi-cal-deserts.pdf</loc>
-    <lastmod>2026-09-24</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://shanmuraja.com/papers/off-trial-real-world-glp1.pdf</loc>
-    <lastmod>2026-09-24</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://shanmuraja.com/papers/same-result-different-price-tirzepatide.pdf</loc>
-    <lastmod>2026-09-24</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://shanmuraja.com/papers/what-week-8-knows.pdf</loc>
-    <lastmod>2026-09-24</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.6</priority>
   </url>
 </urlset>
