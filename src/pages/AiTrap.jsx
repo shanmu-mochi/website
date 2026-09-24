@@ -52,6 +52,7 @@ export default function AiTrap() {
           { k: 'Author', v: 'Shanmugesh Raja, MS' },
           { k: 'Affiliation', v: 'UCSF' },
           { k: 'Version', v: 'Draft, June 2026', dt: '2026-06' },
+          { k: 'DOI', v: '10.2139/ssrn.7119078', href: 'https://doi.org/10.2139/ssrn.7119078' },
         ]}
       />
 

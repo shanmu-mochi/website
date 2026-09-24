@@ -41,7 +41,10 @@ export function Hero({ eyebrow, title, deck, facts }) {
         <Rv className="pp-byline" delay={160}>
           {facts.map((f) => (
             <div key={f.k}>
-              {f.k} {f.dt ? <strong><time dateTime={f.dt}>{f.v}</time></strong> : <strong>{f.v}</strong>}
+              {f.k}{' '}
+              {f.href
+                ? <strong><a className="pp-byline-link" href={f.href} target="_blank" rel="noreferrer">{f.v}</a></strong>
+                : f.dt ? <strong><time dateTime={f.dt}>{f.v}</time></strong> : <strong>{f.v}</strong>}
             </div>
           ))}
         </Rv>

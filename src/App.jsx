@@ -809,29 +809,26 @@ export default function App() {
           <div className="section-head rv"><h2 className="section-title">Papers</h2><p className="section-lead">Peer-reviewed and working papers.</p></div>
           <div className="index-list">
             {PAPERS.map((p, i) => {
-              const Tag = p.href ? 'a' : 'div'
               return (
-                <Tag className="row rv" key={p.title} {...(p.href ? { href: p.href, target: '_blank', rel: 'noreferrer' } : { style: { cursor: 'default' } })}>
+                <div className={'row rv' + (p.href ? ' row-linked' : '')} key={p.title}>
                   <span className="num">{String(i + 1).padStart(2, '0')}</span>
                   <div>
-                    <div className="title">{p.title}</div>
+                    <div className="title">
+                      {p.href
+                        ? <a className="title-link" href={p.href} target="_blank" rel="noreferrer">{p.title}</a>
+                        : p.title}
+                    </div>
                     <div className="excerpt"><em>{p.sub}</em></div>
                     <div className="rkick" style={{ marginTop: '0.5rem', marginBottom: 0 }}>{p.authors}</div>
                     {p.href && <span className="go">Read PDF <span className="arrow">→</span></span>}
                     {p.doi && (
-                      <span
-                        className="doi"
-                        role="link"
-                        tabIndex={0}
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open('https://doi.org/' + p.doi, '_blank', 'noopener') }}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); window.open('https://doi.org/' + p.doi, '_blank', 'noopener') } }}
-                      >
+                      <a className="doi" href={'https://doi.org/' + p.doi} target="_blank" rel="noreferrer">
                         doi.org/{p.doi} · {p.doiVia}
-                      </span>
+                      </a>
                     )}
                   </div>
                   <span className="meta">{p.badge}</span>
-                </Tag>
+                </div>
               )
             })}
           </div>
