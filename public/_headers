@@ -10,3 +10,9 @@
   Cache-Control: public, max-age=604800
 /papers/*
   Cache-Control: public, max-age=86400
+
+# The paper PDFs compete with their own HTML pages in search results, and the
+# HTML page is the better landing page. Keep the PDFs reachable, unindexed.
+/papers/*.pdf
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: public, max-age=86400

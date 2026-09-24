@@ -50,7 +50,7 @@ export default function MediCal() {
         facts={[
           { k: 'Author', v: 'Shanmugesh Raja' },
           { k: 'Program', v: 'UCSF Health Policy and Law' },
-          { k: 'Date', v: 'February 2026' },
+          { k: 'Date', v: 'February 2026', dt: '2026-02' },
         ]}
       />
 

@@ -39,7 +39,11 @@ export function Hero({ eyebrow, title, deck, facts }) {
         <Rv as="h1" className="pp-title">{title}</Rv>
         <Rv as="p" className="pp-deck" delay={90}>{deck}</Rv>
         <Rv className="pp-byline" delay={160}>
-          {facts.map((f) => <div key={f.k}>{f.k} <strong>{f.v}</strong></div>)}
+          {facts.map((f) => (
+            <div key={f.k}>
+              {f.k} {f.dt ? <strong><time dateTime={f.dt}>{f.v}</time></strong> : <strong>{f.v}</strong>}
+            </div>
+          ))}
         </Rv>
       </div>
     </header>
