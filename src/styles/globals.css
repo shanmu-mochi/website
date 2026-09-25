@@ -230,7 +230,7 @@ a { color: inherit; text-decoration: none; }
 .contents { border-top: 1px solid var(--line); }
 .story { display: grid; grid-template-columns: 2.75rem 1fr; gap: clamp(0.75rem, 3vw, 2.5rem); padding: 1.5rem 0.3rem; border-bottom: 1px solid var(--line); color: inherit; transition: padding-left .35s, background .35s; }
 .story[href]:hover { background: var(--paper-2); padding-left: 1rem; }
-.st-num { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 0.74rem; color: var(--muted); padding-top: 0.5rem; }
+.st-num { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 0.74rem; color: var(--accent); padding-top: 0.5rem; }
 .st-kicker { font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.16em; font-size: 0.62rem; color: var(--muted); margin-bottom: 0.55rem; }
 .st-head { display: flex; align-items: baseline; gap: 0.6rem; }
 .st-title { position: relative; font-family: var(--black); font-weight: 500; font-size: clamp(1.35rem, 2.8vw, 1.95rem); line-height: 1.1; letter-spacing: -0.015em; white-space: nowrap; transition: font-style 0s; }
@@ -260,7 +260,7 @@ a { color: inherit; text-decoration: none; }
 .index-list { border-top: 1px solid var(--line); }
 .row { position: relative; display: grid; grid-template-columns: 2.75rem 1fr auto; gap: clamp(0.75rem, 3vw, 2.5rem); padding: 1.4rem 0.3rem; border-bottom: 1px solid var(--line); color: inherit; transition: background .3s, padding-left .3s; }
 .row[href]:hover, .row-linked:hover { background: var(--paper-2); padding-left: 1rem; }
-.row .num { font-family: var(--mono); font-size: 0.74rem; color: var(--muted); padding-top: 0.45rem; }
+.row .num { font-family: var(--mono); font-size: 0.74rem; color: var(--accent); padding-top: 0.45rem; }
 .row .title { font-family: var(--black); font-weight: 500; font-size: clamp(1.35rem, 2.8vw, 1.95rem); line-height: 1.1; letter-spacing: -0.015em; }
 .row[href]:hover .title, .row-linked:hover .title { color: var(--red); }
 .row .excerpt { font-size: 1.03rem; line-height: 1.62; color: var(--soft); margin-top: 0.45rem; max-width: 64ch; }
@@ -384,7 +384,7 @@ a { color: inherit; text-decoration: none; }
 .mh-img img { width: 100%; height: clamp(280px, 52vh, 600px); object-fit: cover; display: block; filter: saturate(0.95); }
 
 /* ---------- about ---------- */
-.about-grid { display: grid; grid-template-columns: 300px 1fr; gap: clamp(2rem, 6vw, 5rem); align-items: start; }
+.about-grid { display: grid; grid-template-columns: 300px auto minmax(0, 1fr); gap: clamp(2rem, 6vw, 5rem); align-items: start; }
 .plate figure { margin: 0; }
 .plate img { display: block; width: 100%; height: auto; filter: grayscale(0.32) contrast(1.02); }
 .about-body { max-width: 60ch; }
@@ -474,14 +474,15 @@ a { color: inherit; text-decoration: none; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } html { scroll-behavior: auto; } .scroll-cue { opacity: 1 !important; } .st-new { opacity: 1 !important; } }
 
 .section-lead, .section-head .section-title:only-child, .feature-title, .feature-sub,
-.thesis-title, .thesis-desc, .st-title, .award h4, .contact-title, .about-body p.lead { text-wrap: balance; }
+.thesis-title, .thesis-desc, .st-title, .row .title, .award h4, .contact-title, .about-body p.lead { text-wrap: balance; }
 .feature-summary, .thesis-desc, .about-body p, .award p, .st-excerpt, .section-lead { text-wrap: pretty; }
+/* opening quotes and brackets hang into the margin so the left edge stays optically straight */
+.about-body p, .st-excerpt, .row .excerpt, .feature-summary, .award p, .section-lead { hanging-punctuation: first; }
 
 :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 1px; }
 
 /* ---------- responsive ---------- */
 @media (max-width: 900px) {
-  .row[href] .meta, .row-linked .meta { display: none; }   /* 'PDF' badge is redundant next to the Read PDF button on phones */
   .mh-dateline span:nth-child(2) { display: none; }
   .about-grid { grid-template-columns: 1fr; }
   .plate { max-width: 240px; }

@@ -216,6 +216,7 @@ a.pp-row:hover h4 { text-decoration: underline; text-decoration-color: var(--lin
 .pp-title, .pp-h2, .pp-h2-sub, .pp-deck, .pp-h3, .pp-feat-card h3, .pp-feat-card p,
 .pp-toc-t, .pp-stat-l, .pp-cap { text-wrap: balance; }
 .pp-p, .pp-abstract p, .pp-list li, .pp-cite, .pp-tnote, .pp-aside-body p, .pp-panel-note { text-wrap: pretty; }
+.pp-p, .pp-abstract p, .pp-aside-body p, .pp-deck { hanging-punctuation: first; }
 
 /* ---------- narrow screens ---------- */
 @media (max-width: 720px) {

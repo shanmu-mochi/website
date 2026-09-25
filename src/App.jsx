@@ -827,7 +827,7 @@ export default function App() {
                       </a>
                     )}
                   </div>
-                  <span className="meta">{p.badge}</span>
+                  {!p.href && <span className="meta">{p.badge}</span>}
                 </div>
               )
             })}
@@ -892,15 +892,15 @@ export default function App() {
               <p>My fiction has been recognized by <em>The New Yorker</em>, the Paul Kalanithi Writing Competition, and the Massachusetts Undergraduate Poetry Festival. My research has appeared in <em>The Journal of Thoracic and Cardiovascular Surgery</em> and <em>Journal of Vascular Surgery</em>.</p>
               <p>Off the page: squash, piano, a steady diet of cinema.</p>
             </div>
-          </div>
-          <div style={{ marginTop: '3rem' }}>
-            <a className="contact-mail" href="mailto:shanmur@uclawsf.edu">shanmur@uclawsf.edu</a>
-            <div className="social-grid">{SOCIALS.map(([label, icon, href]) => (
-              <a className="social" href={href} target="_blank" rel="noreferrer" key={label} aria-label={label}>
-                <span className="social-box"><svg viewBox="0 0 24 24" aria-hidden="true">{ICONS[icon]}</svg></span>
-                <span className="social-label">{label}</span>
-              </a>
-            ))}</div>
+            <div className="about-contact">
+              <a className="contact-mail" href="mailto:shanmur@uclawsf.edu">shanmur@uclawsf.edu</a>
+              <div className="social-grid">{SOCIALS.map(([label, icon, href]) => (
+                <a className="social" href={href} target="_blank" rel="noreferrer" key={label} aria-label={label}>
+                  <span className="social-box"><svg viewBox="0 0 24 24" aria-hidden="true">{ICONS[icon]}</svg></span>
+                  <span className="social-label">{label}</span>
+                </a>
+              ))}</div>
+            </div>
           </div>
         </section>
 
