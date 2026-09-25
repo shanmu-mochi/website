@@ -1,5 +1,5 @@
 import React from 'react'
-import { useScene, smooth, Hatch } from './chartkit'
+import { useScene, useNarrow, smooth, Hatch } from './chartkit'
 
 /* ============================================================
    AI Trap, Figure 1: the cost-curve (supply-side Einav-Finkelstein)
@@ -45,7 +45,9 @@ export function AITrapFig1({ num = 'Figure 1. The cost-curve: who pays, and who 
    ============================================================ */
 const F2 = [[0, 0.80], [0.08, 0.74], [0.16, 0.60], [0.24, 0.38], [0.32, 0.0], [0.40, -0.20], [0.50, -0.31], [0.58, -0.325], [0.68, -0.27], [0.80, -0.16], [0.90, -0.08], [1.0, -0.03]]
 export function AITrapFig2({ num = 'Figure 2. The leftover pool goes broke early, before break-even' }) {
-  const W = 720, H = 380, padL = 70, padR = 30, padT = 30, padB = 60
+  const nw = useNarrow()
+  const W = nw ? 380 : 720, H = nw ? 400 : 380
+  const padL = nw ? 44 : 70, padR = nw ? 14 : 30, padT = nw ? 40 : 30, padB = nw ? 64 : 60
   const yTop = 0.92, yBot = -0.48
   const x = (t) => padL + t * (W - padL - padR)
   const y = (v) => padT + (yTop - v) / (yTop - yBot) * (H - padT - padB)
@@ -54,7 +56,7 @@ export function AITrapFig2({ num = 'Figure 2. The leftover pool goes broke early
   const deficit = F2.filter(([t]) => t >= 0.32).map(([t, v]) => [x(t), y(v)])
   const solventArea = `${smooth(solvent)} L ${x(0.32)} ${y(0)} L ${x(0)} ${y(0)} Z`
   const deficitArea = `${smooth(deficit)} L ${x(1)} ${y(0)} L ${x(0.32)} ${y(0)} Z`
-  const ref = useScene()
+  const ref = useScene(0.6, nw)
   return (
     <figure className="figure" ref={ref}>
       <div className="fig-num">{num}</div>
@@ -69,13 +71,20 @@ export function AITrapFig2({ num = 'Figure 2. The leftover pool goes broke early
           <line className="dropline" x1={x(0.32)} y1={padT} x2={x(0.32)} y2={H - padB} />
           <line className="dropline" x1={x(0.50)} y1={padT} x2={x(0.50)} y2={H - padB} />
           <text className="region-label" x={x(0.05)} y={y(0.42)}>SOLVENT</text>
-          <text className="region-label" x={x(0.62)} y={y(-0.14)}>POOL UNDERWATER</text>
+          {nw ? (
+            <>
+              <text className="region-label" x={x(0.40)} y={y(-0.14)}>POOL</text>
+              <text className="region-label" x={x(0.40)} y={y(-0.14) + 15}>UNDERWATER</text>
+            </>
+          ) : (
+            <text className="region-label" x={x(0.62)} y={y(-0.14)}>POOL UNDERWATER</text>
+          )}
           <circle className="mark" cx={x(0.32)} cy={y(0)} r="4.5" />
           <text className="annot-key" x={x(0.32)} y={padT - 10} textAnchor="middle">θ̄ ≈ 0.32</text>
           <text className="annot" x={x(0.50)} y={padT - 10} textAnchor="middle">c† = 0.50</text>
         </g>
-        <text className="axt" x={(padL + W - padR) / 2} y={H - 16} textAnchor="middle">share of cases automated   θ   (easy → hard)</text>
-        <text className="axt" transform={`translate(22, ${(padT + H - padB) / 2}) rotate(-90)`} textAnchor="middle">profit of leftover pool   Π(θ)</text>
+        <text className="axt" x={(padL + W - padR) / 2} y={H - 16} textAnchor="middle">{nw ? 'cases automated  θ  (easy → hard)' : 'share of cases automated   θ   (easy → hard)'}</text>
+        <text className="axt" transform={`translate(${nw ? 15 : 22}, ${(padT + H - padB) / 2}) rotate(-90)`} textAnchor="middle">{nw ? 'leftover pool  Π(θ)' : 'profit of leftover pool   Π(θ)'}</text>
       </svg>
     </figure>
   )
@@ -88,19 +97,24 @@ const YEARS = Array.from({ length: 15 }, (_, i) => 2010 + i)
 const DESERT =    [1850, 1880, 1900, 1872, 1845, 1822, 1810, 1788, 1742, 1690, 1642, 1600, 1560, 1526, 1500]
 const NONDESERT = [1300, 1306, 1300, 1296, 1301, 1290, 1286, 1281, 1276, 1281, 1276, 1279, 1276, 1281, 1283]
 export function ThesisLines() {
-  const W = 720, H = 360, padL = 58, padR = 20, padT = 34, padB = 46, yMin = 1100, yMax = 2000
+  const nw = useNarrow()
+  /* this one lives inside the padded feature card, so it draws at ~300px and
+     needs a tighter canvas than the paper figures to keep labels readable */
+  const W = nw ? 326 : 720, H = nw ? 380 : 360
+  const padL = nw ? 40 : 58, padR = nw ? 10 : 20, padT = nw ? 60 : 34, padB = nw ? 48 : 46
+  const yMin = 1100, yMax = 2000
   const x = (i) => padL + (i / (YEARS.length - 1)) * (W - padL - padR)
   const y = (v) => padT + (1 - (v - yMin) / (yMax - yMin)) * (H - padT - padB)
   const toPts = (a) => a.map((v, i) => [x(i), y(v)])
   const poly = (pts) => pts.map((p, i) => `${i ? 'L' : 'M'} ${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ')
   const gap = `${poly(toPts(DESERT))} ${poly([...toPts(NONDESERT)].reverse()).replace(/^M/, 'L')} Z`
-  const ref = useScene()
+  const ref = useScene(0.6, nw)
   return (
     <figure className="figure" ref={ref}>
       <div className="fig-num">Figure 3. Preventable hospitalizations per 100k, desert vs non-desert counties, 2010–2024</div>
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="The access gap between desert and non-desert counties narrows after Prop 56">
         {[1200, 1500, 1800].map((t) => (<g key={t}><line className="grid" x1={padL} x2={W - padR} y1={y(t)} y2={y(t)} /><text className="axt" x={padL - 8} y={y(t) + 3} textAnchor="end">{t}</text></g>))}
-        {[2010, 2014, 2018, 2022, 2024].map((t) => (<text className="axt" key={t} x={x(t - 2010)} y={H - padB + 18} textAnchor="middle">{t}</text>))}
+        {(nw ? [2010, 2016, 2022] : [2010, 2014, 2018, 2022, 2024]).map((t) => (<text className="axt" key={t} x={x(t - 2010)} y={H - padB + 18} textAnchor="middle">{t}</text>))}
         <g className="cr-area">
           <rect className="band" x={x(7)} y={padT} width={x(14) - x(7)} height={H - padT - padB} />
           <path d={gap} className="gap-area" />
@@ -110,13 +124,20 @@ export function ThesisLines() {
         <g className="cr-fade">
           <text className="axt band-label" x={(x(7) + x(14)) / 2} y={padT + 12} textAnchor="middle">PROP 56 (2017+)</text>
           <text className="region-sub" x={x(0.4)} y={y(1575)}>the access gap</text>
-          <text className="annot-key" x={x(2.1)} y={y(1960)} textAnchor="middle">+37% in deserts</text>
-          <text className="annot" x={x(12.6)} y={y(1690)} textAnchor="middle">81.8% of the</text>
-          <text className="annot" x={x(12.6)} y={y(1690) + 12} textAnchor="middle">closure is post-2016</text>
-          <g transform={`translate(${padL + 6}, ${padT - 20})`}>
-            <line className="curve" x1="0" y1="0" x2="20" y2="0" /><text className="axt" x="26" y="3">Desert (n=11)</text>
-            <line className="curve dashed" x1="150" y1="0" x2="170" y2="0" /><text className="axt" x="176" y="3">Non-desert (n=47)</text>
-          </g>
+          <text className="annot-key" x={nw ? x(3.2) : x(2.1)} y={y(1960)} textAnchor="middle">+37% in deserts</text>
+          <text className="annot" x={nw ? x(11) : x(12.6)} y={y(1690)} textAnchor="middle">{nw ? '81.8% closed' : '81.8% of the'}</text>
+          <text className="annot" x={nw ? x(11) : x(12.6)} y={y(1690) + 12} textAnchor="middle">{nw ? 'since 2016' : 'closure is post-2016'}</text>
+          {nw ? (
+            <g transform={`translate(${padL}, ${padT - 40})`}>
+              <line className="curve" x1="0" y1="0" x2="18" y2="0" /><text className="axt" x="24" y="3">Desert (n=11)</text>
+              <line className="curve dashed" x1="0" y1="16" x2="18" y2="16" /><text className="axt" x="24" y="19">Non-desert (n=47)</text>
+            </g>
+          ) : (
+            <g transform={`translate(${padL + 6}, ${padT - 20})`}>
+              <line className="curve" x1="0" y1="0" x2="20" y2="0" /><text className="axt" x="26" y="3">Desert (n=11)</text>
+              <line className="curve dashed" x1="150" y1="0" x2="170" y2="0" /><text className="axt" x="176" y="3">Non-desert (n=47)</text>
+            </g>
+          )}
         </g>
       </svg>
     </figure>

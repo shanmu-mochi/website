@@ -219,9 +219,9 @@ a.pp-row:hover h4 { text-decoration: underline; text-decoration-color: var(--lin
 .pp-p, .pp-abstract p, .pp-aside-body p, .pp-deck { hanging-punctuation: first; }
 
 /* ---------- narrow screens ---------- */
-/* sideways-scrollable figures and tables show a shadow on the end you can still
-   scroll toward; the paper-coloured layers scroll with the content and mask it */
-.pp-art .figure, .pp-tw {
+/* a wide table shows a shadow on the end you can still scroll toward; the
+   paper-coloured layers scroll with the content and mask it at the ends */
+.pp-tw {
   background:
     linear-gradient(to right, var(--paper) 40%, rgba(253, 252, 250, 0)) left center / 2.2rem 100% no-repeat local,
     linear-gradient(to left, var(--paper) 40%, rgba(253, 252, 250, 0)) right center / 2.2rem 100% no-repeat local,
@@ -230,22 +230,6 @@ a.pp-row:hover h4 { text-decoration: underline; text-decoration-color: var(--lin
 }
 
 @media (max-width: 720px) {
-  /* a 720-unit viewBox drawn at 350px renders every label at ~5px. The layouts are
-     hand-placed, so enlarging the labels collides them. Keep them at native size
-     and let the figure scroll sideways instead. */
-  .pp-art .figure {
-    max-width: none;
-    width: calc(100% + var(--gutter) * 2);
-    margin-left: calc(var(--gutter) * -1);
-    margin-right: calc(var(--gutter) * -1);
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-    padding: 0 var(--gutter);
-    scrollbar-width: none;
-  }
-  .pp-art .figure::-webkit-scrollbar { display: none; }
-  .pp-art .figure svg { min-width: 41rem; }
   .pp-h2 { font-size: clamp(1.9rem, 9vw, 2.6rem); }
   .pp-tw { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .pp-t { min-width: 32rem; font-size: 0.82rem; }

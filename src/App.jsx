@@ -767,6 +767,7 @@ export default function App() {
           <button className="gallery-redo" onClick={redo} aria-label="Show another gallery">
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20 11a8 8 0 1 0-.6 4M20 4v5h-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
+          <div className={`gallery-tip${hint === 'in' ? ' gt-hide' : ''}`} aria-hidden="true">Refresh carousel</div>
         </section>
 
         {/* STORIES */}

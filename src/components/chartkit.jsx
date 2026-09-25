@@ -1,11 +1,28 @@
-import React, { useRef, useState, useLayoutEffect } from 'react'
+import React, { useRef, useState, useLayoutEffect, useEffect } from 'react'
 import { register } from '../lib/scroll'
+
+/* Figures are drawn twice: a wide layout, and a phone layout that fits a
+   380-unit canvas so labels render at their real size instead of half of it. */
+const NARROW = '(max-width: 720px)'
+export function useNarrow() {
+  const [narrow, setNarrow] = useState(
+    () => (typeof window === 'undefined' ? false : window.matchMedia(NARROW).matches),
+  )
+  useEffect(() => {
+    const mq = window.matchMedia(NARROW)
+    const on = (e) => setNarrow(e.matches)
+    setNarrow(mq.matches)
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  return narrow
+}
 
 /* Shared by the home figures and the paper pages. Line draws run on the Web
    Animations API with fill forwards so a React re-render cannot cut them. */
 /* Registers a figure with the scroll engine and measures its paths once, so
    every mark inside can be driven off the figure's --p. */
-export function useScene(span = 0.6) {
+export function useScene(span = 0.6, relayout = null) {
   const ref = useRef(null)
   useLayoutEffect(() => {
     const el = ref.current
@@ -16,7 +33,7 @@ export function useScene(span = 0.6) {
       if (len) path.style.setProperty('--len', len.toFixed(1) + 'px')
     })
     return register(el, { span, startAt: 0.95 })
-  }, [span])
+  }, [span, relayout])
   return ref
 }
 
