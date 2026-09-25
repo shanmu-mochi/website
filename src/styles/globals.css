@@ -295,6 +295,10 @@ a { color: inherit; text-decoration: none; }
 .feature-title { font-family: var(--black); font-weight: 500; font-size: clamp(1.35rem, 2.8vw, 1.95rem); line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 0.6rem; }
 .feature-sub { font-size: 1.03rem; line-height: 1.62; color: var(--soft); margin-bottom: 0.8rem; }
 .feature-byline { font-family: var(--mono); font-size: 0.66rem; color: var(--muted); margin-bottom: 1.4rem; }
+/* the prose caps at a readable measure, so the button takes the rest of the card */
+.dd-row { display: grid; grid-template-columns: minmax(0, 38rem) minmax(0, 1fr); gap: clamp(1.6rem, 4vw, 3.4rem); align-items: start; }
+.dd-row .deep-cta { margin-top: 0.3rem; }
+
 .feature-summary { max-width: 70ch; font-size: 1.05rem; line-height: 1.7; color: var(--soft); margin-bottom: 1.3rem; }
 .feature-summary em { font-style: italic; color: var(--ink); }
 .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.4rem 0; }
@@ -305,7 +309,8 @@ a { color: inherit; text-decoration: none; }
 
 /* ---------- awards ---------- */
 .awards-list { border-top: 1px solid var(--line); }
-.award { display: grid; grid-template-columns: 2.75rem 1fr; gap: clamp(0.75rem, 3vw, 2.5rem); padding: 1.7rem 0.3rem; border-bottom: 1px solid var(--line); }
+.award { display: grid; grid-template-columns: 2.75rem 1fr auto; gap: clamp(0.75rem, 3vw, 2.5rem); padding: 1.7rem 0.3rem; border-bottom: 1px solid var(--line); }
+.award-kind { font-family: var(--mono); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted); text-align: right; white-space: nowrap; padding-top: 0.5rem; }
 .award .rn { font-family: var(--black); font-size: 1.4rem; color: var(--red); line-height: 1; }
 .award h4 { font-family: var(--black); font-weight: 500; font-size: clamp(1.35rem, 2.8vw, 1.95rem); line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 0.45rem; }
 .award p { font-size: 1.03rem; line-height: 1.62; color: var(--soft); max-width: 64ch; }
@@ -492,10 +497,13 @@ a { color: inherit; text-decoration: none; }
   .about-grid { grid-template-columns: 1fr; }
   .plate { max-width: 240px; }
   .thesis-prose { grid-template-columns: 1fr; }
+  .dd-row { grid-template-columns: 1fr; }
   .stat-grid { grid-template-columns: 1fr; }
   .stat { border-right: 0; border-bottom: 1px solid var(--ink); }
   .row { grid-template-columns: 2.2rem 1fr; }
   .story { grid-template-columns: 2.2rem 1fr; }
+  .award { grid-template-columns: 2.2rem 1fr; }
+  .award-kind { grid-column: 2; text-align: left; padding-top: 0.5rem; }
   .st-head { flex-wrap: wrap; }
   .st-leader { display: none; }
   .st-title { white-space: normal; }

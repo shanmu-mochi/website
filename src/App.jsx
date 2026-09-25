@@ -162,11 +162,12 @@ const shuffle = (a) => { const r = a.slice(); for (let i = r.length - 1; i > 0; 
    Pick the smallest one that covers how large the painting is drawn (CSS px x device pixels, capped:
    paintings don't need full 2-3x density, and it keeps a 14-painting gallery to ~1-3 MB instead of ~10). */
 const DPR_CAP = 1.6
+const dprCap = () => (typeof window !== 'undefined' && window.innerWidth <= 720 ? 1.15 : DPR_CAP)
 const fileBase = (src) => src.replace(/\.jpe?g$/i, '')
 function variantFor(src, cssWidthPx) {
   const d = DIMS[src]
   if (!d) return ''
-  const dpr = Math.min((typeof window !== 'undefined' && window.devicePixelRatio) || 1, DPR_CAP)
+  const dpr = Math.min((typeof window !== 'undefined' && window.devicePixelRatio) || 1, dprCap())
   const need = cssWidthPx * dpr
   const w = d.widths.find((x) => x >= need) || d.widths[d.widths.length - 1]
   return `/paintings/${fileBase(src)}-${w}.webp`
@@ -322,10 +323,10 @@ const STORIES = [
 ]
 
 const AWARDS = [
-  { rn: 'I', title: 'Shortlist · The New Yorker', desc: <>For the historical short fiction <em>“Burnt Red Tongues.”</em></> },
-  { rn: 'II', title: 'Shortlist · Paul Kalanithi Writing Competition', desc: <>Stanford’s national essay prize, in memory of the late neurosurgeon and author of <em>When Breath Becomes Air.</em></> },
-  { rn: 'III', title: 'Winner · Massachusetts Undergraduate Poetry Festival', desc: <>First prize, statewide juried competition.</> },
-  { rn: 'IV', title: 'Finalist · American College of Preventive Medicine', desc: <>Annual Meeting, Baltimore, MD. Selected abstract: <em>Branded Wegovy™ vs. Compounded Semaglutide + Cyanocobalamin.</em></> },
+  { rn: 'I', kind: 'Shortlist', title: 'The New Yorker', desc: <>For the historical short fiction <em>“Burnt Red Tongues.”</em></> },
+  { rn: 'II', kind: 'Shortlist', title: 'Paul Kalanithi Writing Competition', desc: <>Stanford’s national essay prize, in memory of the late neurosurgeon and author of <em>When Breath Becomes Air.</em></> },
+  { rn: 'III', kind: 'Winner', title: 'Massachusetts Undergraduate Poetry Festival', desc: <>First prize, statewide juried competition.</> },
+  { rn: 'IV', kind: 'Finalist', title: 'American College of Preventive Medicine', desc: <>Annual Meeting, Baltimore, MD. Selected abstract: <em>Branded Wegovy™ vs. Compounded Semaglutide + Cyanocobalamin.</em></> },
 ]
 const ICONS = {
   medium: <path d="M2.5 5.5h6.6l3.1 7.4 3-7.4H21.5v.4l-1.6 1.5v8.7l1.6 1.5v.4h-6.4v-.4l1.7-1.6v-7.6l-3.9 9.6h-.5l-4.4-9.6v6.6l1.9 2.2v.4H4.7v-.4l1.9-2.2V7.4L4.5 5.9v-.4z" />,
@@ -755,7 +756,7 @@ export default function App() {
                   onClick={(e) => openItem(p, e)}
                   onKeyDown={(e) => { if (!copy && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openItem(p, e) } }}
                 >
-                  <img src={p.url} alt={p.title} loading="eager" decoding="async"
+                  <img src={p.url} alt={p.title} loading={i < 2 ? 'eager' : 'lazy'} decoding="async"
                     onError={(e) => e.currentTarget.closest('figure').classList.add('broken')} />
                 </figure>
               )
@@ -840,7 +841,13 @@ export default function App() {
         {/* AWARDS */}
         <section className="section" id="awards">
           <div className="section-head rv"><h2 className="section-title">Awards</h2><p className="section-lead">A small archive of luck.</p></div>
-          <div className="awards-list">{AWARDS.map((a) => <div className="award rv" key={a.rn}><span className="rn">{a.rn}</span><div><h4>{a.title}</h4><p>{a.desc}</p></div></div>)}</div>
+          <div className="awards-list">{AWARDS.map((a) => (
+            <div className="award rv" key={a.rn}>
+              <span className="rn">{a.rn}</span>
+              <div><h4>{a.title}</h4><p>{a.desc}</p></div>
+              <span className="award-kind">{a.kind}</span>
+            </div>
+          ))}</div>
         </section>
 
         <div className="prairie" />
@@ -853,22 +860,26 @@ export default function App() {
             <div className="feature-tag"><span className="dot" /><span>Economics</span></div>
             <h3 className="feature-title">Healthcare’s AI Trap</h3>
             <p className="feature-sub">When automation skims the cream and starves the pipeline at once.</p>
-            <a className="deep-cta" href="/papers/ai-trap">
-              <span className="deep-cta-t">Read the white paper here</span>
-              <span className="deep-cta-arrow">→</span>
-            </a>
-            <p className="feature-summary">Routine cases do double duty: under a flat fee they cross-subsidize complex care, and they are the cases on which junior clinicians become senior. AI automates them first, creaming the easy cases. As <em>θ</em> climbs from the easy cases toward the hard ones, the leftover pool’s profit crosses zero at the unraveling threshold <em>θ̄ ≈ 0.32</em>, strictly before the social break-even <em>c† = 0.50</em>. The entrant over-skims, dumping the rescue cost of the abandoned tail onto everyone else.</p>
+            <div className="dd-row">
+              <p className="feature-summary">Routine cases do double duty: under a flat fee they cross-subsidize complex care, and they are the cases on which junior clinicians become senior. AI automates them first, creaming the easy cases. As <em>θ</em> climbs from the easy cases toward the hard ones, the leftover pool’s profit crosses zero at the unraveling threshold <em>θ̄ ≈ 0.32</em>, strictly before the social break-even <em>c† = 0.50</em>. The entrant over-skims, dumping the rescue cost of the abandoned tail onto everyone else.</p>
+              <a className="deep-cta" href="/papers/ai-trap">
+                <span className="deep-cta-t">Read the white paper here</span>
+                <span className="deep-cta-arrow">→</span>
+              </a>
+            </div>
             <AITrapFig2 />
           </article>
 
           <article className="thesis-card rv">
             <div className="thesis-eyebrow">UCSF · Health Policy & Law · April 2026 · Master’s Thesis</div>
             <h3 className="thesis-title">Mapping Medi-Cal Deserts in California</h3>
-            <p className="thesis-desc">Provider shortages, preventable hospitalizations, and the limits of workforce policy in Medi-Cal: an empirical study of California’s 58 counties, with five causal identification strategies and a portfolio policy response.</p>
-            <a className="deep-cta" href="/papers/medi-cal-deserts">
-              <span className="deep-cta-t">Read the white paper here</span>
-              <span className="deep-cta-arrow">→</span>
-            </a>
+            <div className="dd-row">
+              <p className="thesis-desc">Provider shortages, preventable hospitalizations, and the limits of workforce policy in Medi-Cal: an empirical study of California’s 58 counties, with five causal identification strategies and a portfolio policy response.</p>
+              <a className="deep-cta" href="/papers/medi-cal-deserts">
+                <span className="deep-cta-t">Read the white paper here</span>
+                <span className="deep-cta-arrow">→</span>
+              </a>
+            </div>
             <div className="stat-grid">
               <div className="stat"><div className="n">+37%</div><div className="l">Preventable hospitalization gap, desert vs. non-desert counties</div></div>
               <div className="stat"><div className="n">$82M</div><div className="l">Annual excess Medi-Cal cost attributable to the access deficit</div></div>
@@ -885,7 +896,7 @@ export default function App() {
         {/* BIO */}
         <section className="section" id="bio">
           <div className="about-grid rv">
-            <div className="plate"><figure><img src="/headshot.jpg" alt="Shanmu Raja" /></figure></div>
+            <div className="plate"><figure><img src="/headshot-700.webp" alt="Shanmu Raja" width="700" height="1049" loading="lazy" decoding="async" /></figure></div>
             <div className="about-body">
               <p className="lead">I’m a writer who works in medicine, or a medical person who writes. The order keeps changing.</p>
               <p>I write fiction, essays, and the occasional poem.</p>
