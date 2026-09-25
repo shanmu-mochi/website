@@ -2,6 +2,19 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import glsl from 'vite-plugin-glsl'
 import { resolve } from 'path'
+import { execFileSync } from 'child_process'
+
+/* The pages are client-rendered, so without this the HTML ships with no text in
+   it and any crawler that does not run JS sees a blank page. It hangs off the
+   build itself rather than an npm postbuild hook, so a bare `vite build` cannot
+   skip it. */
+const prerender = {
+  name: 'prerender',
+  apply: 'build',
+  closeBundle() {
+    execFileSync('node', [resolve(__dirname, 'scripts/prerender.cjs')], { stdio: 'inherit' })
+  },
+}
 
 /* dev-only: serve /papers and /papers/x the way Cloudflare serves them in production */
 const cleanUrls = {
@@ -20,7 +33,7 @@ const cleanUrls = {
 }
 
 export default defineConfig({
-  plugins: [react(), glsl(), cleanUrls],
+  plugins: [react(), glsl(), cleanUrls, prerender],
   server: {
     port: 3001,
     open: true
