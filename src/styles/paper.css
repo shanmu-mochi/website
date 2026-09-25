@@ -219,7 +219,33 @@ a.pp-row:hover h4 { text-decoration: underline; text-decoration-color: var(--lin
 .pp-p, .pp-abstract p, .pp-aside-body p, .pp-deck { hanging-punctuation: first; }
 
 /* ---------- narrow screens ---------- */
+/* sideways-scrollable figures and tables show a shadow on the end you can still
+   scroll toward; the paper-coloured layers scroll with the content and mask it */
+.pp-art .figure, .pp-tw {
+  background:
+    linear-gradient(to right, var(--paper) 40%, rgba(253, 252, 250, 0)) left center / 2.2rem 100% no-repeat local,
+    linear-gradient(to left, var(--paper) 40%, rgba(253, 252, 250, 0)) right center / 2.2rem 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, 0.13), rgba(0, 0, 0, 0)) left center / 0.85rem 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.13), rgba(0, 0, 0, 0)) right center / 0.85rem 100% no-repeat scroll;
+}
+
 @media (max-width: 720px) {
+  /* a 720-unit viewBox drawn at 350px renders every label at ~5px. The layouts are
+     hand-placed, so enlarging the labels collides them. Keep them at native size
+     and let the figure scroll sideways instead. */
+  .pp-art .figure {
+    max-width: none;
+    width: calc(100% + var(--gutter) * 2);
+    margin-left: calc(var(--gutter) * -1);
+    margin-right: calc(var(--gutter) * -1);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 var(--gutter);
+    scrollbar-width: none;
+  }
+  .pp-art .figure::-webkit-scrollbar { display: none; }
+  .pp-art .figure svg { min-width: 41rem; }
   .pp-h2 { font-size: clamp(1.9rem, 9vw, 2.6rem); }
   .pp-tw { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .pp-t { min-width: 32rem; font-size: 0.82rem; }
@@ -317,3 +343,23 @@ a.pp-row:hover h4 { text-decoration: underline; text-decoration-color: var(--lin
 
 .pp-byline-link { color: inherit; text-decoration: none; border-bottom: 1px solid var(--line); transition: border-color .25s; }
 .pp-byline-link:hover { border-bottom-color: currentColor; }
+
+/* ----------------------------------------------------------------
+   Phone pass. Lives at the end of the file so it wins against the
+   base rules above it rather than losing on source order.
+   ---------------------------------------------------------------- */
+@media (max-width: 720px) {
+  /* nothing below ~11px on a phone */
+  .pp-aside-k, .pp-panel-k, .pp-label, .pp-eyebrow,
+  .pp-feat-card .pp-k, .pp-row .pp-badge { font-size: 0.7rem; }
+  .pp-fig .fig-num, .pp-art .figure .fig-num, .pp-stepfig .fig-num, .pp-tw .pp-tnum { font-size: 0.7rem; }
+  .pp-t thead th { font-size: 0.78rem; }
+
+  /* 44px hit areas, with nothing moving on the page */
+  .pp-back, .pp-top-act a, .pp-byline-link, .pp-rail-foot a, .pp-index a, .pp-end a {
+    display: inline-block; padding: 0.9rem 0; margin: -0.9rem 0;
+  }
+  .pp-aside-t { min-height: 44px; }
+  .pp-pill { min-height: 44px; display: inline-flex; align-items: center; }
+  .pp-toc a { padding: 1.05rem 0; }
+}

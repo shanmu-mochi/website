@@ -499,23 +499,42 @@ a { color: inherit; text-decoration: none; }
   @keyframes new-in-flat { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
   .row .meta { grid-column: 2; text-align: left; padding-top: 0.3rem; }
   .nav-center { display: none; }
+
+  /* 44px hit areas on touch, with no change to how anything looks */
+  .nav-right a { display: inline-block; padding: 0.8rem 0; margin: -0.8rem 0; }
+  .nav-left { display: inline-block; padding: 0.75rem 0; margin: -0.75rem 0; }
+  .row .doi, .archive-line a, .contact-mail, .colo-contact, .colophon-mail {
+    display: inline-block; padding: 0.9rem 0; margin: -0.9rem 0;
+  }
+  .social { min-height: 44px; }
+  .gallery-redo { min-width: 44px; min-height: 44px; }
 }
+
 @media (max-width: 540px) { .masthead h1 { white-space: normal; } .mh-dateline { font-size: 0.54rem; letter-spacing: 0.12em; } }
 /* phones: keep the name + links on one line in the bar, and tighten the footer */
 @media (max-width: 620px) {
   .nav-inner { padding: 0.5rem 1rem; gap: 0.5rem; }
   .nav-left { font-size: 0.98rem; white-space: nowrap; }
-  .nav-right { gap: clamp(0.32rem, 2.2vw, 0.7rem); font-size: 0.72rem; }
+  /* five labels only fit at 9px gaps, and Deep dives is the longest of them;
+     the section is still right there as you scroll */
+  .nav-right a[href="#features"] { display: none; }
+  .nav-right { gap: 0.9rem; font-size: 0.8rem; }
   .colo-inner { padding: 0.5rem 1rem; gap: 0.6rem; }
-  .colo-contact { font-size: 0.6rem; }
-  .colo-social { gap: 1rem; }
-  .colo-social svg { width: 19px; height: 19px; }
+  .colo-contact { font-size: 0.68rem; }
+  .colo-social { gap: 0.6rem; }
+  .colo-social svg { width: 20px; height: 20px; }
+  .colo-social a { min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
+
+  /* the smallest labels on the page get a floor; caps at 8.8px is too small to read */
+  .social-label { font-size: 0.68rem; }
+  .story .st-kicker, .row .rkick, .row .doi, .row .go { font-size: 0.68rem; }
+  .feature-tag span, .stat .l { font-size: 0.68rem; }
 }
-/* very small phones (<=360px): tighten the bar so all five links stay visible */
+/* very small phones (<=360px): four links, still on one line with the name */
 @media (max-width: 360px) {
   .nav-inner { padding: 0.5rem 0.75rem; }
   .nav-left { font-size: 0.9rem; }
-  .nav-right { gap: 0.3rem; font-size: 0.64rem; }
+  .nav-right { gap: 0.6rem; font-size: 0.74rem; }
 }
 
 
