@@ -537,6 +537,10 @@ a { color: inherit; text-decoration: none; }
   .nav-right a[href="#features"] { display: none; }
   .nav-right { gap: 0.9rem; font-size: 0.8rem; }
   .gallery { padding-top: 3.4rem; }
+  /* the glass reads too thin over a painting on a small screen */
+  .colophon { background: rgba(253, 252, 250, 0.74); }
+  .colophon .lg-tint { background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.45)); }
+  .colophon { border-top-color: rgba(0, 0, 0, 0.16); }
   .colo-inner { padding: 0.5rem 1rem; gap: 0.6rem; }
   .colo-contact { font-size: 0.68rem; }
   .colo-social { gap: 0.6rem; }
