@@ -394,7 +394,7 @@ a { color: inherit; text-decoration: none; }
 .mh-img img { width: 100%; height: clamp(280px, 52vh, 600px); object-fit: cover; display: block; filter: saturate(0.95); }
 
 /* ---------- about ---------- */
-.about-grid { display: grid; grid-template-columns: 300px auto minmax(0, 1fr); gap: clamp(2rem, 6vw, 5rem); align-items: start; }
+.about-grid { display: grid; grid-template-columns: 300px minmax(0, 1.5fr) minmax(0, 1fr); gap: clamp(2rem, 6vw, 5rem); align-items: start; }
 .plate figure { margin: 0; }
 .plate img { display: block; width: 100%; height: auto; filter: grayscale(0.32) contrast(1.02); }
 .about-body { max-width: 60ch; }
@@ -405,6 +405,8 @@ a { color: inherit; text-decoration: none; }
 /* ---------- contact ---------- */
 .contact-title { font-family: var(--black); font-size: clamp(2.4rem, 8vw, 6rem); line-height: 0.86; letter-spacing: -0.03em; margin-bottom: 1.5rem; }
 .contact-mail { font-size: clamp(1.3rem, 3vw, 2rem); border-bottom: 2px solid var(--line-2); }
+/* in the bio side column it has far less room, and it is one unbreakable word */
+.about-contact .contact-mail { font-size: clamp(1rem, 1.5vw, 1.55rem); overflow-wrap: anywhere; }
 .contact-mail:hover { color: var(--red); border-color: var(--red); }
 .contact-links { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 2rem; }
 .contact-links a { font-size: 0.82rem; font-weight: 500; color: var(--soft); border-bottom: 1px solid transparent; }
