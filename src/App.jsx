@@ -148,7 +148,8 @@ const gazeOf = (s) => GAZE[s] || 'F'
 const SHOWN = 14                     // paintings per gallery
 const LEAD = 'ravivarma2.jpg'        // the Indian lady leads the first gallery
 const AREA = 2600, GMIN = 34, GMAX = 76         // Cargo-flavored ribbon: moderate size range
-const GMAX_PHONE = 72                           // phones: fills the screen, but leaves a band for the reshuffle button
+const GMAX_TABLET = 72                          // iPad: leaves a band under the strip for the reshuffle button
+const GMAX_PHONE = 76                           // phone: no controls to make room for, so the art fills more
 const RHY = [1.28, 0.82, 1.08, 0.92, 1.2, 0.8, 1.0, 0.95, 1.15, 0.86]   // size cadence by position (big -> small rhythm)
 const GAPS = [4.6, 1.5, 2.8, 1.8, 4.2, 1.4, 2.3, 2.0, 3.8, 1.6]          // whitespace cadence (vw): generous around big pieces
 const NUDGE = [0, -6, 5, 7, -4, 6, -7, 4, -5, 6]                          // subtle fixed vertical nudge (vh), eased onto smaller pieces
@@ -194,14 +195,14 @@ function sizeSet(srcs) {
   const vhPx = (typeof window !== 'undefined' && window.innerHeight) || 900
   const vwPx = (typeof window !== 'undefined' && window.innerWidth) || 1400
   const dpr = Math.min((typeof window !== 'undefined' && window.devicePixelRatio) || 1, 2)
-  const phone = vwPx <= 900
+  const gmax = vwPx <= 620 ? GMAX_PHONE : vwPx <= 900 ? GMAX_TABLET : GMAX
   return srcs.filter((s) => DIMS[s]).map((src, i) => {
     const d = DIMS[src]
     const ar = d.w / d.h                              // computed from real pixels
     const qMax = (d.h * 100) / (dpr * vhPx)           // never upscale past native resolution
     const meta = META[src] || { title: '', artist: '' }
     // equal visual area x a repeating cadence -> structured big/small variation
-    const base = clamp(Math.sqrt(AREA / ar) * RHY[i % RHY.length], Math.max(GMIN, meta.minH || 0), Math.min(phone ? GMAX_PHONE : GMAX, qMax))
+    const base = clamp(Math.sqrt(AREA / ar) * RHY[i % RHY.length], Math.max(GMIN, meta.minH || 0), Math.min(gmax, qMax))
     const h = base, w = h * ar
     const tallness = clamp((base - GMIN) / (GMAX - GMIN), 0, 1)
     const y = NUDGE[i % NUDGE.length] * (1 - tallness)   // small pieces nudged up/down, big ones stay centred

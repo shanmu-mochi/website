@@ -539,6 +539,9 @@ a { color: inherit; text-decoration: none; }
   .nav-right a[href="#features"] { display: none; }
   .nav-right { gap: 0.9rem; font-size: 0.8rem; }
   .gallery { padding-top: 3.7rem; }
+  /* phone-only: the montage speaks for itself, and both controls sat awkwardly
+     over it. iPad and desktop keep them. */
+  .gallery-hint, .gallery-tip, .gallery-redo { display: none; }
   /* the glass reads too thin over a painting on a small screen */
   .colophon { background: rgba(253, 252, 250, 0.74); }
   .colophon .lg-tint { background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.45)); }
