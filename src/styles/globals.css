@@ -520,11 +520,11 @@ a { color: inherit; text-decoration: none; }
     display: inline-block; padding: 0.9rem 0; margin: -0.9rem 0;
   }
   .social { min-height: 44px; }
-  .gallery-redo { min-width: 44px; min-height: 44px; bottom: 1rem; }
-  /* a full-viewport box centred the strip and left ~150px of nothing above it.
-     On a phone the montage starts just under the nav instead. The top offset
-     tracks the nav, which gets shorter at the 620px breakpoint. */
-  .gallery { height: auto; min-height: 0; padding: 4.4rem 0 4.6rem; }
+  .gallery-redo { min-width: 44px; min-height: 44px; bottom: 5.2rem; }
+  /* keep the full-screen montage so the next section cannot peek in, but centre
+     the strip in the space the nav and the bottom bar actually leave free.
+     Top padding tracks the nav, which gets shorter at the 620px breakpoint. */
+  .gallery { padding: 4.4rem 0 4rem; }
 }
 
 @media (max-width: 540px) { .masthead h1 { white-space: normal; } .mh-dateline { font-size: 0.54rem; letter-spacing: 0.12em; } }
@@ -536,7 +536,7 @@ a { color: inherit; text-decoration: none; }
      the section is still right there as you scroll */
   .nav-right a[href="#features"] { display: none; }
   .nav-right { gap: 0.9rem; font-size: 0.8rem; }
-  .gallery { padding-top: 3.4rem; }
+  .gallery { padding-top: 2.9rem; }
   /* the glass reads too thin over a painting on a small screen */
   .colophon { background: rgba(253, 252, 250, 0.74); }
   .colophon .lg-tint { background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.45)); }
