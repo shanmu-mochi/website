@@ -520,11 +520,13 @@ a { color: inherit; text-decoration: none; }
     display: inline-block; padding: 0.9rem 0; margin: -0.9rem 0;
   }
   .social { min-height: 44px; }
-  .gallery-redo { min-width: 44px; min-height: 44px; bottom: 5.2rem; }
-  /* keep the full-screen montage so the next section cannot peek in, but centre
-     the strip in the space the nav and the bottom bar actually leave free.
-     Top padding tracks the nav, which gets shorter at the 620px breakpoint. */
-  .gallery { padding: 4.4rem 0 4rem; }
+  .gallery-redo { min-width: 44px; min-height: 44px; bottom: 5.4rem; }
+  /* 100svh is the SMALLEST viewport, so when the URL bar retracts the visible
+     area grows past the gallery and the next section shows. lvh is the largest,
+     so the montage always covers the screen whatever the browser chrome does.
+     The strip sits under the nav and the reshuffle button lives in the band
+     below it, rather than floating over a painting. */
+  .gallery { height: 100lvh; align-items: flex-start; padding: 4.4rem 0 4rem; }
 }
 
 @media (max-width: 540px) { .masthead h1 { white-space: normal; } .mh-dateline { font-size: 0.54rem; letter-spacing: 0.12em; } }
@@ -536,7 +538,7 @@ a { color: inherit; text-decoration: none; }
      the section is still right there as you scroll */
   .nav-right a[href="#features"] { display: none; }
   .nav-right { gap: 0.9rem; font-size: 0.8rem; }
-  .gallery { padding-top: 2.9rem; }
+  .gallery { padding-top: 3.7rem; }
   /* the glass reads too thin over a painting on a small screen */
   .colophon { background: rgba(253, 252, 250, 0.74); }
   .colophon .lg-tint { background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.45)); }

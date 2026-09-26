@@ -148,7 +148,7 @@ const gazeOf = (s) => GAZE[s] || 'F'
 const SHOWN = 14                     // paintings per gallery
 const LEAD = 'ravivarma2.jpg'        // the Indian lady leads the first gallery
 const AREA = 2600, GMIN = 34, GMAX = 76         // Cargo-flavored ribbon: moderate size range
-const GMAX_PHONE = 80                           // phones: the strip is the whole screen, so let it fill the height
+const GMAX_PHONE = 72                           // phones: fills the screen, but leaves a band for the reshuffle button
 const RHY = [1.28, 0.82, 1.08, 0.92, 1.2, 0.8, 1.0, 0.95, 1.15, 0.86]   // size cadence by position (big -> small rhythm)
 const GAPS = [4.6, 1.5, 2.8, 1.8, 4.2, 1.4, 2.3, 2.0, 3.8, 1.6]          // whitespace cadence (vw): generous around big pieces
 const NUDGE = [0, -6, 5, 7, -4, 6, -7, 4, -5, 6]                          // subtle fixed vertical nudge (vh), eased onto smaller pieces
