@@ -58,6 +58,7 @@ const META = {
   'cezanne-cards.jpg':  { title: 'The Card Players', artist: 'Paul Cézanne', year: 'c. 1894', minH: 48 },
   'ensor.jpg':          { title: 'The Drunkards', artist: 'James Ensor', year: '1883', minH: 48 },
   'monet-parasol.jpg':  { title: 'Woman with a Parasol', artist: 'Claude Monet', year: '1875' },
+  'monet-camille.jpg':  { title: 'Camille Monet on her Deathbed', artist: 'Claude Monet', year: '1879' },
   'bellows-club.jpg':   { title: 'Club Night', artist: 'George Bellows', year: '1907', minH: 50 },
   'bellows-stag.jpg':   { title: "Stag at Sharkey's", artist: 'George Bellows', year: '1909', minH: 50 },
   'magritte.jpg':       { title: 'The Lovers', artist: 'René Magritte', year: '1928', minH: 46 },
@@ -246,7 +247,7 @@ const POOL = [
   'bellei.jpg', 'bastien.jpg', 'paolo.jpg', 'millet.jpg', 'calypso.jpg', 'kollwitz.jpg', 'hammershoi.jpg', 'schjerfbeck-convalescent.jpg', 'sickert-ennui.jpg', 'sohlberg-winternight.jpg', 'repin.jpg', 'apothecary.jpg', 'tiger.jpg',
   // — newly catalogued, widening the pool —
   'blue-morning.jpg', 'boar-lane.jpg', 'homer-hurricane.jpg', 'simplon.jpg',
-  'klimt-beech.jpg', 'friedrich-abbey.jpg', 'turner-rain.jpg', 'monet-poppies.jpg', 'monet-parliament.jpg', 'monet-waterloo.jpg',
+  'klimt-beech.jpg', 'friedrich-abbey.jpg', 'turner-rain.jpg', 'monet-poppies.jpg', 'monet-parliament.jpg', 'monet-waterloo.jpg', 'monet-camille.jpg',
   'matisse-conv.jpg', 'matisse-redstudio.jpg', 'hitchcock-tulip.jpg', 'bellows-newyork.jpg', 'bellows-summernight.jpg',
   'mondrian-tableau.jpg', 'kandinsky-akhtyrka.jpg', 'klimt-hygieia.jpg', 'ravivarma-mirror.jpg',
   // — second wave —
