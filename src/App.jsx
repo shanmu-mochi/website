@@ -46,6 +46,8 @@ const META = {
   'munch-sick.jpg':     { title: 'The Sick Child', artist: 'Edvard Munch', year: '1886' },
   'munch-kiss.jpg':     { title: 'In the Luxembourg Gardens', artist: 'John Singer Sargent', year: '1879', minH: 46 },
   'munch-peonies.jpg':  { title: 'Woman with Peonies', artist: 'Edvard Munch', year: 'c. 1925' },
+  'munch-deadmother.jpg': { title: 'The Dead Mother and the Child', artist: 'Edvard Munch', year: 'c. 1899', minH: 44 },
+  'vonmax-anatom.jpg':  { title: 'The Anatomist', artist: 'Gabriel von Max', year: '1869', minH: 42 },
   'lautrec.jpg':        { title: 'La Toilette', artist: 'Henri de Toulouse-Lautrec', year: '1889' },
   'kollwitz.jpg':       { title: 'Woman with Dead Child', artist: 'Käthe Kollwitz', year: '1903' },
   'schiele.jpg':        { title: 'Death and the Maiden', artist: 'Egon Schiele', year: '1915' },
@@ -139,6 +141,7 @@ const GAZE = {
      direction. The rest are landscapes, abstractions, frontal portraits, or
      two-figure scenes already facing each other, where 'F' is the right answer. */
   'wyeth-adrift.jpg': 'R', 'sargent-jaleo.jpg': 'L', 'munch-kiss.jpg': 'L', 'munch-peonies.jpg': 'L',
+  'vonmax-anatom.jpg': 'L',
   'vangogh-oldman.jpg': 'L', 'rojas-miseria.jpg': 'R', 'ryder-racetrack.jpg': 'L',
   'sickert-ennui.jpg': 'R', 'schjerfbeck-convalescent.jpg': 'R',
   'calypso.jpg': 'L', 'repin.jpg': 'L', 'tiger.jpg': 'L',
@@ -235,7 +238,7 @@ const POOL = [
   'barracoon.jpg', 'caitlins-world.jpg', 'christinas.jpg', 'wyeth-adrift.jpg', 'wyeth-maypole.jpg', 'wyeth-donkey.jpg', 'dying-bird.jpg',
   'venice.jpg', 'nonchaloir.jpg', 'carnation.jpg', 'granada.jpg', 'sargent-dinner.jpg', 'eljaleo.jpg', 'sargent-gassed.jpg',
   'automat.jpg', 'hopper-roomny.jpg', 'hopper-elevenam.jpg', 'hopper-soirbleu.jpg', 'hopper-nymovie.jpg', 'hopper-nyinterior.jpg', 'hopper-gas.jpg', 'hopper-hotelrr.jpg',
-  'munch-sick.jpg', 'munch-kiss.jpg', 'munch-peonies.jpg',
+  'munch-sick.jpg', 'munch-kiss.jpg', 'munch-peonies.jpg', 'munch-deadmother.jpg', 'vonmax-anatom.jpg',
   'schiele.jpg', 'schiele2.jpg', 'peschka.jpg',
   'bellows-club.jpg', 'bellows-stag.jpg',
   'labsinthe.jpg', 'lautrec.jpg', 'manet-bar.jpg', 'cezanne-cards.jpg', 'ensor.jpg', 'monet-parasol.jpg', 'magritte.jpg', 'whistler-nocturne.jpg',
