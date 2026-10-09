@@ -59,6 +59,8 @@ const META = {
   'ensor.jpg':          { title: 'The Drunkards', artist: 'James Ensor', year: '1883', minH: 48 },
   'monet-parasol.jpg':  { title: 'Woman with a Parasol', artist: 'Claude Monet', year: '1875' },
   'monet-camille.jpg':  { title: 'Camille Monet on her Deathbed', artist: 'Claude Monet', year: '1879' },
+  'malevich-redcavalry.jpg': { title: 'Red Cavalry Riding', artist: 'Kazimir Malevich', year: 'c. 1932', minH: 44 },
+  'taeuberarp-verticalhorizontal.jpg': { title: 'Vertical-Horizontal Composition', artist: 'Sophie Taeuber-Arp', year: '1916' },
   'bellows-club.jpg':   { title: 'Club Night', artist: 'George Bellows', year: '1907', minH: 50 },
   'bellows-stag.jpg':   { title: "Stag at Sharkey's", artist: 'George Bellows', year: '1909', minH: 50 },
   'magritte.jpg':       { title: 'The Lovers', artist: 'René Magritte', year: '1928', minH: 46 },
@@ -153,7 +155,7 @@ const SHOWN = 14                     // paintings per gallery
 const LEAD = 'ravivarma2.jpg'        // the Indian lady leads the first gallery
 const AREA = 2600, GMIN = 34, GMAX = 76         // Cargo-flavored ribbon: moderate size range
 const GMAX_TABLET = 72                          // iPad: leaves a band under the strip for the reshuffle button
-const GMAX_PHONE = 76                           // phone: no controls to make room for, so the art fills more
+const GMAX_PHONE = 72                           // phone: leaves a band under the strip for the reshuffle button
 const RHY = [1.28, 0.82, 1.08, 0.92, 1.2, 0.8, 1.0, 0.95, 1.15, 0.86]   // size cadence by position (big -> small rhythm)
 const GAPS = [4.6, 1.5, 2.8, 1.8, 4.2, 1.4, 2.3, 2.0, 3.8, 1.6]          // whitespace cadence (vw): generous around big pieces
 const NUDGE = [0, -6, 5, 7, -4, 6, -7, 4, -5, 6]                          // subtle fixed vertical nudge (vh), eased onto smaller pieces
@@ -248,6 +250,7 @@ const POOL = [
   // — newly catalogued, widening the pool —
   'blue-morning.jpg', 'boar-lane.jpg', 'homer-hurricane.jpg', 'simplon.jpg',
   'klimt-beech.jpg', 'friedrich-abbey.jpg', 'turner-rain.jpg', 'monet-poppies.jpg', 'monet-parliament.jpg', 'monet-waterloo.jpg', 'monet-camille.jpg',
+  'malevich-redcavalry.jpg', 'taeuberarp-verticalhorizontal.jpg',
   'matisse-conv.jpg', 'matisse-redstudio.jpg', 'hitchcock-tulip.jpg', 'bellows-newyork.jpg', 'bellows-summernight.jpg',
   'mondrian-tableau.jpg', 'kandinsky-akhtyrka.jpg', 'klimt-hygieia.jpg', 'ravivarma-mirror.jpg',
   // — second wave —
