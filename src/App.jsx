@@ -156,7 +156,7 @@ const GAZE = {
 }
 const gazeOf = (s) => GAZE[s] || 'F'
 
-const SHOWN = 14                     // paintings per gallery
+const SHOWN = 24                     // paintings per gallery
 const LEAD = 'ravivarma2.jpg'        // the Indian lady leads the first gallery
 const AREA = 2600, GMIN = 34, GMAX = 76         // Cargo-flavored ribbon: moderate size range
 const GMAX_TABLET = 72                          // iPad: leaves a band under the strip for the reshuffle button
