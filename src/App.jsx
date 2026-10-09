@@ -114,6 +114,7 @@ const META = {
   'wyeth-floodplain.jpg':   { title: 'Flood Plain', artist: 'Andrew Wyeth', year: '1986', minH: 44 },
   'wyeth-perpetualcare.jpg':{ title: 'Perpetual Care', artist: 'Andrew Wyeth', year: '1961', minH: 48 },
   'vallotton-wind.jpg':     { title: 'The Wind', artist: 'Félix Vallotton', year: '1910', minH: 46 },
+  'vallotton-ballon.jpg':   { title: 'The Ball', artist: 'Félix Vallotton', year: '1899', minH: 46 },
   'henri-volendam.jpg':     { title: 'Volendam Street Scene', artist: 'Robert Henri', year: '1910', minH: 46 },
   'sargent-olive.jpg':      { title: 'Wild Olive, Majorca', artist: 'John Singer Sargent', year: 'c. 1908', minH: 46 },
   'monadnock.jpg':          { title: 'Mount Monadnock', artist: 'Abbott Handerson Thayer', year: 'c. 1914', minH: 46 },
@@ -144,7 +145,7 @@ const GAZE = {
      direction. The rest are landscapes, abstractions, frontal portraits, or
      two-figure scenes already facing each other, where 'F' is the right answer. */
   'wyeth-adrift.jpg': 'R', 'sargent-jaleo.jpg': 'L', 'munch-kiss.jpg': 'L', 'munch-peonies.jpg': 'L',
-  'vonmax-anatom.jpg': 'L',
+  'vonmax-anatom.jpg': 'L', 'vallotton-ballon.jpg': 'L',
   'vangogh-oldman.jpg': 'L', 'rojas-miseria.jpg': 'R', 'ryder-racetrack.jpg': 'L',
   'sickert-ennui.jpg': 'R', 'schjerfbeck-convalescent.jpg': 'R',
   'calypso.jpg': 'L', 'repin.jpg': 'L', 'tiger.jpg': 'L',
@@ -257,7 +258,7 @@ const POOL = [
   'ryder-racetrack.jpg', 'hitchcock-vanquished.jpg', 'wyeth-bluedoor.jpg', 'mondrian-castle.jpg', 'munch-horsecart.jpg',
   'hitchcock-flight.jpg', 'kandinsky-composition.jpg',
   'hopper-paintermodel.jpg', 'hopper-railroad.jpg', 'hopper-sundaymorning.jpg', 'rojas-miseria.jpg',
-  'wyeth-floodplain.jpg', 'wyeth-perpetualcare.jpg', 'vallotton-wind.jpg', 'henri-volendam.jpg', 'sargent-olive.jpg',
+  'wyeth-floodplain.jpg', 'wyeth-perpetualcare.jpg', 'vallotton-wind.jpg', 'vallotton-ballon.jpg', 'henri-volendam.jpg', 'sargent-olive.jpg',
   'monadnock.jpg', 'lake-nemi.jpg', 'seine.jpg',
   // — third wave —
   'vangogh-irises.jpg', 'vangogh-poppyfield.jpg', 'matisse-goldfish.jpg', 'pollock-bluepoles.jpg', 'sargent-jaleo.jpg', 'munch-landscape.jpg',
