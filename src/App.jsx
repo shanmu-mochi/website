@@ -32,6 +32,8 @@ const META = {
   'schjerfbeck-convalescent.jpg': { title: 'The Convalescent', artist: 'Helene Schjerfbeck', year: '1888' },
   'sohlberg-winternight.jpg': { title: 'Winter Night in the Mountains', artist: 'Harald Sohlberg', year: '1914' },
   'sickert-ennui.jpg':  { title: 'Ennui', artist: 'Walter Sickert', year: 'c. 1914', minH: 48 },
+  'sickert-ennui2.jpg': { title: 'Ennui', artist: 'Walter Sickert', year: '1914', minH: 48 },
+  'tagore-journeysend.jpg': { title: 'Journey\u2019s End', artist: 'Abanindranath Tagore', year: 'c. 1913', minH: 46 },
   'nonchaloir.jpg':     { title: 'Nonchaloir (Repose)', artist: 'John Singer Sargent', year: '1911' },
   'venice.jpg':         { title: 'A Street in Venice', artist: 'John Singer Sargent', year: 'c. 1882', minH: 56 },
   'carnation.jpg':      { title: 'Carnation, Lily, Lily, Rose', artist: 'John Singer Sargent', year: '1886' },
@@ -151,7 +153,7 @@ const GAZE = {
   'wyeth-adrift.jpg': 'R', 'sargent-jaleo.jpg': 'L', 'munch-kiss.jpg': 'L', 'munch-peonies.jpg': 'L',
   'vonmax-anatom.jpg': 'L', 'vallotton-ballon.jpg': 'L', 'shergil-bridestoilet.jpg': 'R', 'gwenjohn-convalescent.jpg': 'L',
   'vangogh-oldman.jpg': 'L', 'rojas-miseria.jpg': 'R', 'ryder-racetrack.jpg': 'L',
-  'sickert-ennui.jpg': 'R', 'schjerfbeck-convalescent.jpg': 'R',
+  'sickert-ennui.jpg': 'R', 'sickert-ennui2.jpg': 'R', 'tagore-journeysend.jpg': 'L', 'schjerfbeck-convalescent.jpg': 'R',
   'calypso.jpg': 'L', 'repin.jpg': 'L', 'tiger.jpg': 'L',
 }
 const gazeOf = (s) => GAZE[s] || 'F'
@@ -251,7 +253,7 @@ const POOL = [
   'bellows-club.jpg', 'bellows-stag.jpg',
   'labsinthe.jpg', 'lautrec.jpg', 'manet-bar.jpg', 'cezanne-cards.jpg', 'ensor.jpg', 'monet-parasol.jpg', 'magritte.jpg', 'whistler-nocturne.jpg',
   'vangogh-oldman.jpg', 'vangogh-girlinwhite.jpg', 'vangogh-ward.jpg', 'vangogh-courtyard.jpg', 'pollock-west.jpg', 'blume-head.jpg', 'russian-couple.jpg',
-  'bellei.jpg', 'bastien.jpg', 'paolo.jpg', 'millet.jpg', 'calypso.jpg', 'kollwitz.jpg', 'hammershoi.jpg', 'schjerfbeck-convalescent.jpg', 'sickert-ennui.jpg', 'sohlberg-winternight.jpg', 'repin.jpg', 'apothecary.jpg', 'tiger.jpg',
+  'bellei.jpg', 'bastien.jpg', 'paolo.jpg', 'millet.jpg', 'calypso.jpg', 'kollwitz.jpg', 'hammershoi.jpg', 'schjerfbeck-convalescent.jpg', 'sickert-ennui.jpg', 'sickert-ennui2.jpg', 'tagore-journeysend.jpg', 'sohlberg-winternight.jpg', 'repin.jpg', 'apothecary.jpg', 'tiger.jpg',
   // — newly catalogued, widening the pool —
   'blue-morning.jpg', 'boar-lane.jpg', 'homer-hurricane.jpg', 'simplon.jpg',
   'klimt-beech.jpg', 'friedrich-abbey.jpg', 'turner-rain.jpg', 'monet-poppies.jpg', 'monet-parliament.jpg', 'monet-waterloo.jpg', 'monet-camille.jpg',
