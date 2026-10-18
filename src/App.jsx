@@ -18,6 +18,7 @@ const META = {
   'ravivarma2.jpg':     { title: 'Lady in a Black Saree', artist: 'Raja Ravi Varma', year: 'c. 1893' },
   'ravivarma.jpg':      { title: 'Radha in the Moonlight', artist: 'Raja Ravi Varma', year: 'c. 1890' },
   'ravivarma3.jpg':     { title: 'There Comes Papa', artist: 'Raja Ravi Varma', year: '1893' },
+  'ravivarma-shakuntala.jpg': { title: 'Shakuntala', artist: 'Raja Ravi Varma', year: '1898' },
   'shergil-brahmacharis.jpg': { title: 'Brahmacharis', artist: 'Amrita Sher-Gil', year: '1937', minH: 46 },
   'shergil-bridestoilet.jpg': { title: 'The Bride\u2019s Toilet', artist: 'Amrita Sher-Gil', year: '1937', minH: 46 },
   'tagore-staircase.jpg': { title: 'Meeting at the Staircase', artist: 'Gaganendranath Tagore', year: 'c. 1920\u201325' },
@@ -140,7 +141,7 @@ const META = {
    anything unlisted is 'F' (frontal / back / ambiguous). Used to alternate gaze so
    consecutive figures tend to look toward each other or out to opposite sides. */
 const GAZE = {
-  'ravivarma2.jpg': 'R', 'ravivarma.jpg': 'R', 'ravivarma3.jpg': 'R',
+  'ravivarma2.jpg': 'R', 'ravivarma-shakuntala.jpg': 'R', 'ravivarma.jpg': 'R', 'ravivarma3.jpg': 'R',
   'barracoon.jpg': 'L', 'caitlins-world.jpg': 'L', 'christinas.jpg': 'R',
   'nonchaloir.jpg': 'L', 'eljaleo.jpg': 'L', 'sargent-gassed.jpg': 'R',
   'hopper-elevenam.jpg': 'L', 'hopper-nymovie.jpg': 'R', 'hopper-gas.jpg': 'L',
@@ -158,7 +159,14 @@ const GAZE = {
 const gazeOf = (s) => GAZE[s] || 'F'
 
 const SHOWN = 24                     // paintings per gallery
-const LEAD = 'ravivarma2.jpg'        // the Indian lady leads the first gallery
+/* a first visit always opens on an Indian painting, picked at random from this
+   group. Reshuffling the carousel draws freely from the whole pool. */
+const LEAD_GROUP = [
+  'ravivarma2.jpg', 'ravivarma.jpg', 'ravivarma3.jpg', 'ravivarma-mirror.jpg', 'ravivarma-shakuntala.jpg',
+  'shergil-brahmacharis.jpg', 'shergil-bridestoilet.jpg',
+  'tagore-staircase.jpg', 'tagore-journeysend.jpg',
+].filter((s) => DIMS[s])
+const pickLead = () => LEAD_GROUP[Math.floor(Math.random() * LEAD_GROUP.length)]
 const AREA = 2600, GMIN = 34, GMAX = 76         // Cargo-flavored ribbon: moderate size range
 const GMAX_TABLET = 72                          // iPad: leaves a band under the strip for the reshuffle button
 const GMAX_PHONE = 72                           // phone: leaves a band under the strip for the reshuffle button
@@ -243,7 +251,7 @@ const catOf = (s) => (META[s] && META[s].artist) || s
 const COOLDOWN = 2
 /* the whole cohesive pool (muted figure / scene paintings), drawn from for every gallery */
 const POOL = [
-  'ravivarma2.jpg', 'ravivarma.jpg', 'ravivarma3.jpg', 'shergil-brahmacharis.jpg', 'shergil-bridestoilet.jpg', 'tagore-staircase.jpg', 'gwenjohn-convalescent.jpg',
+  'ravivarma2.jpg', 'ravivarma.jpg', 'ravivarma3.jpg', 'ravivarma-shakuntala.jpg', 'shergil-brahmacharis.jpg', 'shergil-bridestoilet.jpg', 'tagore-staircase.jpg', 'gwenjohn-convalescent.jpg',
   'barracoon.jpg', 'caitlins-world.jpg', 'christinas.jpg', 'wyeth-adrift.jpg', 'wyeth-maypole.jpg', 'wyeth-donkey.jpg', 'dying-bird.jpg',
   'venice.jpg', 'nonchaloir.jpg', 'carnation.jpg', 'granada.jpg', 'sargent-dinner.jpg', 'eljaleo.jpg', 'sargent-gassed.jpg',
   'automat.jpg', 'hopper-roomny.jpg', 'hopper-elevenam.jpg', 'hopper-soirbleu.jpg', 'hopper-nymovie.jpg', 'hopper-nyinterior.jpg', 'hopper-gas.jpg', 'hopper-hotelrr.jpg',
@@ -269,11 +277,12 @@ const POOL = [
   'vangogh-irises.jpg', 'vangogh-poppyfield.jpg', 'matisse-goldfish.jpg', 'pollock-bluepoles.jpg', 'sargent-jaleo.jpg', 'munch-landscape.jpg',
 ].filter((s) => DIMS[s])
 
-/* choose SHOWN paintings, unseen ones first (novelty); opener leads with Ravi Varma */
-function pickSrcs(seen, opener) {
+/* choose SHOWN paintings, unseen ones first (novelty); a lead, when given, is
+   forced into the set and then anchored first by orderCohesive */
+function pickSrcs(seen, lead) {
   const all = shuffle(POOL)
   const chosen = [...all.filter((s) => !seen.has(s)), ...all.filter((s) => seen.has(s))]
-  const out = opener ? [LEAD, ...chosen.filter((s) => s !== LEAD)] : chosen
+  const out = lead ? [lead, ...chosen.filter((s) => s !== lead)] : chosen
   return out.slice(0, SHOWN)
 }
 /* color cohesion: how many of one painting's dominant colors have a near match in another's.
@@ -317,7 +326,8 @@ function orderCohesive(srcs, lead) {
   return res
 }
 function buildGallery(seen, opener) {
-  return sizeSet(orderCohesive(pickSrcs(seen, opener), opener ? LEAD : null))
+  const lead = opener ? pickLead() : null    // one draw, used by both the pick and the ordering
+  return sizeSet(orderCohesive(pickSrcs(seen, lead), lead))
 }
 
 /* excerpt = draft opening line (placeholder voice; edit freely or I can pull the real first lines) */
@@ -362,7 +372,7 @@ const NAVLINKS = [['Stories', '#stories'], ['Papers', '#papers'], ['Awards', '#a
 export default function App() {
   const seenRef = useRef(new Set())          // paintings the visitor has already seen
   const [gallery, setGallery] = useState(() => {
-    const g = buildGallery(seenRef.current, true)   // opener leads with Ravi Varma
+    const g = buildGallery(seenRef.current, true)   // opener leads with an Indian painting
     g.forEach((x) => seenRef.current.add(x.src))
     return g
   })
