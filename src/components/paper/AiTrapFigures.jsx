@@ -62,10 +62,10 @@ export function AITrapFig3({ num = 'Figure 3. Nothing is lost until the leftover
           <text className="annot-key" x={x(tBar)} y={padT - 12} textAnchor="middle">θ̄ ≈ 0.32</text>
           <text className="region-label" x={x(0.03)} y={y(eff(0.16)) - 26}>IDENTICAL</text>
           <text className="region-sub" x={x(0.03)} y={y(eff(0.16)) - 12}>{nw ? 'money only moves' : 'skimming only moves money around'}</text>
-          <text className="region-label" x={nw ? x(0.34) : x(0.355)} y={y(eff(0.47)) + 4}>THE LEAK</text>
-          <text className="region-sub" x={nw ? x(0.34) : x(0.355)} y={y(eff(0.47)) + 18}>{nw ? 'complex care loses its' : 'complex care loses its provider'}</text>
-          {nw ? <text className="region-sub" x={x(0.34)} y={y(eff(0.47)) + 30}>provider</text> : null}
-          <g transform={`translate(${padL + 8}, ${H - padB - 14})`}>
+          <text className="region-label" x={nw ? x(0.30) : x(0.37)} y={(nw ? y(eff(0.30)) : y(eff(0.40) - leak(0.40))) + (nw ? 48 : 46)}>THE LEAK</text>
+          <text className="region-sub" x={nw ? x(0.30) : x(0.37)} y={(nw ? y(eff(0.30)) : y(eff(0.40) - leak(0.40))) + (nw ? 62 : 60)}>{nw ? 'complex care loses its' : 'complex care loses its provider'}</text>
+          {nw ? <text className="region-sub" x={x(0.30)} y={y(eff(0.30)) + 74}>provider</text> : null}
+          <g transform={`translate(${nw ? W - padR - 150 : W - padR - 184}, ${H - padB - 16})`}>
             <line className="curve" x1="0" y1="0" x2="20" y2="0" /><text className="axt" x="26" y="3">Market</text>
             <line className="curve dashed" x1={nw ? 84 : 96} y1="0" x2={nw ? 104 : 116} y2="0" /><text className="axt" x={nw ? 110 : 122} y="3">Planner</text>
           </g>
@@ -121,10 +121,23 @@ export function AITrapFig4({ num = 'Figure 4. Capability runs, capacity walks' }
         <g className="cr-fade">
           <text className="annot-key" x={padL + 6} y={yB(floor) - 8}>{nw ? 'the floor' : 'the floor: doctors always needed'}</text>
           <circle className="mark" cx={x(cross)} cy={yB(floor)} r="4.5" />
-          <text className="region-label" x={nw ? x(8) : x(19.5)} y={nw ? yB(0.1) : yB(0.22)}>THE SHORTFALL</text>
-          <text className="region-sub" x={nw ? x(8) : x(19.5)} y={(nw ? yB(0.1) : yB(0.22)) + 14}>{nw ? 'cannot be rebuilt in time' : 'cannot be rebuilt inside the training lag'}</text>
+          {nw ? (
+            <>
+              <text className="region-label" x={x(8)} y={yB(0.1)}>THE SHORTFALL</text>
+              <text className="region-sub" x={x(8)} y={yB(0.1) + 14}>cannot be rebuilt in time</text>
+            </>
+          ) : (
+            /* right-aligned in the widest part of the wedge, and split in two:
+               one long line is wide enough that the decaying curve crosses it
+               wherever it sits */
+            <>
+              <text className="region-label" x={x(29.6)} y={yB(0.34)} textAnchor="end">THE SHORTFALL</text>
+              <text className="region-sub" x={x(29.6)} y={yB(0.34) + 14} textAnchor="end">cannot be rebuilt inside</text>
+              <text className="region-sub" x={x(29.6)} y={yB(0.34) + 27} textAnchor="end">the training lag</text>
+            </>
+          )}
           <text className="annot" x={nw ? x(11) : x(12)} y={nw ? yB(0.92) : yB(0.86)}>if we keep training</text>
-          <text className="annot" x={nw ? x(1) : x(10.6)} y={nw ? yB(0.5) : yB(0.58)}>market path</text>
+          <text className="annot" x={nw ? x(1) : x(9.2)} y={nw ? yB(0.5) : yB(0.46)}>market path</text>
         </g>
         <text className="axt" x={(padL + W - padR) / 2} y={H - 12} textAnchor="middle">time   →</text>
         <text className="axt" transform={`translate(${nw ? 15 : 20}, ${(t2.top + t2.bot) / 2}) rotate(-90)`} textAnchor="middle">{nw ? 'senior capacity' : 'senior clinician capacity'}</text>
@@ -260,8 +273,8 @@ export function AllocationSplit({ num = 'Figure 3. The efficient split and the c
                   <>
                     <text className="clab" x={padL} y={r.y - 26}>{r.k}</text>
                     <text className="clab-mute" x={padL} y={r.y - 10}>{r.s}</text>
-                    <text className="vlab" x={padL + 8} y={r.y + barH + 18}>{r.a}</text>
-                    <text className="vlab" x={padL + innerW} y={r.y + barH + 18} textAnchor="end">{r.b}</text>
+                    <text className="vlab" x={padL + 8} y={r.y + 28}>{r.a}</text>
+                    <text className="vlab" x={padL + innerW * theta + 8} y={r.y + 28}>{r.b}</text>
                   </>
                 ) : (
                   <>
@@ -420,7 +433,7 @@ export function PriceVsCost({ num = 'Figure 2. Price is flat. Cost is not.' }) {
         <path d={smooth(pts)} className="curve draw" />
         <g className="cr-fade">
           <text className="clab" x={nw ? x(0.02) : W - padR + 10} y={nw ? y(1) - 10 : y(1) + 4}>what a visit pays</text>
-          <text className="clab" x={nw ? x(0.98) : W - padR + 10} y={nw ? y(w(1)) + 22 : y(w(1)) + 4} textAnchor={nw ? 'end' : 'start'}>what it costs</text>
+          <text className="clab" x={nw ? x(0.30) : W - padR + 10} y={nw ? y(w(0.30)) + 26 : y(w(1)) + 4} textAnchor="start">what it costs</text>
           <line className="dropline" x1={x(0.5)} y1={padT} x2={x(0.5)} y2={H - padB} />
           <circle className="mark" cx={x(0.5)} cy={y(1)} r="5" />
           <text className="annot-key" x={x(0.5)} y={padT - 16} textAnchor="middle">break-even case</text>

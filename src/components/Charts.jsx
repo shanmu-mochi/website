@@ -70,14 +70,14 @@ export function AITrapFig2({ num = 'Figure 2. The leftover pool goes broke early
         <g className="cr-fade">
           <line className="dropline" x1={x(0.32)} y1={padT} x2={x(0.32)} y2={H - padB} />
           <line className="dropline" x1={x(0.50)} y1={padT} x2={x(0.50)} y2={H - padB} />
-          <text className="region-label" x={x(0.05)} y={y(0.42)}>SOLVENT</text>
+          <text className="region-label" x={x(0.04)} y={y(nw ? 0.20 : 0.42)}>SOLVENT</text>
           {nw ? (
             <>
-              <text className="region-label" x={x(0.40)} y={y(-0.14)}>POOL</text>
-              <text className="region-label" x={x(0.40)} y={y(-0.14) + 15}>UNDERWATER</text>
+              <text className="region-label" x={x(0.40)} y={y(-0.12)}>POOL</text>
+              <text className="region-label" x={x(0.40)} y={y(-0.12) + 15}>UNDERWATER</text>
             </>
           ) : (
-            <text className="region-label" x={x(0.62)} y={y(-0.14)}>POOL UNDERWATER</text>
+            <text className="region-label" x={x(0.55)} y={y(-0.06)}>POOL UNDERWATER</text>
           )}
           <circle className="mark" cx={x(0.32)} cy={y(0)} r="4.5" />
           <text className="annot-key" x={x(0.32)} y={padT - 10} textAnchor="middle">θ̄ ≈ 0.32</text>

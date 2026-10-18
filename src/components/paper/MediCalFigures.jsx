@@ -239,7 +239,7 @@ export function LamaTrend({ num = 'Figure 5. Share of emergency patients who lea
         <g className="cr-fade">
           {LAMA_D.map((v, i) => <circle key={i} className="dot pop" cx={x(i)} cy={y(v)} r="3.2" style={{ '--o': Math.min(0.55, (i * 70) / 1500) }} />)}
           {LAMA_N.map((v, i) => <circle key={i} className="dot-open pop" cx={x(i)} cy={y(v)} r="3.2" style={{ '--o': Math.min(0.55, (120 + i * 70) / 1500) }} />)}
-          <text className="clab" x={nw ? x(4) : x(4) + 12} y={nw ? y(LAMA_D[4]) - 12 : y(LAMA_D[4]) + 4} textAnchor={nw ? 'end' : 'start'}>Desert</text>
+          <text className="clab" x={nw ? x(4) : x(4) + 12} y={nw ? y(LAMA_D[4]) - 22 : y(LAMA_D[4]) + 4} textAnchor={nw ? 'end' : 'start'}>Desert</text>
           <text className="clab-mute" x={nw ? x(4) : x(4) + 12} y={nw ? y(LAMA_N[4]) + 20 : y(LAMA_N[4]) + 4} textAnchor={nw ? 'end' : 'start'}>Rest of state</text>
           <text className="annot-key" x={nw ? x(1.3) : x(1)} y={y(3.78)} textAnchor="middle">{nw ? 'gap peaks: 1.19 pts' : 'gap peaks at 1.19 pts'}</text>
         </g>
