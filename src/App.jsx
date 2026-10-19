@@ -163,7 +163,10 @@ const SHOWN = 24                     // paintings per gallery
 /* a first visit always opens on an Indian painting, picked at random from this
    group. Reshuffling the carousel draws freely from the whole pool. */
 const LEAD_GROUP = [
-  'ravivarma2.jpg', 'ravivarma.jpg', 'ravivarma3.jpg', 'ravivarma-mirror.jpg', 'ravivarma-shakuntala.jpg',
+  // ravivarma-mirror is left out on purpose: its only source is 429x640, so the
+  // never-upscale cap renders it ~320px tall on a retina screen - fine mid-strip,
+  // far too small to open on. It stays in POOL.
+  'ravivarma2.jpg', 'ravivarma.jpg', 'ravivarma3.jpg', 'ravivarma-shakuntala.jpg',
   'shergil-brahmacharis.jpg', 'shergil-bridestoilet.jpg', 'shergil-threegirls.jpg',
   'tagore-staircase.jpg', 'tagore-journeysend.jpg',
 ].filter((s) => DIMS[s])
@@ -171,6 +174,7 @@ const pickLead = () => LEAD_GROUP[Math.floor(Math.random() * LEAD_GROUP.length)]
 const AREA = 2600, GMIN = 34, GMAX = 76         // Cargo-flavored ribbon: moderate size range
 const GMAX_TABLET = 72                          // iPad: leaves a band under the strip for the reshuffle button
 const GMAX_PHONE = 72                           // phone: leaves a band under the strip for the reshuffle button
+const LEAD_MIN = 64                             // vh: the opening painting carries the first screen, so never let it come up short
 const RHY = [1.28, 0.82, 1.08, 0.92, 1.2, 0.8, 1.0, 0.95, 1.15, 0.86]   // size cadence by position (big -> small rhythm)
 const GAPS = [4.6, 1.5, 2.8, 1.8, 4.2, 1.4, 2.3, 2.0, 3.8, 1.6]          // whitespace cadence (vw): generous around big pieces
 const NUDGE = [0, -6, 5, 7, -4, 6, -7, 4, -5, 6]                          // subtle fixed vertical nudge (vh), eased onto smaller pieces
@@ -223,7 +227,11 @@ function sizeSet(srcs) {
     const qMax = (d.h * 100) / (dpr * vhPx)           // never upscale past native resolution
     const meta = META[src] || { title: '', artist: '' }
     // equal visual area x a repeating cadence -> structured big/small variation
-    const base = clamp(Math.sqrt(AREA / ar) * RHY[i % RHY.length], Math.max(GMIN, meta.minH || 0), Math.min(gmax, qMax))
+    const cap = Math.min(gmax, qMax)
+    // equal area leaves wide landscapes short, which looks weak in the lead slot,
+    // so the opener gets a floor - still under the never-upscale cap
+    const floor = i === 0 ? Math.max(GMIN, meta.minH || 0, Math.min(LEAD_MIN, cap)) : Math.max(GMIN, meta.minH || 0)
+    const base = clamp(Math.sqrt(AREA / ar) * RHY[i % RHY.length], floor, cap)
     const h = base, w = h * ar
     const tallness = clamp((base - GMIN) / (GMAX - GMIN), 0, 1)
     const y = NUDGE[i % NUDGE.length] * (1 - tallness)   // small pieces nudged up/down, big ones stay centred
