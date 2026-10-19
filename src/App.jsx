@@ -72,6 +72,7 @@ const META = {
   'bellows-club.jpg':   { title: 'Club Night', artist: 'George Bellows', year: '1907', minH: 50 },
   'bellows-stag.jpg':   { title: "Stag at Sharkey's", artist: 'George Bellows', year: '1909', minH: 50 },
   'magritte.jpg':       { title: 'The Lovers', artist: 'René Magritte', year: '1928', minH: 46 },
+  'magritte-assassin.jpg': { title: 'The Menaced Assassin', artist: 'Ren\u00e9 Magritte', year: '1927', minH: 40 },
   'bellei.jpg':         { title: 'An Embrace', artist: 'Gaetano Bellei', year: 'c. 1900', minH: 44 },
   'bastien.jpg':        { title: 'Rural Love', artist: 'Jules Bastien-Lepage', year: '1882', minH: 46 },
   'paolo.jpg':          { title: 'Paolo and Francesca', artist: 'Alexandre Cabanel', year: '1870', minH: 42 },
@@ -268,7 +269,7 @@ const POOL = [
   'munch-sick.jpg', 'munch-kiss.jpg', 'munch-peonies.jpg', 'munch-deadmother.jpg', 'vonmax-anatom.jpg',
   'schiele.jpg', 'schiele2.jpg', 'peschka.jpg',
   'bellows-club.jpg', 'bellows-stag.jpg',
-  'labsinthe.jpg', 'lautrec.jpg', 'manet-bar.jpg', 'cezanne-cards.jpg', 'ensor.jpg', 'monet-parasol.jpg', 'magritte.jpg', 'whistler-nocturne.jpg',
+  'labsinthe.jpg', 'lautrec.jpg', 'manet-bar.jpg', 'cezanne-cards.jpg', 'ensor.jpg', 'monet-parasol.jpg', 'magritte.jpg', 'magritte-assassin.jpg', 'whistler-nocturne.jpg',
   'vangogh-oldman.jpg', 'vangogh-girlinwhite.jpg', 'vangogh-ward.jpg', 'vangogh-courtyard.jpg', 'pollock-west.jpg', 'blume-head.jpg', 'russian-couple.jpg',
   'bellei.jpg', 'bastien.jpg', 'paolo.jpg', 'millet.jpg', 'calypso.jpg', 'kollwitz.jpg', 'hammershoi.jpg', 'schjerfbeck-convalescent.jpg', 'sickert-ennui.jpg', 'tagore-journeysend.jpg', 'sohlberg-winternight.jpg', 'repin.jpg', 'apothecary.jpg', 'tiger.jpg',
   // — newly catalogued, widening the pool —
