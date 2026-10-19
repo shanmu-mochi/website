@@ -470,7 +470,10 @@ export default function App() {
       const m = Math.abs(v)
       return m < 1 ? 0 : clamp(Math.sign(v) * REF * Math.pow(m / REF, GAMMA) * POWER)
     }
-    let offset = 0, vel = AUTO, copyW = 1, raf, last = performance.now()
+    // start a little past the wrap, so the tail of the last painting shows at the
+    // left edge and the opening one sits inside the frame instead of flush against it
+    const LEADIN = Math.round(Math.min(180, Math.max(56, (gal.clientWidth || 1200) * 0.12)))
+    let offset = LEADIN, vel = AUTO, copyW = 1, raf, last = performance.now()
     let down = false, dragging = false, lastX = 0, moved = 0
     let wheelV = 0, wheelT = 0
     const samples = []
