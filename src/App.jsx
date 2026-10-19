@@ -174,7 +174,7 @@ const pickLead = () => LEAD_GROUP[Math.floor(Math.random() * LEAD_GROUP.length)]
 const AREA = 2600, GMIN = 34, GMAX = 76         // Cargo-flavored ribbon: moderate size range
 const GMAX_TABLET = 72                          // iPad: leaves a band under the strip for the reshuffle button
 const GMAX_PHONE = 72                           // phone: leaves a band under the strip for the reshuffle button
-const LEAD_MIN = 64                             // vh: the opening painting carries the first screen, so never let it come up short
+const LEAD_MIN = 54, LEAD_MAX = 64              // vh: the opening painting sits in a band - never a thumbnail, never overbearing
 const RHY = [1.28, 0.82, 1.08, 0.92, 1.2, 0.8, 1.0, 0.95, 1.15, 0.86]   // size cadence by position (big -> small rhythm)
 const GAPS = [4.6, 1.5, 2.8, 1.8, 4.2, 1.4, 2.3, 2.0, 3.8, 1.6]          // whitespace cadence (vw): generous around big pieces
 const NUDGE = [0, -6, 5, 7, -4, 6, -7, 4, -5, 6]                          // subtle fixed vertical nudge (vh), eased onto smaller pieces
@@ -227,9 +227,9 @@ function sizeSet(srcs) {
     const qMax = (d.h * 100) / (dpr * vhPx)           // never upscale past native resolution
     const meta = META[src] || { title: '', artist: '' }
     // equal visual area x a repeating cadence -> structured big/small variation
-    const cap = Math.min(gmax, qMax)
-    // equal area leaves wide landscapes short, which looks weak in the lead slot,
-    // so the opener gets a floor - still under the never-upscale cap
+    // equal area leaves wide landscapes short in the lead slot and lets portraits
+    // run the full height, so the opener is held inside a band instead
+    const cap = i === 0 ? Math.min(gmax, qMax, LEAD_MAX) : Math.min(gmax, qMax)
     const floor = i === 0 ? Math.max(GMIN, meta.minH || 0, Math.min(LEAD_MIN, cap)) : Math.max(GMIN, meta.minH || 0)
     const base = clamp(Math.sqrt(AREA / ar) * RHY[i % RHY.length], floor, cap)
     const h = base, w = h * ar
