@@ -21,6 +21,7 @@ const META = {
   'ravivarma-shakuntala.jpg': { title: 'Shakuntala', artist: 'Raja Ravi Varma', year: '1898' },
   'shergil-brahmacharis.jpg': { title: 'Brahmacharis', artist: 'Amrita Sher-Gil', year: '1937', minH: 46 },
   'shergil-bridestoilet.jpg': { title: 'The Bride\u2019s Toilet', artist: 'Amrita Sher-Gil', year: '1937', minH: 46 },
+  'shergil-threegirls.jpg': { title: 'Group of Three Girls', artist: 'Amrita Sher-Gil', year: '1935' },
   'tagore-staircase.jpg': { title: 'Meeting at the Staircase', artist: 'Gaganendranath Tagore', year: 'c. 1920\u201325' },
   'gwenjohn-convalescent.jpg': { title: 'The Convalescent', artist: 'Gwen John', year: 'c. 1923\u201324' },
   'barracoon.jpg':      { title: 'Barracoon', artist: 'Andrew Wyeth', year: '1976' },
@@ -151,7 +152,7 @@ const GAZE = {
      direction. The rest are landscapes, abstractions, frontal portraits, or
      two-figure scenes already facing each other, where 'F' is the right answer. */
   'wyeth-adrift.jpg': 'R', 'sargent-jaleo.jpg': 'L', 'munch-kiss.jpg': 'L', 'munch-peonies.jpg': 'L',
-  'vonmax-anatom.jpg': 'L', 'vallotton-ballon.jpg': 'L', 'shergil-bridestoilet.jpg': 'R', 'gwenjohn-convalescent.jpg': 'L',
+  'vonmax-anatom.jpg': 'L', 'vallotton-ballon.jpg': 'L', 'shergil-bridestoilet.jpg': 'R', 'shergil-threegirls.jpg': 'L', 'gwenjohn-convalescent.jpg': 'L',
   'vangogh-oldman.jpg': 'L', 'rojas-miseria.jpg': 'R', 'ryder-racetrack.jpg': 'L',
   'sickert-ennui.jpg': 'R', 'tagore-journeysend.jpg': 'L', 'schjerfbeck-convalescent.jpg': 'R',
   'calypso.jpg': 'L', 'repin.jpg': 'L', 'tiger.jpg': 'L',
@@ -163,7 +164,7 @@ const SHOWN = 24                     // paintings per gallery
    group. Reshuffling the carousel draws freely from the whole pool. */
 const LEAD_GROUP = [
   'ravivarma2.jpg', 'ravivarma.jpg', 'ravivarma3.jpg', 'ravivarma-mirror.jpg', 'ravivarma-shakuntala.jpg',
-  'shergil-brahmacharis.jpg', 'shergil-bridestoilet.jpg',
+  'shergil-brahmacharis.jpg', 'shergil-bridestoilet.jpg', 'shergil-threegirls.jpg',
   'tagore-staircase.jpg', 'tagore-journeysend.jpg',
 ].filter((s) => DIMS[s])
 const pickLead = () => LEAD_GROUP[Math.floor(Math.random() * LEAD_GROUP.length)]
@@ -251,7 +252,7 @@ const catOf = (s) => (META[s] && META[s].artist) || s
 const COOLDOWN = 2
 /* the whole cohesive pool (muted figure / scene paintings), drawn from for every gallery */
 const POOL = [
-  'ravivarma2.jpg', 'ravivarma.jpg', 'ravivarma3.jpg', 'ravivarma-shakuntala.jpg', 'shergil-brahmacharis.jpg', 'shergil-bridestoilet.jpg', 'tagore-staircase.jpg', 'gwenjohn-convalescent.jpg',
+  'ravivarma2.jpg', 'ravivarma.jpg', 'ravivarma3.jpg', 'ravivarma-shakuntala.jpg', 'shergil-brahmacharis.jpg', 'shergil-bridestoilet.jpg', 'shergil-threegirls.jpg', 'tagore-staircase.jpg', 'gwenjohn-convalescent.jpg',
   'barracoon.jpg', 'caitlins-world.jpg', 'christinas.jpg', 'wyeth-adrift.jpg', 'wyeth-maypole.jpg', 'wyeth-donkey.jpg', 'dying-bird.jpg',
   'venice.jpg', 'nonchaloir.jpg', 'carnation.jpg', 'granada.jpg', 'sargent-dinner.jpg', 'eljaleo.jpg', 'sargent-gassed.jpg',
   'automat.jpg', 'hopper-roomny.jpg', 'hopper-elevenam.jpg', 'hopper-soirbleu.jpg', 'hopper-nymovie.jpg', 'hopper-nyinterior.jpg', 'hopper-gas.jpg', 'hopper-hotelrr.jpg',
