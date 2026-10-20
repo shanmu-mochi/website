@@ -19,6 +19,7 @@ const META = {
   'ravivarma.jpg':      { title: 'Radha in the Moonlight', artist: 'Raja Ravi Varma', year: 'c. 1890' },
   'ravivarma3.jpg':     { title: 'There Comes Papa', artist: 'Raja Ravi Varma', year: '1893' },
   'ravivarma-shakuntala.jpg': { title: 'Shakuntala', artist: 'Raja Ravi Varma', year: '1898' },
+  'ravivarma-fruit.jpg': { title: 'Woman Holding a Fruit', artist: 'Raja Ravi Varma', year: 'late 19th c.' },
   'shergil-brahmacharis.jpg': { title: 'Brahmacharis', artist: 'Amrita Sher-Gil', year: '1937', minH: 46 },
   'shergil-bridestoilet.jpg': { title: 'The Bride\u2019s Toilet', artist: 'Amrita Sher-Gil', year: '1937', minH: 46 },
   'shergil-threegirls.jpg': { title: 'Group of Three Girls', artist: 'Amrita Sher-Gil', year: '1935' },
@@ -144,7 +145,7 @@ const META = {
    anything unlisted is 'F' (frontal / back / ambiguous). Used to alternate gaze so
    consecutive figures tend to look toward each other or out to opposite sides. */
 const GAZE = {
-  'ravivarma2.jpg': 'R', 'ravivarma-shakuntala.jpg': 'R', 'ravivarma.jpg': 'R', 'ravivarma3.jpg': 'R',
+  'ravivarma2.jpg': 'R', 'ravivarma-shakuntala.jpg': 'R', 'ravivarma-fruit.jpg': 'L', 'ravivarma.jpg': 'R', 'ravivarma3.jpg': 'R',
   'barracoon.jpg': 'L', 'caitlins-world.jpg': 'L', 'christinas.jpg': 'R',
   'nonchaloir.jpg': 'L', 'eljaleo.jpg': 'L', 'sargent-gassed.jpg': 'R',
   'hopper-elevenam.jpg': 'L', 'hopper-nymovie.jpg': 'R', 'hopper-gas.jpg': 'L',
@@ -168,7 +169,7 @@ const LEAD_GROUP = [
   // ravivarma-mirror is left out on purpose: its only source is 429x640, so the
   // never-upscale cap renders it ~320px tall on a retina screen - fine mid-strip,
   // far too small to open on. It stays in POOL.
-  'ravivarma2.jpg', 'ravivarma.jpg', 'ravivarma3.jpg', 'ravivarma-shakuntala.jpg',
+  'ravivarma2.jpg', 'ravivarma.jpg', 'ravivarma3.jpg', 'ravivarma-shakuntala.jpg', 'ravivarma-fruit.jpg',
   'shergil-brahmacharis.jpg', 'shergil-bridestoilet.jpg', 'shergil-threegirls.jpg', 'shergil-fruitvendors.jpg',
   'tagore-staircase.jpg', 'tagore-journeysend.jpg',
 ].filter((s) => DIMS[s])
@@ -262,7 +263,7 @@ const catOf = (s) => (META[s] && META[s].artist) || s
 const COOLDOWN = 2
 /* the whole cohesive pool (muted figure / scene paintings), drawn from for every gallery */
 const POOL = [
-  'ravivarma2.jpg', 'ravivarma.jpg', 'ravivarma3.jpg', 'ravivarma-shakuntala.jpg', 'shergil-brahmacharis.jpg', 'shergil-bridestoilet.jpg', 'shergil-threegirls.jpg', 'shergil-fruitvendors.jpg', 'tagore-staircase.jpg', 'gwenjohn-convalescent.jpg',
+  'ravivarma2.jpg', 'ravivarma.jpg', 'ravivarma3.jpg', 'ravivarma-shakuntala.jpg', 'ravivarma-fruit.jpg', 'shergil-brahmacharis.jpg', 'shergil-bridestoilet.jpg', 'shergil-threegirls.jpg', 'shergil-fruitvendors.jpg', 'tagore-staircase.jpg', 'gwenjohn-convalescent.jpg',
   'barracoon.jpg', 'caitlins-world.jpg', 'christinas.jpg', 'wyeth-adrift.jpg', 'wyeth-maypole.jpg', 'wyeth-donkey.jpg', 'dying-bird.jpg',
   'venice.jpg', 'nonchaloir.jpg', 'carnation.jpg', 'granada.jpg', 'sargent-dinner.jpg', 'eljaleo.jpg', 'sargent-gassed.jpg',
   'automat.jpg', 'hopper-roomny.jpg', 'hopper-elevenam.jpg', 'hopper-soirbleu.jpg', 'hopper-nymovie.jpg', 'hopper-nyinterior.jpg', 'hopper-gas.jpg', 'hopper-hotelrr.jpg',
