@@ -344,7 +344,9 @@ function buildGallery(seen, opener) {
 
 /* excerpt = draft opening line (placeholder voice; edit freely or I can pull the real first lines) */
 const STORIES = [
-  { title: 'How to Be Thanked', kind: 'Short Story', venue: 'Substack', excerpt: 'The onions were distractingly pungent. But he kept reading.', href: 'https://open.substack.com/pub/shanmuraja/p/how-to-be-thanked?r=1hai5c&utm_medium=web', latest: true },
+  { title: 'A Young Lady’s Photograph Album', kind: 'Short Story', venue: 'Substack', excerpt: 'The painter had lettered the board from hearing.', href: 'https://open.substack.com/pub/shanmuraja/p/a-young-ladys-photograph-album?r=1hai5c&utm_medium=web', latest: true },
+  { title: 'To Get the Face Right', kind: 'Short Story', venue: 'Substack', excerpt: 'I drew a dick on a girl’s face one time.', href: 'https://open.substack.com/pub/shanmuraja/p/to-get-the-face-right?r=1hai5c&utm_medium=web' },
+  { title: 'How to Be Thanked', kind: 'Short Story', venue: 'Substack', excerpt: 'The onions were distractingly pungent. But he kept reading.', href: 'https://open.substack.com/pub/shanmuraja/p/how-to-be-thanked?r=1hai5c&utm_medium=web' },
   { title: 'Burnt Red Tongues', kind: 'Historical Fiction', venue: 'Medium', excerpt: 'The fire came for the temple first, and the language second.', href: 'https://shanmuraja.medium.com/burnt-red-tongues-e5647e67d243' },
   { title: 'Fugue State', kind: 'Short Story', venue: 'Unpublished', excerpt: 'She woke in a city she had never agreed to live in.' },
   { title: 'A Pound of Flesh', kind: 'Short Story', venue: 'Substack', excerpt: 'Everyone wanted their share, and the body was only so large.', href: 'https://open.substack.com/pub/shanmuraja/p/a-pound-of-flesh?r=1hai5c&utm_medium=web' },
