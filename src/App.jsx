@@ -349,9 +349,12 @@ function buildGallery(seen, opener) {
 const INPROGRESS = [
   { title: 'A Few Faultless Words', kind: 'Short story', note: 'The side stand is no good on our floor.' },
   { title: 'The Doctor Will See You Now', kind: 'Working paper', note: 'Stakes, verifiability, and the supervision of clinical AI.' },
-  { title: 'Measured by the Other Doctor', kind: 'Working paper', note: 'Third-party cardiometabolic outcomes in a GLP-1 telehealth cohort.' },
+  { title: 'Third-Party Cardiometabolic Outcomes in a GLP-1 Telehealth Cohort', kind: 'Working paper', note: 'Blood pressure, A1c and lipids measured by the member’s own outside clinicians.' },
   { title: 'Scheduled Jumps', kind: 'Working paper', note: 'Recovering the option-implied probability of FDA approval.' },
 ]
+/* Keeps hyphenated names like GLP-1 from breaking across two lines. */
+const keepWhole = (s) => s.split(/(\S+-\d\S*)/g).map((part, i) => (i % 2 ? <span className="nobr" key={i}>{part}</span> : part))
+
 const STORIES = [
   { title: 'A Young Lady’s Photograph Album', kind: 'Short Story', venue: 'Substack', excerpt: 'The painter had lettered the board from hearing.', href: 'https://open.substack.com/pub/shanmuraja/p/a-young-ladys-photograph-album?r=1hai5c&utm_medium=web', latest: true },
   { title: 'To Get the Face Right', kind: 'Short Story', venue: 'Substack', excerpt: 'I drew a dick on a girl’s face one time.', href: 'https://open.substack.com/pub/shanmuraja/p/to-get-the-face-right?r=1hai5c&utm_medium=web' },
@@ -859,7 +862,7 @@ export default function App() {
                 <div className="row" key={w.title}>
                   <span className="num">{String(i + 1).padStart(2, '0')}</span>
                   <div>
-                    <div className="title">{w.title}</div>
+                    <div className="title">{keepWhole(w.title)}</div>
                     <div className="excerpt"><em>{w.note}</em></div>
                   </div>
                   <span className="meta">{w.kind}</span>
