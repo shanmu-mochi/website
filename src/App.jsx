@@ -25,6 +25,7 @@ const META = {
   'shergil-threegirls.jpg': { title: 'Group of Three Girls', artist: 'Amrita Sher-Gil', year: '1935' },
   'shergil-fruitvendors.jpg': { title: 'Fruit Vendors', artist: 'Amrita Sher-Gil', year: '1937' },
   'tagore-staircase.jpg': { title: 'Meeting at the Staircase', artist: 'Gaganendranath Tagore', year: 'c. 1920\u201325' },
+  'vishnu-shesha.jpg':  { title: 'Vishnu Narayana on the Serpent Shesha', artist: 'Chromolithograph, Mumbai', year: '1886' },
   'gwenjohn-convalescent.jpg': { title: 'The Convalescent', artist: 'Gwen John', year: 'c. 1923\u201324' },
   'barracoon.jpg':      { title: 'Barracoon', artist: 'Andrew Wyeth', year: '1976' },
   'caitlins-world.jpg': { title: 'Caitlin', artist: 'Andrew Wyeth', year: '1996' },
@@ -62,8 +63,10 @@ const META = {
   'schiele.jpg':        { title: 'Death and the Maiden', artist: 'Egon Schiele', year: '1915' },
   'schiele2.jpg':       { title: 'The Embrace', artist: 'Egon Schiele', year: '1917' },
   'schiele-hermits.jpg': { title: 'The Hermits', artist: 'Egon Schiele', year: '1912' },
+  'schiele-bentknee.jpg': { title: 'Seated Woman with Bent Knee', artist: 'Egon Schiele', year: '1917' },
   'peschka.jpg':        { title: 'Portrait of Anton Peschka', artist: 'Egon Schiele', year: '1909' },
   'labsinthe.jpg':      { title: "L'Absinthe", artist: 'Edgar Degas', year: 'c. 1876', minH: 46 },
+  'degas-photographer.jpg': { title: 'Dancer Posing for a Photographer', artist: 'Edgar Degas', year: '1875' },
   'manet-bar.jpg':      { title: 'A Bar at the Folies-Bergère', artist: 'Édouard Manet', year: '1882', minH: 50 },
   'cezanne-cards.jpg':  { title: 'The Card Players', artist: 'Paul Cézanne', year: 'c. 1894', minH: 48 },
   'ensor.jpg':          { title: 'The Drunkards', artist: 'James Ensor', year: '1883', minH: 48 },
@@ -172,7 +175,7 @@ const LEAD_GROUP = [
   // far too small to open on. It stays in POOL.
   'ravivarma2.jpg', 'ravivarma.jpg', 'ravivarma3.jpg', 'ravivarma-shakuntala.jpg', 'ravivarma-fruit.jpg',
   'shergil-brahmacharis.jpg', 'shergil-bridestoilet.jpg', 'shergil-threegirls.jpg', 'shergil-fruitvendors.jpg',
-  'tagore-staircase.jpg', 'tagore-journeysend.jpg',
+  'tagore-staircase.jpg', 'tagore-journeysend.jpg', 'vishnu-shesha.jpg',
 ].filter((s) => DIMS[s])
 const pickLead = () => LEAD_GROUP[Math.floor(Math.random() * LEAD_GROUP.length)]
 const AREA = 2600, GMIN = 34, GMAX = 76         // Cargo-flavored ribbon: moderate size range
@@ -264,14 +267,14 @@ const catOf = (s) => (META[s] && META[s].artist) || s
 const COOLDOWN = 2
 /* the whole cohesive pool (muted figure / scene paintings), drawn from for every gallery */
 const POOL = [
-  'ravivarma2.jpg', 'ravivarma.jpg', 'ravivarma3.jpg', 'ravivarma-shakuntala.jpg', 'ravivarma-fruit.jpg', 'shergil-brahmacharis.jpg', 'shergil-bridestoilet.jpg', 'shergil-threegirls.jpg', 'shergil-fruitvendors.jpg', 'tagore-staircase.jpg', 'gwenjohn-convalescent.jpg',
+  'ravivarma2.jpg', 'ravivarma.jpg', 'ravivarma3.jpg', 'ravivarma-shakuntala.jpg', 'ravivarma-fruit.jpg', 'shergil-brahmacharis.jpg', 'shergil-bridestoilet.jpg', 'shergil-threegirls.jpg', 'shergil-fruitvendors.jpg', 'tagore-staircase.jpg', 'vishnu-shesha.jpg', 'gwenjohn-convalescent.jpg',
   'barracoon.jpg', 'caitlins-world.jpg', 'christinas.jpg', 'wyeth-adrift.jpg', 'wyeth-maypole.jpg', 'wyeth-donkey.jpg', 'dying-bird.jpg',
   'venice.jpg', 'nonchaloir.jpg', 'carnation.jpg', 'granada.jpg', 'sargent-dinner.jpg', 'eljaleo.jpg', 'sargent-gassed.jpg',
   'automat.jpg', 'hopper-roomny.jpg', 'hopper-elevenam.jpg', 'hopper-soirbleu.jpg', 'hopper-nymovie.jpg', 'hopper-nyinterior.jpg', 'hopper-gas.jpg', 'hopper-hotelrr.jpg',
   'munch-sick.jpg', 'munch-kiss.jpg', 'munch-peonies.jpg', 'munch-deadmother.jpg', 'vonmax-anatom.jpg',
-  'schiele.jpg', 'schiele2.jpg', 'schiele-hermits.jpg', 'peschka.jpg',
+  'schiele.jpg', 'schiele2.jpg', 'schiele-hermits.jpg', 'schiele-bentknee.jpg', 'peschka.jpg',
   'bellows-club.jpg', 'bellows-stag.jpg',
-  'labsinthe.jpg', 'lautrec.jpg', 'manet-bar.jpg', 'cezanne-cards.jpg', 'ensor.jpg', 'monet-parasol.jpg', 'magritte.jpg', 'magritte-assassin.jpg', 'whistler-nocturne.jpg',
+  'labsinthe.jpg', 'degas-photographer.jpg', 'lautrec.jpg', 'manet-bar.jpg', 'cezanne-cards.jpg', 'ensor.jpg', 'monet-parasol.jpg', 'magritte.jpg', 'magritte-assassin.jpg', 'whistler-nocturne.jpg',
   'vangogh-oldman.jpg', 'vangogh-girlinwhite.jpg', 'vangogh-ward.jpg', 'vangogh-courtyard.jpg', 'pollock-west.jpg', 'blume-head.jpg', 'russian-couple.jpg',
   'bellei.jpg', 'bastien.jpg', 'paolo.jpg', 'millet.jpg', 'calypso.jpg', 'kollwitz.jpg', 'hammershoi.jpg', 'schjerfbeck-convalescent.jpg', 'sickert-ennui.jpg', 'tagore-journeysend.jpg', 'sohlberg-winternight.jpg', 'repin.jpg', 'apothecary.jpg', 'tiger.jpg',
   // — newly catalogued, widening the pool —
