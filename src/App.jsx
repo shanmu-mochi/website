@@ -396,7 +396,7 @@ const SOCIALS = [
   ['LinkedIn', 'linkedin', 'https://www.linkedin.com/in/shanmuraja'],
 ]
 
-const NAVLINKS = [['Stories', '#stories'], ['Papers', '#papers'], ['Awards', '#awards'], ['Deep dives', '#features'], ['Contact', '#bio']]
+const NAVLINKS = [['Stories', '#stories'], ['Papers', '#papers'], ['Awards', '#awards'], ['Deep dives', '#features'], ['About', '#bio']]
 
 export default function App() {
   const seenRef = useRef(new Set())          // paintings the visitor has already seen
@@ -994,7 +994,7 @@ export default function App() {
           <div className="lg-tint" aria-hidden="true" />
           <div className="lg-shine" aria-hidden="true" />
           <div className="colo-inner">
-            <a className="colo-contact" href="#bio">Contact</a>
+            <a className="colo-contact" href="#bio">About</a>
             <span className="colo-social">{SOCIALS.map(([label, icon, href]) => (
               <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label}><svg viewBox="0 0 24 24" aria-hidden="true">{ICONS[icon]}</svg></a>
             ))}</span>
