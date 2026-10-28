@@ -299,6 +299,15 @@ function Home({ cat, go }) {
   const [leaving, setLeaving] = useState(false)
   const [bgOn, setBgOn] = useState(false)
   // name-first opening: the wordmark sits alone, centred, then flies to its place in the bar
+  // the hint fades away on the first wheel / drag / key, or by itself after a few seconds (CSS)
+  const [hintGone, setHintGone] = useState(false)
+  useEffect(() => {
+    if (hintGone) return
+    const off = () => setHintGone(true)
+    const ev = ['wheel', 'pointerdown', 'keydown', 'touchstart']
+    ev.forEach((e) => window.addEventListener(e, off, { passive: true, once: true }))
+    return () => ev.forEach((e) => window.removeEventListener(e, off))
+  }, [hintGone])
   const [nameOn, setNameOn] = useState(() => !session.introDone && !reduced() && !returning)
   const [fontOk, setFontOk] = useState(false)
   const nameRef = useRef(null)
@@ -463,7 +472,7 @@ function Home({ cat, go }) {
           <span className="h-iname-m"><span>Shanmu Raja</span></span>
         </div>
       )}
-      <p className={`h-hint${foot ? ' is-on' : ''}`} aria-hidden="true">{isTouch() ? 'Swipe' : shown === 'luck' ? 'Scroll or drag up and down' : 'Scroll, drag, or use the arrow keys'}</p>
+      <p className={`h-hint${foot && phase === 'ready' && !hintGone ? ' is-on' : ''}${hintGone ? ' is-gone' : ''}`} aria-hidden="true">{isTouch() ? 'Swipe' : shown === 'luck' ? 'Scroll or drag up and down' : 'Scroll, drag, or use the arrow keys'}</p>
     </main>
   )
 }

@@ -404,3 +404,7 @@ a.pg-cta-a:hover b { transform: translate(3px, -3px); }
   .h-sfoot .h-social { display: flex; }
   .h-foot { right: max(18px, calc(env(safe-area-inset-right) + 12px)); bottom: max(22px, calc(env(safe-area-inset-bottom) + 16px)); }
 }
+
+/* iteration 10b: the hint sits just above the counter (bottom-right), never in the nav row */
+.h-hint { top: auto; right: 26px; bottom: 66px; text-align: right; }
+.h-hint.is-gone { animation: none; opacity: 0; transition: opacity .35s; }

@@ -97,3 +97,9 @@ seamlessly into its spot on the page; fix details, smoothness and nav.
   padding via `max()`. Note that `viewport-fit=cover` is not set, so the insets read as 0 and the minimum padding applies.
 - They fade in with the counter, on the same `foot` flag, so the intro brings them in with the rest of the UI.
   The About page icons are unchanged.
+
+## Iteration 10b: the hint moves out of the nav row
+
+- "Scroll, drag, or use the arrow keys" used to sit at top-right, on top of Paintings, About and Contact at 1280. It now sits bottom-right, just above the counter.
+- It appears only once the intro is done (phase ready), fades in and out over about 6s, and disappears on the first wheel, pointer, key or touch.
+- It is still hidden on phones and touch devices, so 390 is unaffected.
