@@ -37,3 +37,17 @@ Feedback: "too busy". Kept the wheel and the phone; removed almost everything el
 - `src/pieceNotes.js` holds the "On the painting" notes. **All of them are empty.** Shanmu has to write them.
 - The phone is gone from the whole site.
 - Screenshots are in /workspace/redesign-shots-v4/.
+
+## Feedback overlay (preview builds only)
+
+- `npm run build:preview` builds with `VITE_FEEDBACK=1` and copies `scripts/serve.py` into `dist/`. A plain `npm run build` has none of it: the `__FEEDBACK__` define folds to `false`, so the dynamic import is dropped. You can check with `grep -r GROK_FEEDBACK dist`, which should find nothing.
+- Shanmu unzips the preview, runs `python3 serve.py`, and opens http://localhost:8000. To change the port, pass it as an argument: `python3 serve.py 8001`.
+- To comment:
+  - Press **C** (or click the "Comment · C" pill at top centre; on phones it sits low in the centre).
+  - Click anything to drop a numbered pin, type, then press Enter to save. Shift+Enter adds a new line; Esc cancels.
+  - **L** opens the list, where comments can be edited, resolved or deleted. The list also has a general note, Copy feedback for Grok, Download .md and Clear resolved.
+- Comments live in localStorage. They also auto-POST to `/__feedback`, and serve.py writes `feedback.json` and `feedback.md` next to itself. If the browser has no comments yet, the page reloads them from the server with a GET.
+- Reading the block: each line is `N. [route · category · piece (index/total) · viewport] "text" — on: <css path> aria/text, at x% y%`.
+  - The route and the piece say which page or wheel item the comment is about.
+  - The css path names the element: `b-*` is the browser, `pg-*` the piece and About pages, `cv-*` the type covers, `t-*` the phone track.
+  - x% and y% are positions in the viewport.

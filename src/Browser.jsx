@@ -102,6 +102,7 @@ function Wheel({ cat, onOpen, onCenter }) {
       if (Math.abs(acc) > 40 && now - last > 420) { step(acc > 0 ? 1 : -1); acc = 0; last = now }
     }
     const onKey = (e) => {
+      if (e.target.closest && e.target.closest('input, textarea')) return
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); step(1) }
       else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); step(-1) }
       else if (e.key === 'Enter' && !(document.activeElement && document.activeElement.closest('.sw-cats, .top'))) {

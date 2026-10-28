@@ -12,7 +12,8 @@
     "prebuild": "node scripts/build-paintings.cjs",
     "og": "node scripts/build-og.cjs",
     "prerender": "node scripts/prerender.cjs",
-    "previews": "node scripts/build-previews.cjs"
+    "previews": "node scripts/build-previews.cjs",
+    "build:preview": "VITE_FEEDBACK=1 vite build && cp scripts/serve.py dist/serve.py"
   },
   "dependencies": {
     "@react-three/drei": "^9.88.13",

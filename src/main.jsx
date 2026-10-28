@@ -13,3 +13,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <Browser />
   </React.StrictMode>,
 )
+
+// Preview-only feedback overlay. Statically false in `npm run build`, so it is tree-shaken out.
+// eslint-disable-next-line no-undef
+if (__FEEDBACK__) import('./feedback/mount.jsx').then((m) => m.mount())
