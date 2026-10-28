@@ -50,7 +50,10 @@ export const SECTIONS = {
   prose: { tiltX: TILT, tiltY: TILT, area: 2.9, maxSide: 2.1, depth: 0.024, edge: 0xffffff, spine: 0xffffff },
   publications: { tiltX: TILT * 0.55, tiltY: TILT * 0.7, aspect: 0.72, area: 2.2, maxSide: 2, depth: 0.075, edge: 0xf3f0e8, spine: 0xe6e1d6 },
   // iteration 12: the home "Selected" row stages like prose; each plate keeps its own section's shape
-  get home() { return this.prose },
+  // iteration 19: the one row of everything, staged exactly like A24 (-30° on both axes)
+  home: { tiltX: -30, tiltY: -30, area: 2.35, maxSide: 1.85, depth: 0.024, edge: 0xffffff, spine: 0xffffff },
+  get deep() { return this.publications },
+  get paintings() { return this.prose },
   luck: { tiltX: TILT * 0.45, tiltY: TILT * 0.85, aspect: 1, area: 1.9, maxSide: 1.5, depth: 0.04, edge: 0xefe6d2, spine: 0xefe6d2 },
 }
 
@@ -127,11 +130,13 @@ export default class Gallery {
     this.clearPlates()
     this.items = items; this.N = items.length; this.mode = mode
     // iteration 18: Deep Dives is a row of white papers, staged exactly like Publications
-    this.kind = mode === 'deep' ? 'publications' : mode
+    this.kind = mode === 'deep' ? 'publications' : mode === 'home' ? 'prose' : mode
+    this.oneAxis = mode === 'home'
     this.sec = SECTIONS[this.kind] || SECTIONS.prose
     this.root.rotation.set(rad(this.sec.tiltX), rad(this.sec.tiltY), 0)
     this.L = clamp(start, 0, this.N - 1); this.we = this.L; this.Se = 0; this.Te = 0; this.Ce = 0
     this.target = -1; this.tweening = false; this.cur = -1; this.hover = -1; this.flight = false
+    this.L = clamp(start, 0, items.length - 1)
     this.plates = items.map((it, i) => this.makePlate(it, i))
     this.resize()
     this.layout(1, true)
@@ -156,8 +161,15 @@ export default class Gallery {
     group.scale.setScalar(0.0001)
     this.root.add(group)
     const p = { it, i, w, h, mesh, spin, group, front, back, mats: [edge, spine, front, back], hover: 0, spinX: 0, spinY: 0, face: 0, fresh: true, hidden: false }
-    p.ready = Promise.resolve(this.o.frontTexture(it, this.mode, w / h)).then((t) => { if (t && this.plates[i] === p) { front.map = t; front.color.set(0xffffff); front.needsUpdate = true } })
-    Promise.resolve(this.o.backTexture(it, this.mode, w / h)).then((t) => { if (t && this.plates[i] === p) { back.map = t; back.needsUpdate = true } })
+    // iteration 19: the row is long (all paintings too), so faces load as they come near
+    let res; p.ready = new Promise((r) => { res = r })
+    p.load = () => {
+      if (p.loaded) return
+      p.loaded = true
+      Promise.resolve(this.o.frontTexture(it, this.mode, w / h)).then((t) => { if (t && this.plates[i] === p) { front.map = t; front.color.set(0xffffff); front.needsUpdate = true } res() })
+      Promise.resolve(this.o.backTexture(it, this.mode, w / h)).then((t) => { if (t && this.plates[i] === p) { back.map = t; back.needsUpdate = true } })
+    }
+    if (Math.abs(i - this.L) <= CFG.renderRadius + 2) p.load()
     return p
   }
 
@@ -183,6 +195,12 @@ export default class Gallery {
       onUpdate: () => { this.L = this.tw.value },
       onComplete: () => { this.L = n; this.tweening = false; this.target = -1 },
     })
+  }
+  jumpTo(n) {
+    this.cancel()
+    this.L = clamp(n, 0, this.N - 1); this.we = this.L; this.Ce = 0
+    for (const p of this.plates) if (Math.abs(p.i - this.L) <= CFG.renderRadius + 2) p.load()
+    this.layout(1, true)
   }
   step(k, source) {
     const n = this.settled() + k
@@ -350,6 +368,8 @@ export default class Gallery {
     const lm = e.deltaMode === 1 ? 16 : 1
     let dx = e.deltaX * lm, dy = e.deltaY * lm
     if (e.shiftKey && !dx) { dx = dy; dy = 0 }
+    // iteration 19: one axis. Vertical and horizontal wheel both travel along the row.
+    if (this.oneAxis) { if (Math.abs(dy) > Math.abs(dx)) dx = dy; dy = 0 }
     const gapMs = now - (w.g || 0), newG = gapMs > CFG.gestureGap
     w.g = now
     const mag = Math.max(Math.abs(dx), Math.abs(dy))
@@ -393,7 +413,7 @@ export default class Gallery {
   onDown(e) {
     if (e.button !== 0 || this.busy()) return
     const h = this.pick(e.clientX, e.clientY)
-    this.drag = { x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t: performance.now(), on: false, hit: h, spin: h && h.i === this.index() && !this.touch ? h.i : -1, w: this.el.clientWidth, h: this.el.clientHeight }
+    this.drag = { x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t: performance.now(), on: false, hit: h, spin: h && h.i === this.index() && !this.touch && !this.oneAxis ? h.i : -1, w: this.el.clientWidth, h: this.el.clientHeight }
   }
   onMove(e) {
     const d = this.drag
@@ -408,11 +428,11 @@ export default class Gallery {
     if (!d.on) {
       if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < CFG.dragStart) return
       d.ax = Math.abs(e.clientX - d.x0) >= Math.abs(e.clientY - d.y0) ? 'x' : 'y'
-      if (d.ax === 'y' && d.spin < 0) { d.on = true; this.setHover(-1); return }
+      if (d.ax === 'y' && d.spin < 0 && !this.oneAxis) { d.on = true; this.setHover(-1); return }
       d.on = true; gsap.killTweensOf(this.tw); this.tweening = false; this.target = -1; this.Te = 0
       this.setHover(-1); this.el.classList.add('is-dragging')
     }
-    if (d.ax === 'y' && d.spin < 0) {
+    if (d.ax === 'y' && d.spin < 0 && !this.oneAxis) {
       // a vertical drag / swipe: once it has travelled far enough, it asks for the next section, once
       const ty = e.clientY - d.y0
       const lim = Math.min(CFG.sectionDrag, d.h * 0.14)
@@ -420,7 +440,10 @@ export default class Gallery {
       else if (!d.fired && this.o.onPull) this.o.onPull(-ty / lim)
       return
     }
-    const now = performance.now(), dx = e.clientX - d.x, dy = e.clientY - d.y, dt = Math.max(8, now - d.t)
+    const now = performance.now(), dy = e.clientY - d.y, dt = Math.max(8, now - d.t)
+    // one axis: a vertical drag / swipe travels along the row too (up = onward), scaled to the width
+    let dx = e.clientX - d.x
+    if (this.oneAxis && d.ax === 'y' && d.spin < 0) dx = dy * (d.w / d.h)
     d.x = e.clientX; d.y = e.clientY; d.t = now
     d.px = (d.px || 0) + dx
     ;(d.sm || (d.sm = [])).push({ t: now, p: d.px })
@@ -450,7 +473,7 @@ export default class Gallery {
       else this.to(h.i, 'click')
       return
     }
-    if (d.ax === 'y' && d.spin < 0) { if (!d.fired && this.o.onPull) this.o.onPull(0); return }
+    if (d.ax === 'y' && d.spin < 0 && !this.oneAxis) { if (!d.fired && this.o.onPull) this.o.onPull(0); return }
     if (d.spin >= 0) {
       const p = this.plates[d.spin]
       gsap.to(p, { spinX: 0, spinY: Math.round(p.spinY / Math.PI) * Math.PI, duration: CFG.resetDuration, ease: 'elastic.out(1, 0.6)' })
@@ -549,6 +572,7 @@ export default class Gallery {
     for (const p of this.plates) {
       const m = p.i - this.L, h = Math.abs(m), g = p.i === n
       if (h > CFG.renderRadius + 1) { p.group.visible = false; p.fresh = true; continue }
+      if (!p.loaded) p.load()
       this.pose(m, g, lean, dip, T)
       let { x, y, z, rx, ry, rz, S } = T, s, vis = true
       if (g) s = S * G.active

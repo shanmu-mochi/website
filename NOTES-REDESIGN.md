@@ -168,3 +168,17 @@ Built on iteration 16 (A24 system kept: tilted plates, expanded pages, white pap
 - Deep Dives (`#/deep`): the White paper entries from the publications data, Healthcare's AI Trap and Mapping Medi-Cal Deserts.
 - Hover: a story's real first line is written out by hand under its plate. The jittery pen circle redraws continuously. Nav items get a jittery pen underline.
 - QA: /tmp/q.cjs (Puppeteer); screenshots in /workspace/redesign-shots-v18.
+
+## Iteration 19 — one A24 row, with jumps
+
+- **One row.** Home is a single continuous A24 diagonal of every piece, in order: Prose (15), Publications (16), Deep Dives (2), Luck (4), ART THAT I LOVE (125 paintings) = 162 plates. Staged at A24's -30°/-30°. There are no vertical section pages, no stage-follow, no scroll cue.
+- **One axis.** Wheel (up/down/left/right), trackpad, arrow keys (Right/Down/PageDown = next, Left/Up/PageUp = previous), and mouse drag (horizontal or vertical) all travel along the row with the existing A24 inertia/spring and CustomEase 0.32,0.72,0,1. A wheel over the chrome (title block, nav, footer) also moves the row. Dragging the front plate moves the row; it no longer spins the plate (Flip/Space still turns it).
+- **Jumps.** The nav (Prose · Publications · Deep Dives · Luck — SHANMU RAJA — Index · ART THAT I LOVE · About) and the new minimal **Index** dropdown (sections with counts) jump to a section start with a quick cut: the row falls back, the position is set, the row fans back in. The active nav item (pen underline) follows the piece in front, and the hash is updated with replaceState (#/prose, #/luck, …). A nav click on a page (About, a piece) opens the row at that section start.
+- **Title block.** Top-left: uppercase Lora at 28px over a hairline table with tiny tracked labels and right-aligned values, using real data only. At ≤1380px it drops under the bar so it never meets the nav; at 390 it sits under the two-line mobile bar.
+- **Removed:** the right-side section indicator, the home Chekhov epigraph, the scroll-down cue, the swipe hint, the side arrows, and the Paintings "up" button. The bottom-centre line is the piece's real line only.
+- **Chekhov** now lives at the top of About: the first line is handwritten (Pinyon Script, animated), then line 2 and the attribution.
+- **Background** is plain #F2F2F2 everywhere on the row.
+- **Performance:** plate textures load lazily, when a plate comes within the render radius.
+- **QA** (Puppeteer, 1440): all of these PASS — wheel ±x/±y, trackpad bursts both ways, 6 rapid notches = +6, keys, drag both ways, nav jumps ×4, Index jumps, wheeling up from Paintings into Luck, open then Back restoring the index, About → Deep Dives, and wheeling all the way back to piece 1. No page errors. 390 scrollWidth = 390. Lint 9 (5/4).
+- **Not tested:** touch or swipe (synthetic touch doesn't work headless).
+- **Remaining differences from A24:** plates are flat rectangles, not discs; the first screen shows about 2 plates because Prose 1 has nothing to its left; the bottom slot is one line, not two review quotes; the opening is the iteration-18 name flight, re-used.
