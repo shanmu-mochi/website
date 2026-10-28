@@ -59,3 +59,30 @@ Feedback: "too busy". Kept the wheel and the phone; removed almost everything el
 - Piece pages: white paper, A24 film-page layout (centred title, drawn rules, crosshair marks, meta table, double-rule CTA, painting rising in).
 - Fonts: Bodoni Moda (OFL, self-hosted) stands in for PP Eiko.
 - Study + spec: /workspace/NOTES-A24-STUDY.md. Side-by-side sheets: /workspace/redesign-shots-v6/.
+
+## Iteration 7
+
+Feedback: angle a tad steep; each section should have its own presentation; flipped poster should travel
+seamlessly into its spot on the page; fix details, smoothness and nav.
+
+- **Angle.** `TILT` constant at the top of `src/gallery/Gallery.js`: −30° → −19° (both axes for prose).
+- **Per-section presentation** (one engine, `SECTIONS` table):
+  - Prose: painting plates on A24's diagonal arc, full tilt.
+  - Publications: white-paper chapbooks (thicker box, spine face, seeded paper grain, type-only cover from
+    real kind/title/venue); flatter, straighter shelf (tilt ×0.55/×0.7); cool background. Verso = abstract line,
+    authors, venue, DOI.
+  - Luck: square award cards (award name large, double rule frame), vertical drum (vertical drag turns it);
+    warm background. Verso = citation line + meta incl. painting credit.
+  - Switching: current row falls back (`exit`), new objects fan in, background and fog ease; the home stays
+    mounted so nothing cuts.
+- **Shared element.** `openFace()` turns the front object square to the camera (keeping the visible side), so its
+  projection is an exact rect. A DOM clone (`.fly`, front+back faces, same image/canvas pixels) replaces it in the
+  same frame, then FLIP-flies to the measured `.pg-art` rect while the page draws in (rotating from verso to front
+  if flipped). Page image is revealed only after it decodes, then the clone is removed. Back (link, Esc, browser
+  back) reverses it: clone lifts off the page art, page fades, gallery `prepareReturn()` gives the face-on rect,
+  clone lands, `land()` turns the object back into the row. Prev/next = slide + crossfade. Direct URL = fade/reveal.
+- **Nav.** Single navigation queue (`NAV`): one transition at a time, the latest request runs after; section switches
+  cancel each other (token) instead of queueing; Esc during a transition is queued.
+- Details: Bodoni kerning/optical sizing/word spacing, mark tracking, piece page is now a two-column body
+  (art left within the viewport, meta/CTA/quote right), comment pill moved to bottom right, mobile counter + 16px
+  section labels + larger meta rows, clickable counter, grab cursor.

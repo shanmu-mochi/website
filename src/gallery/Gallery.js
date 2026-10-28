@@ -1,27 +1,29 @@
-/* The home browser: a three.js gallery of paintings that moves like the A24 disc browser
-   (a24.raviklaassens.com). The behaviour was studied from frame captures and its parameters;
-   the code here is our own. See NOTES-A24-STUDY.md for the spec.
+/* The home browser: a three.js gallery that moves like the A24 disc browser (a24.raviklaassens.com).
+   Behaviour was studied from frame captures and its parameters; the code is our own. Spec: NOTES-A24-STUDY.md.
 
-   Model: a continuous position L (0..N-1). Every plate has a target pose computed from its
-   offset m = index - L on an arc that lives inside a group rotated -30deg on X and Y (that
-   rotation is what makes the diagonal). Plates chase their targets at a per-plate rate that
-   drops with distance, so far plates trail. Steps (wheel, keys, clicks) are tweens of L on the
-   "discGlide" curve with a velocity kick that leans and banks the row; free motion (drag release)
-   coasts and then settles on a spring. */
+   One continuous position L (0..N-1). Every object has a target pose from its offset m = index - L,
+   computed by the section's arrangement inside a tilted group. Objects chase their targets at a rate that
+   falls with distance, so far ones trail. Steps (wheel, keys, clicks) are tweens of L on the "discGlide"
+   curve with a velocity kick that leans and banks the row; a drag release coasts, then settles on a spring.
+
+   Sections share the engine but not the object or the staging:
+     prose        framed painting plates on A24's diagonal arc
+     publications white-paper chapbooks with a spine, on a flatter, straighter shelf
+     luck         square award cards on a vertical drum */
 import * as THREE from 'three'
 import gsap from 'gsap'
 import { CustomEase } from 'gsap/CustomEase'
 
 gsap.registerPlugin(CustomEase)
 export const GLIDE = CustomEase.create('discGlide', '0.32, 0.72, 0, 1')
-export const GLIDE_CSS = 'cubic-bezier(.32,.72,0,1)'
+
+/* The diagonal. A24 uses -30° on both axes; Shanmu found that a tad steep (iteration 7). */
+export const TILT = -19
 
 export const CFG = {
-  galleryScale: 1.08, hGap: 2.3, depthGap: 1, activeY: 0.06, rotX: -30, rotY: -30,
-  inactiveScale: 0.8, camDist: 4.4, fov: 40,
+  galleryScale: 1.08, camDist: 4.4, fov: 40,
   hoverTilt: 0.21, dragSens: 0.95, dragSmooth: 0.32, dragMaxV: 0.5, dragStart: 5,
-  // release glide: the coast of the original drifting carousel (TAU 0.55 s), then the spring
-  glideTau: 0.55, glideMaxV: 0.2,
+  glideTau: 0.55, glideMaxV: 0.2,              // release coast: the original carousel's TAU
   snapDuration: 0.46, snapFreq: 9.5, snapDamping: 12,
   flowLean: 0.055, flowLeanMax: 0.3, flowBank: 0.32, flowDip: 0.014, flowDipMax: 0.09,
   followTight: 15, followBase: 11, followFalloff: 1.15, followMin: 6.5,
@@ -31,92 +33,127 @@ export const CFG = {
   resetDuration: 1.2, renderRadius: 6,
   wheelFloor: 0.3, wheelStep: 6, wheelGap: 170, wheelPause: 150,
 }
+
+/* per-section staging: group tilt, object proportions, arrangement */
+export const SECTIONS = {
+  prose: { tiltX: TILT, tiltY: TILT, area: 2.9, maxSide: 2.1, depth: 0.024, edge: 0xffffff, spine: 0xffffff },
+  publications: { tiltX: TILT * 0.55, tiltY: TILT * 0.7, aspect: 0.72, area: 2.2, maxSide: 2, depth: 0.075, edge: 0xf3f0e8, spine: 0xe6e1d6 },
+  luck: { tiltX: TILT * 0.45, tiltY: TILT * 0.85, aspect: 1, area: 1.9, maxSide: 1.5, depth: 0.04, edge: 0xefe6d2, spine: 0xefe6d2 },
+}
+
 const rad = THREE.MathUtils.degToRad
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v))
 const outCubic = (t) => 1 - (1 - t) ** 3
 
-const texCache = new Map()
-const loader = new THREE.TextureLoader()
-function loadTex(url) {
-  if (!texCache.has(url)) {
-    texCache.set(url, new Promise((res) => loader.load(url, (t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; res(t) }, undefined, () => res(null))))
+/* ---- one renderer for the life of the page, so leaving and coming back never makes a new GL context ---- */
+let RENDERER = null
+function renderer() {
+  if (!RENDERER) {
+    RENDERER = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' })
+    RENDERER.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+    RENDERER.outputColorSpace = THREE.SRGBColorSpace
+    RENDERER.setClearColor(0x000000, 0)
+    RENDERER.domElement.className = 'gl'
   }
-  return texCache.get(url)
+  return RENDERER
 }
 
-/* plate size: paintings keep their proportions at roughly the area of A24's 2-unit disc */
-export function plateSize(a) {
-  let h = Math.sqrt(2.9 / a), w = a * h
+/* ---- textures live as long as the page: a section you come back to is instant ---- */
+const TEX = new Map()
+const loader = new THREE.TextureLoader()
+export function texture(key, make) {
+  if (!TEX.has(key)) TEX.set(key, Promise.resolve(make()).then((t) => { if (t) { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4 } return t }))
+  return TEX.get(key)
+}
+export const imageTexture = (url) => texture(url, () => new Promise((res) => loader.load(url, res, undefined, () => res(null))))
+
+export function plateSize(it, sec) {
+  const a = sec.aspect || it.aspect
+  let h = Math.sqrt(sec.area / a), w = a * h
   const m = Math.max(w, h)
-  if (m > 2.1) { w *= 2.1 / m; h *= 2.1 / m }
+  if (m > sec.maxSide) { w *= sec.maxSide / m; h *= sec.maxSide / m }
   return [w, h]
 }
 
+const _v = new THREE.Vector3(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _qi = new THREE.Quaternion()
+
 export default class Gallery {
-  constructor(el, items, opts) {
-    this.el = el; this.items = items; this.o = opts
-    this.N = items.length
+  constructor(el, opts) {
+    this.el = el; this.o = opts
     this.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    this.L = clamp(opts.start || 0, 0, this.N - 1)
-    this.Se = 0; this.Te = 0; this.Ce = 0; this.we = this.L
+    this.items = []; this.N = 0; this.plates = []; this.mode = 'prose'
+    this.L = 0; this.Se = 0; this.Te = 0; this.Ce = 0; this.we = 0
     this.G = { active: 1, others: 1, inbound: false }
     this.q = { active: false, rise: 1, turn: 1 }
-    this.tw = { value: this.L }; this.tweening = false; this.target = -1
+    this.tw = { value: 0 }; this.tweening = false; this.target = -1
     this.hover = -1; this.U = 0; this.Ue = 0
     this.drag = null; this.flight = false; this.cur = -1
     this.wheel = { acc: 0, last: 0, step: 0 }
+    this.tls = new Set()
 
-    const r = this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' })
-    r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
-    r.outputColorSpace = THREE.SRGBColorSpace
-    r.setClearColor(0x000000, 0)
+    const r = this.renderer = renderer()
     el.appendChild(r.domElement)
-    r.domElement.className = 'gl'
     this.scene = new THREE.Scene()
     this.scene.fog = new THREE.Fog(0xf2f2f2, 7, 14)
     this.cam = new THREE.PerspectiveCamera(CFG.fov, 1, 0.1, 60)
     this.cam.position.set(0, 0, CFG.camDist); this.cam.lookAt(0, 0, 0)
     this.root = new THREE.Group()
-    this.root.rotation.set(rad(CFG.rotX), rad(CFG.rotY), 0)
     this.scene.add(this.root)
     this.ray = new THREE.Raycaster(); this.ptr = new THREE.Vector2()
-
-    this.plates = items.map((it, i) => this.makePlate(it, i))
-    this.resize()
+    this.geos = []
     this.bind()
-    this.layout(1, true)
     this.last = performance.now()
     this.raf = requestAnimationFrame(this.frame)
   }
 
   get touch() { return this.o.touch() }
+  tl(vars) { const t = gsap.timeline({ ...vars, onComplete: () => { this.tls.delete(t); vars && vars.onComplete && vars.onComplete() } }); this.tls.add(t); return t }
 
+  /* ---------------- sections ---------------- */
+  setSection(items, mode, start = 0) {
+    this.clearPlates()
+    this.items = items; this.N = items.length; this.mode = mode
+    this.sec = SECTIONS[mode] || SECTIONS.prose
+    this.root.rotation.set(rad(this.sec.tiltX), rad(this.sec.tiltY), 0)
+    this.L = clamp(start, 0, this.N - 1); this.we = this.L; this.Se = 0; this.Te = 0; this.Ce = 0
+    this.target = -1; this.tweening = false; this.cur = -1; this.hover = -1; this.flight = false
+    this.plates = items.map((it, i) => this.makePlate(it, i))
+    this.resize()
+    this.layout(1, true)
+  }
+  clearPlates() {
+    gsap.killTweensOf(this.tw)
+    for (const p of this.plates) { gsap.killTweensOf(p); this.root.remove(p.group); p.mesh.geometry.dispose(); p.mats.forEach((m) => m.dispose()) }
+    this.plates = []
+  }
   makePlate(it, i) {
-    const [w, h] = plateSize(it.aspect)
-    const geo = new THREE.BoxGeometry(w, h, 0.024)
-    const edge = new THREE.MeshBasicMaterial({ color: 0xffffff })
+    const sec = this.sec, [w, h] = plateSize(it, sec)
+    const geo = new THREE.BoxGeometry(w, h, sec.depth)
+    const edge = new THREE.MeshBasicMaterial({ color: sec.edge })
+    const spine = new THREE.MeshBasicMaterial({ color: sec.spine })
     const front = new THREE.MeshBasicMaterial({ color: new THREE.Color(it.placeholder) })
     const back = new THREE.MeshBasicMaterial({ color: 0xfbfaf8 })
-    const mesh = new THREE.Mesh(geo, [edge, edge, edge, edge, front, back])
+    // box faces: +x, -x (the spine on a chapbook), +y, -y, front, back
+    const mesh = new THREE.Mesh(geo, [edge, spine, edge, edge, front, back])
     mesh.userData.i = i
     const spin = new THREE.Group(); spin.add(mesh)
     const group = new THREE.Group(); group.add(spin)
     group.scale.setScalar(0.0001)
     this.root.add(group)
-    const p = { it, i, w, h, mesh, spin, group, front, back, hover: 0, spinX: 0, spinY: 0, fresh: true, loaded: false }
-    const ready = it.url ? loadTex(it.url) : Promise.resolve(this.o.coverTexture(it, w / h))
-    p.ready = ready.then((t) => { if (t && !this.dead) { front.map = t; front.color.set(0xffffff); front.needsUpdate = true } p.loaded = true })
-    Promise.resolve(this.o.versoTexture(it, w / h)).then((t) => { if (t && !this.dead) { back.map = t; back.needsUpdate = true } })
+    const p = { it, i, w, h, mesh, spin, group, front, back, mats: [edge, spine, front, back], hover: 0, spinX: 0, spinY: 0, face: 0, fresh: true, hidden: false }
+    p.ready = Promise.resolve(this.o.frontTexture(it, this.mode, w / h)).then((t) => { if (t && this.plates[i] === p) { front.map = t; front.color.set(0xffffff); front.needsUpdate = true } })
+    Promise.resolve(this.o.backTexture(it, this.mode, w / h)).then((t) => { if (t && this.plates[i] === p) { back.map = t; back.needsUpdate = true } })
     return p
   }
 
-  /* -------- state -------- */
+  /* ---------------- state ---------------- */
   index() { return Math.round(clamp(this.L, 0, this.N - 1)) }
   settled() { return this.target >= 0 ? this.target : this.index() }
+  flipped(i = this.index()) { const p = this.plates[i]; return !!p && Math.cos(p.spinY) < 0 }
 
   to(i, source = 'snap') {
-    const n = clamp(i, 0, this.N - 1), dist = Math.abs(n - this.L)
-    const d = CFG.snapDuration
+    if (!this.N) return
+    const n = clamp(i, 0, this.N - 1), dist = Math.abs(n - this.L), d = CFG.snapDuration
     const a = source === 'wheel' ? { duration: d + 0.05, kick: 2.5 }
       : source === 'key' ? { duration: Math.min(0.6, d - 0.04 + dist * 0.05), kick: 4 }
         : source === 'click' ? { duration: clamp(0.45 + dist * 0.11, d, 1.05), kick: Math.min(5, dist * 1.4) }
@@ -134,66 +171,105 @@ export default class Gallery {
   }
   step(k, source) { this.to(this.settled() + k, source) }
 
-  /* -------- the intro: one plate rises edge-on, turns to face you, then the row fans out -------- */
+  /* ---------------- choreography ---------------- */
   intro(progress) {
     if (this.reduced) { this.G.active = 1; this.G.others = 1; return Promise.resolve() }
     this.G.active = 0.001; this.G.others = 0; this.G.inbound = true
     this.q = { active: true, rise: 0, turn: 0 }
     const q = this.q
     return new Promise((done) => {
-      gsap.timeline({ onComplete: done })
+      this.tl({ onComplete: done })
         .to(q, { rise: 1, turn: 1, duration: 1.7, ease: GLIDE, onUpdate: () => { progress && progress(q.rise) } }, 0)
-        .call(() => this.fan().then(() => {}), null, 1.55)
+        .call(() => { this.fan() }, null, 1.55)
     }).then(() => new Promise((r) => setTimeout(r, CFG.fanDuration * 800)))
   }
   fan() {
     const t = CFG.fanDuration
-    this.G.inbound = true
+    this.G.inbound = true; this.flight = false
+    if (this.reduced) { this.G.active = 1; this.G.others = 1; return Promise.resolve() }
     return new Promise((done) => {
-      gsap.timeline({ onComplete: () => { this.q.active = false; this.G.active = 1; this.G.others = 1; done() } })
+      this.tl({ onComplete: () => { this.q.active = false; this.G.active = 1; this.G.others = 1; done() } })
         .to(this.G, { active: 1, duration: t, ease: GLIDE }, 0)
         .to(this.G, { others: 1, duration: t * 0.85, ease: 'none' }, t * 0.1)
     })
   }
-  /* coming back from a piece page: the front plate grows in place and the rest pop in behind it */
-  inbound() {
+  /* the whole row falls back, A24-style, before a section change or a route change */
+  exit() {
+    this.cancel()
+    this.flight = true; this.setHover(-1)
     if (this.reduced) return Promise.resolve()
-    this.G.active = 0.001; this.G.others = 0; this.G.inbound = true
-    const p = this.plates[this.index()]
-    p.spinY = Math.PI / 2
-    return new Promise((done) => {
-      gsap.timeline({ onComplete: done })
-        .to(this.G, { active: 1, duration: 0.7, ease: GLIDE }, 0)
-        .to(p, { spinY: 0, duration: 0.7, ease: GLIDE }, 0)
-        .to(this.G, { others: 1, duration: 0.6, ease: 'none' }, 0.07)
-    })
-  }
-  /* opening the front plate: the row recedes in a stagger, the plate swells and turns edge-on */
-  flyOut() {
-    this.flight = true; this.hover = -1
-    const i = this.index(), p = this.plates[i]
-    gsap.killTweensOf(p); p.spinY = Math.atan2(Math.sin(p.spinY), Math.cos(p.spinY))
-    gsap.killTweensOf(this.tw); this.Se = 0; this.Te = 0; this.Ce = 0
-    if (this.reduced) return Promise.resolve()
-    const off = Math.abs(this.L - i), c = off < 0.002 ? 0 : clamp(0.12 + off * 0.25, 0.12, 0.4)
     this.G.inbound = false
     return new Promise((done) => {
-      const tl = gsap.timeline({ onComplete: done })
-      if (c) { this.tw.value = this.L; tl.to(this.tw, { value: i, duration: c, ease: 'power2.out', onUpdate: () => { this.L = this.tw.value } }, 0) }
-      const a = c * 0.6, d = 0.5
-      tl.to(this.G, { others: 0, duration: d, ease: 'none' }, a)
-        .to(this.G, { active: 1.45, duration: d, ease: 'power2.in' }, a)
-        .to(p, { spinY: Math.PI / 2, spinX: 0, duration: d, ease: 'power2.in' }, a)
+      this.tl({ onComplete: done })
+        .to(this.G, { others: 0, duration: 0.42, ease: 'none' }, 0)
+        .to(this.G, { active: 0, duration: 0.42, ease: 'power2.in' }, 0.04)
     })
   }
+  /* stop anything mid-flight and leave every object in a clean pose */
+  cancel() {
+    for (const t of this.tls) t.kill()
+    this.tls.clear()
+    gsap.killTweensOf(this.tw); gsap.killTweensOf(this.G)
+    this.tweening = false; this.target = -1; this.Se = 0; this.Te = 0
+    this.q.active = false
+    for (const p of this.plates) {
+      gsap.killTweensOf(p)
+      p.spinX = 0; p.spinY = Math.round(p.spinY / Math.PI) * Math.PI
+    }
+  }
+
+  /* Opening: the front object settles, its neighbours fall back, and it turns to face the camera square-on
+     (keeping whichever side is showing). Face-on, its projection is an exact rectangle, which is where the
+     DOM takes over (see Browser.jsx Flight). */
+  openFace() {
+    const i = this.index(), p = this.plates[i]
+    const back = this.flipped(i)
+    for (const t of this.tls) t.kill()
+    this.tls.clear()
+    gsap.killTweensOf(this.tw); gsap.killTweensOf(p)
+    this.flight = true; this.setHover(-1); this.Se = 0; this.Te = 0; this.Ce = 0
+    p.spinY = back ? Math.PI : 0
+    const off = Math.abs(this.L - i), c = off < 0.002 ? 0 : clamp(0.12 + off * 0.25, 0.12, 0.4)
+    this.G.inbound = false
+    if (this.reduced) { this.L = i; p.face = 1; p.spinX = 0; this.G.others = 0; this.layout(1, true); return Promise.resolve({ i, back }) }
+    return new Promise((done) => {
+      const t = this.tl({ onComplete: () => done({ i, back }) })
+      if (c) { this.tw.value = this.L; t.to(this.tw, { value: i, duration: c, ease: 'power2.out', onUpdate: () => { this.L = this.tw.value } }, 0) }
+      t.to(this.G, { others: 0, duration: 0.5, ease: 'none' }, c * 0.5)
+        .to(p, { face: 1, spinX: 0, duration: 0.55, ease: GLIDE }, c * 0.5)
+    })
+  }
+  /* coming back from a page: put the front object face-on, alone, and report where it is on screen */
+  prepareReturn(back) {
+    this.cancel()
+    const i = this.index(), p = this.plates[i]
+    this.flight = true
+    p.face = 1; p.spinY = back ? Math.PI : 0; p.spinX = 0; p.hidden = true
+    this.G.active = 1; this.G.others = 0; this.G.inbound = true
+    this.layout(1, true)
+    return this.rectOf(i)
+  }
+  /* ...then, once the page image has landed on it, turn it back into its slot and re-fan the row */
+  land() {
+    const p = this.plates[this.index()]
+    p.hidden = false
+    if (this.reduced) { p.face = 0; this.G.others = 1; this.flight = false; return Promise.resolve() }
+    return new Promise((done) => {
+      this.tl({ onComplete: () => { this.flight = false; done() } })
+        .to(p, { face: 0, duration: 0.8, ease: GLIDE }, 0.02)
+        .to(this.G, { others: 1, duration: 0.75, ease: 'none' }, 0.06)
+    })
+  }
+  tone(css) { this.scene.fog.color.set(css) }
+  hidePlate(i, v = true) { const p = this.plates[i]; if (p) p.hidden = v }
   flip() {
-    if (this.reduced) return
+    if (this.reduced || this.flight) return
     const p = this.plates[this.index()]
     const goal = Math.round(p.spinY / Math.PI) * Math.PI + Math.PI
     gsap.to(p, { spinY: goal, spinX: 0, duration: 0.9, ease: GLIDE, overwrite: true })
   }
 
-  /* -------- input -------- */
+  /* ---------------- input ---------------- */
   bind() {
     const c = this.renderer.domElement
     this.h = {
@@ -212,7 +288,10 @@ export default class Gallery {
     const r = this.renderer.domElement.getBoundingClientRect()
     this.ptr.set(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1)
     this.ray.setFromCamera(this.ptr, this.cam)
-    const hit = this.ray.intersectObjects(this.plates.filter((p) => p.group.visible).map((p) => p.mesh), false)[0]
+    const meshes = this.pickList || (this.pickList = [])
+    meshes.length = 0
+    for (const p of this.plates) if (p.group.visible) meshes.push(p.mesh)
+    const hit = this.ray.intersectObjects(meshes, false)[0]
     if (!hit) return null
     const p = this.plates[hit.object.userData.i]
     const lp = p.mesh.worldToLocal(hit.point.clone())
@@ -224,9 +303,10 @@ export default class Gallery {
     this.renderer.domElement.style.cursor = i >= 0 ? 'pointer' : ''
     this.o.onHover && this.o.onHover(i)
   }
+  busy() { return this.flight || this.q.active || !this.N }
   onWheel(e) {
     e.preventDefault()
-    if (this.flight || this.q.active) return
+    if (this.busy()) return
     let d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
     if (e.deltaMode === 1) d *= 16
     if (Math.abs(d) < CFG.wheelFloor) return
@@ -240,19 +320,20 @@ export default class Gallery {
     }
   }
   onDown(e) {
-    if (e.button !== 0 || this.flight || this.q.active) return
+    if (e.button !== 0 || this.busy()) return
     const h = this.pick(e.clientX, e.clientY)
-    this.drag = { x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t: performance.now(), on: false, hit: h, spin: h && h.i === this.index() && !this.touch ? h.i : -1, w: this.el.clientWidth }
+    this.drag = { x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t: performance.now(), on: false, hit: h, spin: h && h.i === this.index() && !this.touch ? h.i : -1, w: this.el.clientWidth, h: this.el.clientHeight }
   }
   onMove(e) {
     const d = this.drag
     if (!d) {
-      if (this.flight || this.q.active || e.pointerType === 'touch') return
+      if (this.busy() || e.pointerType === 'touch') return
       const h = this.pick(e.clientX, e.clientY)
       if (h) { this.U = h.u; this.Ue = -h.v }
       this.setHover(h ? h.i : -1)
       return
     }
+    if (this.flight) { this.drag = null; return }
     if (!d.on) {
       if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < CFG.dragStart) return
       d.on = true; gsap.killTweensOf(this.tw); this.tweening = false; this.target = -1; this.Te = 0
@@ -262,11 +343,14 @@ export default class Gallery {
     d.x = e.clientX; d.y = e.clientY; d.t = now
     if (d.spin >= 0) {
       const p = this.plates[d.spin], k = CFG.dragSens * 0.0045
-      p.spinY = clamp(p.spinY + dx * k, -Math.PI, Math.PI); p.spinX = clamp(p.spinX + dy * k, -Math.PI, Math.PI)
+      gsap.killTweensOf(p)
+      p.spinY = clamp(p.spinY + dx * k, -Math.PI * 2, Math.PI * 2); p.spinX = clamp(p.spinX + dy * k, -Math.PI, Math.PI)
       return
     }
+    // the drum turns with vertical drags too
+    const along = this.mode === 'luck' && !this.touch && Math.abs(dy) > Math.abs(dx) ? dy / d.h : dx / d.w
     const span = this.touch ? CFG.touchSpan : 6 * CFG.dragSens
-    const s = -(dx / d.w) * span
+    const s = -along * span
     this.L = clamp(this.L + s, 0, this.N - 1)
     const v = clamp((16.667 / dt) * s, -CFG.dragMaxV, CFG.dragMaxV)
     this.Se += (v - this.Se) * CFG.dragSmooth
@@ -275,7 +359,8 @@ export default class Gallery {
     const d = this.drag
     if (!d) return
     this.drag = null; this.el.classList.remove('is-dragging')
-    if (!d.on) {   // a click
+    if (this.flight) return
+    if (!d.on) {
       const h = d.hit
       if (!h) return
       if (h.i === this.index() && Math.abs(this.L - h.i) < 0.3) this.o.onOpen(h.i)
@@ -287,7 +372,7 @@ export default class Gallery {
       gsap.to(p, { spinX: 0, spinY: Math.round(p.spinY / Math.PI) * Math.PI, duration: CFG.resetDuration, ease: 'elastic.out(1, 0.6)' })
       return
     }
-    if (performance.now() - d.t > 110) this.Se = 0      // a stall before lift really does stop it
+    if (performance.now() - d.t > 110) this.Se = 0
     if (this.touch) {
       const v = this.Se; this.Se = 0
       if (Math.abs(v) > CFG.touchFlick) this.to(Math.round(this.L + Math.sign(v) * 0.5), 'flick')
@@ -303,54 +388,82 @@ export default class Gallery {
     this.renderer.setSize(w, h, false)
     this.cam.aspect = w / h
     this.cam.updateProjectionMatrix()
-    // touch: fit the front plate to ~64% of the width so its neighbours peek in from the sides
     const vw = 2 * CFG.camDist * Math.tan(rad(CFG.fov / 2)) * this.cam.aspect
-    this.scale = this.touch ? Math.min(CFG.galleryScale, (0.64 * vw) / (1.55 * CFG.touchActive)) : CFG.galleryScale
+    const big = this.mode === 'prose' ? 1.55 * CFG.touchActive : this.mode === 'publications' ? 1.3 * 1.25 : 1.4 * 1.25
+    this.scale = this.touch ? Math.min(CFG.galleryScale, (0.64 * vw) / big) : CFG.galleryScale
     if (!this.touch && w / h < 1.25) this.scale = CFG.galleryScale * clamp((w / h) / 1.6, 0.62, 1)
     this.root.scale.setScalar(this.scale)
     this.root.updateMatrixWorld()
+    _qi.copy(this.root.quaternion).invert()
+    this.qInv = this.qInv || new THREE.Quaternion()
+    this.qInv.copy(_qi)
   }
 
-  /* -------- layout: the heart of it -------- */
-  touchPos(m, out) {
-    const n = Math.min(Math.abs(m), 2.5)
-    out.set(m * CFG.touchGap, -n * CFG.touchDrop, -n * CFG.touchDepth)
-    const qi = this.root.quaternion.clone().invert()
-    return out.applyQuaternion(qi)
+  /* ---------------- arrangements ---------------- */
+  pose(m, g, lean, dip, out) {
+    const h = Math.abs(m), touch = this.touch
+    if (this.mode === 'publications') {
+      // a shelf: nearly straight, booklets turned a little so the spine shows as they pass
+      const a = m * 0.2
+      out.x = Math.sin(a) * 1.55 * 5 * (touch ? 0.62 : 1)
+      out.z = -(1 - Math.cos(a)) * 4 - Math.min(h, 1) * 0.25
+      out.y = (g ? 0.05 : 0) - dip * (g ? 0.7 : 1)
+      out.rx = 0
+      out.ry = -clamp(m, -1.2, 1.2) * 0.42 + lean * (g ? 1 : 1.12)
+      out.rz = -lean * CFG.flowBank * 0.6
+      out.S = g ? (touch ? 1.25 : 1) : Math.max(0.74, 1 - h * 0.13)
+      return out
+    }
+    if (this.mode === 'luck') {
+      // a drum turning toward you from below
+      const a = m * 0.68, R = 2.3
+      out.x = m * 0.18 + (touch ? 0 : 0.2)
+      out.y = -Math.sin(a) * R * (touch ? 0.92 : 1)
+      out.z = -(1 - Math.cos(a)) * R
+      out.rx = a * 0.95 + lean * (g ? 0.8 : 1)
+      out.ry = -m * 0.06
+      out.rz = -lean * CFG.flowBank * 0.4
+      out.S = g ? (touch ? 1.25 : 1) : Math.max(0.7, 1 - h * 0.15)
+      out.y -= dip * 0.5
+      return out
+    }
+    if (touch) {
+      const n = Math.min(h, 2.5)
+      _v.set(m * CFG.touchGap, -n * CFG.touchDrop, -n * CFG.touchDepth).applyQuaternion(this.qInv)
+      out.x = _v.x; out.y = _v.y + (g ? 0.06 : 0) - dip; out.z = _v.z
+      out.rx = 0; out.ry = clamp(-m, 0, 1) * -2 * rad(this.sec.tiltY) + lean * (g ? 1 : 1.12)
+      out.rz = -lean * CFG.flowBank * (g ? 0.7 : 1)
+      out.S = g ? CFG.touchActive : CFG.touchInactive
+      return out
+    }
+    const a = m * 0.35
+    out.x = Math.sin(a) * 2.3 * 2.4
+    out.y = (g ? 0.06 : 0) - dip * (g ? 0.7 : 1)
+    out.z = -(Math.cos(a) - 1) * 2.4
+    out.rx = 0
+    out.ry = -a + lean * (g ? 1 : 1.12)
+    out.rz = -lean * CFG.flowBank * (g ? 0.7 : 1)
+    out.S = g ? 1 : Math.max(0.8, 1 - h * 0.12)
+    return out
   }
-  risePos(t, out) {
-    const k = 1 - clamp(t, 0, 1)
-    out.set(0, -CFG.preloadRise * k, -CFG.preloadDepth * k)
-    if (!k) return out
-    out.applyQuaternion(this.root.quaternion.clone().invert())
-    return out.divideScalar(this.scale || 1)
-  }
+
   layout(dt, instant = false) {
-    const n = this.index(), touch = this.touch, G = this.G, red = this.reduced
+    if (!this.N) return
+    const n = this.index(), G = this.G, red = this.reduced
     const free = !red && !this.flight
     const lean = free ? clamp(Math.sign(this.Ce) * Math.sqrt(Math.abs(this.Ce)) * CFG.flowLean, -CFG.flowLeanMax, CFG.flowLeanMax) : 0
     const dip = free ? Math.min(CFG.flowDipMax, Math.abs(this.Ce) * CFG.flowDip) : 0
     const base = this.drag && this.drag.on ? CFG.followTight : CFG.followBase
-    const aS = touch ? CFG.touchActive : 1, iS = touch ? CFG.touchInactive : CFG.inactiveScale
-    const tmp = this._v || (this._v = new THREE.Vector3())
-    let motion = 0
+    const T = this._t || (this._t = {})
     for (const p of this.plates) {
       const m = p.i - this.L, h = Math.abs(m), g = p.i === n
       if (h > CFG.renderRadius + 1) { p.group.visible = false; p.fresh = true; continue }
-      const a = m * 0.35, v = CFG.depthGap
-      let x = Math.sin(a) * CFG.hGap * 2.4
-      let y = (g ? CFG.activeY : 0) - dip * (g ? 0.7 : 1)
-      let z = -Math.cos(a) * v * 2.4 + v * 2.4
-      if (touch) { this.touchPos(m, tmp); x = tmp.x; y += tmp.y; z = tmp.z }
-      let rx = 0
-      let ry = touch ? clamp(-m, 0, 1) * -2 * rad(CFG.rotY) + lean * (g ? 1 : 1.12) : -a + lean * (g ? 1 : 1.12)
-      const rz = -lean * CFG.flowBank * (g ? 0.7 : 1)
-      const S = g ? aS : Math.max(iS, 1 - h * (1 - iS) * (touch ? 1 : 0.6))
-      let s, vis = true
+      this.pose(m, g, lean, dip, T)
+      let { x, y, z, rx, ry, rz, S } = T, s, vis = true
       if (g) s = S * G.active
       else {
         const e = clamp(G.others, 0, 2), inb = G.inbound
-        const st = clamp(inb ? CFG.flightStaggerIn : CFG.flightStagger, 0, 0.9)
+        const st = inb ? CFG.flightStaggerIn : CFG.flightStagger
         const r = CFG.flightStaggerMax, lag = (Math.min(h, r) / r) * st
         const o = clamp((Math.min(1, e) - lag) / Math.max(0.1, 1 - st), 0, 1)
         const k = (inb ? outCubic(o) : o * (2 - o)) + Math.max(0, e - 1)
@@ -359,12 +472,13 @@ export default class Gallery {
         const c = 1 - Math.min(1, k)
         if (c > 1e-4) z -= c * CFG.flightRecede
       }
-      p.group.visible = vis && s > 0.002
+      p.group.visible = vis && s > 0.002 && !p.hidden
       const want = +(this.hover === p.i && !(this.drag && this.drag.on))
       p.hover += (want - p.hover) * Math.min(1, dt * 10)
       if (p.hover > 0.001) { rx += p.hover * CFG.hoverTilt * this.Ue; ry += p.hover * CFG.hoverTilt * this.U }
       if (this.q.active && g) {
-        this.risePos(this.q.rise, tmp); x += tmp.x; y += tmp.y; z += tmp.z
+        const k = 1 - clamp(this.q.rise, 0, 1)
+        if (k) { _v.set(0, -CFG.preloadRise * k, -CFG.preloadDepth * k).applyQuaternion(this.qInv).divideScalar(this.scale || 1); x += _v.x; y += _v.y; z += _v.z }
         const t = 1 - this.q.turn
         p.spinY = (-Math.PI / 2) * t; p.spin.rotation.z = CFG.preloadSpin * t * t
         const gk = clamp(this.q.rise / CFG.preloadGrowBy, 0, 1)
@@ -373,13 +487,21 @@ export default class Gallery {
       const k = clamp(base - h * CFG.followFalloff, CFG.followMin, CFG.followTight)
       const A = instant || red || this.flight || p.fresh ? 1 : Math.min(1, dt * k)
       const P = p.group.position, R = p.group.rotation
-      motion += Math.abs(x - P.x) + Math.abs(y - P.y) + Math.abs(z - P.z)
-      P.x += (x - P.x) * A; P.y += (y - P.y) * A; P.z += (z - P.z) * A
-      R.x += (rx - R.x) * A; R.y += (ry - R.y) * A; R.z += (rz - R.z) * A
-      const sc = p.group.scale.x + (s - p.group.scale.x) * A
+      if (p.face > 0) {
+        // face-on: cancel the group tilt, pull it a little toward you, grow it a touch
+        const f = p.face
+        y = y * (1 - f); s *= 1 + 0.1 * f
+        x *= 1 - f * 0.9
+        z += f * 0.35
+        _e.set(rx, ry, rz); _q.setFromEuler(_e).slerp(this.qInv, f)
+        P.set(x, y, z); p.group.quaternion.copy(_q)
+      } else {
+        P.x += (x - P.x) * A; P.y += (y - P.y) * A; P.z += (z - P.z) * A
+        R.x += (rx - R.x) * A; R.y += (ry - R.y) * A; R.z += (rz - R.z) * A
+      }
+      const sc = p.face > 0 ? s : p.group.scale.x + (s - p.group.scale.x) * A
       p.group.scale.setScalar(Math.max(1e-4, sc))
       if (p.fresh && !instant && !red && this.cur >= 0 && G.others >= 1) {
-        // a plate entering the render window slides in from its side, a little small
         const side = Math.sign(m)
         P.x += side * 0.9; P.z -= 0.45; R.y -= side * 0.3; p.group.scale.multiplyScalar(0.72)
       }
@@ -387,7 +509,6 @@ export default class Gallery {
       if (!(this.drag && this.drag.spin === p.i) && !gsap.isTweening(p)) p.spinX += (0 - p.spinX) * Math.min(1, dt * 2.5)
       p.spin.rotation.x = p.spinX; p.spin.rotation.y = p.spinY
     }
-    return motion
   }
 
   frame = (now) => {
@@ -396,6 +517,7 @@ export default class Gallery {
     if (document.hidden) { this.last = now; return }
     const t = (now - this.last) / 1000, dt = Math.min(0.05, t)
     this.last = now
+    if (!this.N) return
     const r = Math.min(3, dt * 60)
     const dragging = this.drag && this.drag.on && this.drag.spin < 0
     if (!dragging && !this.flight) {
@@ -425,30 +547,32 @@ export default class Gallery {
     }
     const c = this.index()
     if (c !== this.cur) { this.cur = c; this.o.onChange && this.o.onChange(c) }
-    if (this.o.fog) this.scene.fog.color.set(this.o.fog())
     this.layout(dt)
     this.renderer.render(this.scene, this.cam)
     if (this.o.onFrame) this.o.onFrame()
   }
 
-  /* screen-space box of the front plate, for the scribble ring */
+  /* screen-space box of an object (exact when it is face-on) */
   rectOf(i) {
-    const p = this.plates[i]; if (!p || !p.group.visible) return null
-    const v = new THREE.Vector3(), W = this.el.clientWidth, H = this.el.clientHeight
+    const p = this.plates[i]; if (!p) return null
+    p.group.updateMatrixWorld(true)
+    const W = this.el.clientWidth, H = this.el.clientHeight
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
-    for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
-      v.set((sx * p.w) / 2, (sy * p.h) / 2, 0); p.mesh.localToWorld(v); v.project(this.cam)
-      const X = (v.x + 1) * 0.5 * W, Y = (1 - v.y) * 0.5 * H
-      x0 = Math.min(x0, X); x1 = Math.max(x1, X); y0 = Math.min(y0, Y); y1 = Math.max(y1, Y)
+    for (let k = 0; k < 4; k += 1) {
+      const sx = k === 1 || k === 2 ? 1 : -1, sy = k >= 2 ? 1 : -1
+      _v.set((sx * p.w) / 2, (sy * p.h) / 2, this.sec.depth / 2); p.mesh.localToWorld(_v); _v.project(this.cam)
+      const X = (_v.x + 1) * 0.5 * W, Y = (1 - _v.y) * 0.5 * H
+      if (X < x0) x0 = X; if (X > x1) x1 = X; if (Y < y0) y0 = Y; if (Y > y1) y1 = Y
     }
-    return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }
+    const b = this.el.getBoundingClientRect()
+    return { x: x0 + b.left, y: y0 + b.top, w: x1 - x0, h: y1 - y0 }
   }
 
   destroy() {
     this.dead = true
     cancelAnimationFrame(this.raf)
-    gsap.killTweensOf(this.tw); gsap.killTweensOf(this.G); gsap.killTweensOf(this.q)
-    this.plates.forEach((p) => { gsap.killTweensOf(p); p.mesh.geometry.dispose(); p.front.dispose(); p.back.dispose() })
+    this.cancel()
+    this.clearPlates()
     const c = this.renderer.domElement
     this.el.removeEventListener('wheel', this.h.wheel)
     c.removeEventListener('pointerdown', this.h.down)
@@ -457,6 +581,8 @@ export default class Gallery {
     window.removeEventListener('pointercancel', this.h.up)
     c.removeEventListener('pointerleave', this.h.leave)
     window.removeEventListener('resize', this.h.resize)
-    this.renderer.dispose(); c.remove()
+    c.style.cursor = ''
+    this.renderer.renderLists.dispose()
+    c.remove()
   }
 }
