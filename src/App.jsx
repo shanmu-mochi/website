@@ -380,6 +380,9 @@ const STORIES = [
 
 /* ===== Stories phone =====
    Each story's painting (filenames from META/POOL above). Edit freely: key = story title. */
+/* Stories stage look: 'paintings' (flat tilted plates) or 'chapbooks' (3D pamphlets, same as Papers) */
+const STORY_STAGE_VARIANT = 'paintings' // 'paintings' | 'chapbooks'
+
 const STORY_PAINTING = {
   'A Young Lady’s Photograph Album': 'degas-photographer.jpg',
   'To Get the Face Right': 'peschka.jpg',
@@ -416,7 +419,7 @@ function StoryArt({ s, w }) {
 
 const N_STORIES = STORIES.length
 /* a pencil ring: an ellipse drawn by hand, overshooting where it closes */
-const RING = 'M52 6 C80 4 98 22 97 50 C96 79 76 97 49 96 C21 95 3 77 4 49 C5 22 24 5 55 7 C70 8 82 13 89 20'
+const RING = 'M50 4 C77 3 97 21 97 49 C98 78 79 97 50 97 C22 98 3 79 4 50 C4 23 22 5 47 4.5 C49 4.4 51 4.6 53 5.2'
 
 /* A reusable 3D stage: items on a curved track, the active one ringed. Controlled (idx/onIdx) so an index list can stay in sync. */
 function Stage({ items, idx, onIdx, renderItem, renderInfo, onOpen, flippable = false, label, className = '' }) {
@@ -494,7 +497,7 @@ function Chapbook({ plate, title, by, kind, no, back, flip }) {
         <i className="cb-spine" />
         <svg className="cb-staples" viewBox="0 0 6 100" preserveAspectRatio="none" aria-hidden="true"><path d="M3 22v9M3 69v9" /></svg>
         <div className="cb-plate">{plate}</div>
-        <div className="cb-title">{title}</div>
+        <div className="cb-title">{title.split(' ').map((w, k) => <span key={k}>{k ? ' ' : ''}{w.includes('-') ? <span className="nobr">{w}</span> : w}</span>)}</div>
         <div className="cb-by">{by}</div>
         <div className="cb-kind">{kind}</div>
         <div className="cb-no">No. {String(no).padStart(2, '0')}</div>
@@ -509,6 +512,7 @@ function Chapbook({ plate, title, by, kind, no, back, flip }) {
 const paintImg = (src, w) => src ? <img src={variantFor(src, w)} alt="" draggable="false" style={{ background: placeholderOf(src) }} /> : null
 const credit = (m) => m.title ? <><em>{m.title}</em>{m.artist ? `, ${m.artist}` : ''}{m.year ? `, ${m.year}` : ''}</> : null
 
+const CHAP = STORY_STAGE_VARIANT === 'chapbooks'
 function StoriesStage() {
   const [idx, setIdx] = useState(0)            // the stage always has an active story (first by default)
   const [open, setOpen] = useState(false)      // phone panel (desktop)
@@ -539,8 +543,8 @@ function StoriesStage() {
 
   return (
     <>
-      <Stage items={STORIES} idx={idx} onIdx={setIdx} onOpen={openPhone} flippable className="stg-stories stg-cb"
-        label="Stories. Left and right arrows browse, Space flips the chapbook, Enter opens."
+      <Stage items={STORIES} idx={idx} onIdx={setIdx} onOpen={openPhone} flippable={CHAP} className={`stg-stories ${CHAP ? 'stg-cb' : 'stg-paint'}`}
+        label={`Stories. Left and right arrows browse, ${CHAP ? 'Space flips the chapbook, ' : ''}Enter opens.`}
         renderInfo={(x, i) => {
           const m = META[STORY_PAINTING[x.title]] || {}
           return (<>
@@ -552,12 +556,13 @@ function StoriesStage() {
               <tr><th>Story</th><td>{i + 1} of {N_STORIES}</td></tr>
             </tbody></table>
             <p className="stg-cap">{credit(m)}</p>
-            <p className="stg-hint">{x.href ? 'Click the chapbook or press Enter to read' : 'Not yet published'}</p>
+            <p className="stg-hint">{x.href ? `Click the ${CHAP ? 'chapbook' : 'painting'} or press Enter to read` : 'Not yet published'}</p>
           </>)
         }}
         renderItem={(x, i, { on, flip }) => {
           const src = STORY_PAINTING[x.title]
           const m = META[src] || {}
+          if (!CHAP) return paintImg(src, on ? 520 : 300)
           return <Chapbook flip={flip} no={i + 1} title={x.title} by="Shanmu Raja" kind={`A ${x.kind.split(' · ')[0]}`} plate={paintImg(src, on ? 420 : 240)}
             back={<>
               <p className="cb-first">{x.first || x.excerpt}</p>
@@ -698,7 +703,7 @@ const STAGE_PAINTINGS = Object.values(STORY_PAINTING)
 function PaintingsStage() {
   const [idx, setIdx] = useState(0)
   return (
-    <Stage items={STAGE_PAINTINGS} idx={idx} onIdx={setIdx} className="stg-paint" label="Paintings. Left and right arrows browse."
+    <Stage items={STAGE_PAINTINGS} idx={idx} onIdx={setIdx} className="stg-paint stg-art" label="Paintings. Left and right arrows browse."
       renderInfo={(src, i) => { const m = META[src] || {}; return (<>
         <h3 className="stg-title stg-title-sm">{m.title}</h3>
         <table className="stg-table"><tbody>
@@ -1252,7 +1257,7 @@ export default function App() {
 
         {/* PAINTINGS */}
         <section className="section" id="paintings">
-          <div className="section-head rv"><h2 className="section-title">Paintings</h2><p className="section-lead">The plates on the chapbook covers.</p></div>
+          <div className="section-head rv"><h2 className="section-title">Paintings</h2><p className="section-lead">The paintings paired with each story.</p></div>
           <PaintingsStage />
         </section>
 

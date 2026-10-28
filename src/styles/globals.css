@@ -766,3 +766,21 @@ html.sp-lock, html.sp-lock body { overflow: hidden; }
   .stg-item.is-far-left { opacity: 1; }
   .stg-item .cb, .stg-item.is-active .cb, .stg-item.is-active:hover .cb, .stg-item.is-flipped .cb { height: 46vh; }
 }
+
+/* rev: closed pencil loop, close label clearance, art section, cover title wrap */
+.stg-ring path { stroke-width: 2px; }
+.stg-ring { overflow: visible; }
+.sp-close { position: fixed; top: 104px; right: clamp(1.5rem, 4vw, 3rem); z-index: 2; }
+.stg-art { --h: min(64vh, 600px); height: calc(var(--h) + 3rem); margin-bottom: 0; }
+.stg-art .stg-item img { max-width: 52vw; }
+.cb-title { hyphens: manual; -webkit-hyphens: manual; overflow-wrap: normal; word-break: normal; text-wrap: balance; }
+.nobr { white-space: nowrap; }
+@media (max-width: 720px) { .stg-art { --h: 52vh; height: auto; } .sp-close { position: static; } }
+.stg-item { transform-style: preserve-3d; }
+.stg-ring { transform: translateZ(60px); z-index: 3; }
+/* non-scaling strokes break pathLength-based dashes in Chromium (gaps); drop the dash once drawn */
+@keyframes ring-draw { 99% { stroke-dashoffset: 0; stroke-dasharray: 1; } 100% { stroke-dashoffset: 0; stroke-dasharray: none; } }
+@media (prefers-reduced-motion: reduce) { .stg-ring path { stroke-dasharray: none; } }
+/* an ellipse fully encloses a rectangle when its box is ~1.42x the rectangle */
+.stg-ring, .stg-cb .stg-ring { inset: auto; left: -21%; top: -21%; width: 142%; height: 142%; }
+@media (max-width: 720px) { .stg-ring { display: none; } }
