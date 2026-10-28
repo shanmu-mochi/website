@@ -62,13 +62,15 @@ const outCubic = (t) => 1 - (1 - t) ** 3
 
 /* ---- one renderer for the life of the page, so leaving and coming back never makes a new GL context ---- */
 let RENDERER = null
-function renderer() {
-  if (!RENDERER) {
-    RENDERER = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' })
-    RENDERER.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
-    RENDERER.outputColorSpace = THREE.SRGBColorSpace
-    RENDERER.setClearColor(0x000000, 0)
-    RENDERER.domElement.className = 'gl'
+function renderer(own = false) {
+  if (own || !RENDERER) {
+    const R = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' })
+    R.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+    R.outputColorSpace = THREE.SRGBColorSpace
+    R.setClearColor(0x000000, 0)
+    R.domElement.className = 'gl'
+    if (own) return R
+    RENDERER = R
   }
   return RENDERER
 }
@@ -106,7 +108,9 @@ export default class Gallery {
     this.wheel = { v: 0, t: 0 }
     this.tls = new Set()
 
-    const r = this.renderer = renderer()
+    // iteration 17: each carousel band on the flowing page owns its own renderer (opts.own)
+    const r = this.renderer = opts.own ? renderer(true) : renderer()
+    this.paused = false
     el.appendChild(r.domElement)
     this.scene = new THREE.Scene()
     this.scene.fog = new THREE.Fog(0xf2f2f2, 7, 14)
@@ -310,13 +314,13 @@ export default class Gallery {
     const c = this.renderer.domElement
     this.h = {
       wheel: (e) => this.onWheel(e), down: (e) => this.onDown(e), move: (e) => this.onMove(e),
-      up: (e) => this.onUp(e), leave: () => { if (!this.drag) this.setHover(-1) }, resize: () => this.resize(),
+      up: (e) => this.onUp(e), cancel: (e) => { if (this.drag && !this.drag.on) { this.drag = null; return } this.onUp(e) }, leave: () => { if (!this.drag) this.setHover(-1) }, resize: () => this.resize(),
     }
     this.el.addEventListener('wheel', this.h.wheel, { passive: false })
     c.addEventListener('pointerdown', this.h.down)
     window.addEventListener('pointermove', this.h.move)
     window.addEventListener('pointerup', this.h.up)
-    window.addEventListener('pointercancel', this.h.up)
+    window.addEventListener('pointercancel', this.h.cancel)
     c.addEventListener('pointerleave', this.h.leave)
     window.addEventListener('resize', this.h.resize)
   }
@@ -341,6 +345,18 @@ export default class Gallery {
   }
   busy() { return this.flight || this.q.active || !this.N }
   onWheel(e) {
+    if (this.o.band) {
+      // iteration 17, flowing page: a vertical wheel always belongs to the page (never trapped here);
+      // only a sideways gesture (deltaX, shift + wheel, trackpad swipe) moves the carousel
+      const lm = e.deltaMode === 1 ? 16 : 1
+      let dx = e.deltaX * lm
+      const dy = e.deltaY * lm
+      if (e.shiftKey && !dx) dx = dy
+      else if (Math.abs(dy) >= Math.abs(dx)) return
+      e.preventDefault()
+      if (!this.busy()) this.wheelX(e, dx, performance.now())
+      return
+    }
     e.preventDefault()
     const w = this.wheel, now = performance.now()
     // iteration 14: two axes. Sideways (deltaX, or shift + wheel) browses the pieces; up / down asks the
@@ -369,7 +385,10 @@ export default class Gallery {
       return
     }
     if (this.busy()) return
-    const d = dx
+    this.wheelX(e, dx, now)
+  }
+  wheelX(e, d, now) {
+    const w = this.wheel
     if (Math.abs(d) < CFG.wheelFloor) return
     const fresh = now - w.t > CFG.mFresh                 // a pause means a new gesture, don't inherit the old speed
     // the ends of a row resist; the next section lives below, not beyond the last piece
@@ -404,6 +423,7 @@ export default class Gallery {
     if (!d.on) {
       if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < CFG.dragStart) return
       d.ax = Math.abs(e.clientX - d.x0) >= Math.abs(e.clientY - d.y0) ? 'x' : 'y'
+      if (d.ax === 'y' && d.spin < 0 && this.o.band) { this.drag = null; return }   // the page scrolls
       if (d.ax === 'y' && d.spin < 0) { d.on = true; this.setHover(-1); return }
       d.on = true; gsap.killTweensOf(this.tw); this.tweening = false; this.target = -1; this.Te = 0
       this.setHover(-1); this.el.classList.add('is-dragging')
@@ -600,7 +620,7 @@ export default class Gallery {
   frame = (now) => {
     if (this.dead) return
     this.raf = requestAnimationFrame(this.frame)
-    if (document.hidden) { this.last = now; return }
+    if (document.hidden || this.paused) { this.last = now; return }
     const t = (now - this.last) / 1000, dt = Math.min(0.05, t)
     this.last = now
     if (!this.N) return
@@ -666,11 +686,12 @@ export default class Gallery {
     c.removeEventListener('pointerdown', this.h.down)
     window.removeEventListener('pointermove', this.h.move)
     window.removeEventListener('pointerup', this.h.up)
-    window.removeEventListener('pointercancel', this.h.up)
+    window.removeEventListener('pointercancel', this.h.cancel)
     c.removeEventListener('pointerleave', this.h.leave)
     window.removeEventListener('resize', this.h.resize)
     c.style.cursor = ''
     this.renderer.renderLists.dispose()
     c.remove()
+    if (this.o.own) { this.renderer.dispose(); this.renderer.forceContextLoss() }
   }
 }

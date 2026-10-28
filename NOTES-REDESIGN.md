@@ -162,3 +162,9 @@ seamlessly into its spot on the page; fix details, smoothness and nav.
 
 ### Part 1: slower side scroll
 Gallery.js CFG: dragSens .95->.6, dragMaxV .5->.32, glideTau .55->.36, glideMaxV .2->.125, mPower .8->.5, wheelPx 420->650, touchSpan 1.8->1.15, snapDuration .46->.62; key step duration cap .6->.82 (kick 4->2.5), click glide .45+.11d->.62+.15d (cap 1.4s), wheel-notch kick 2.5->1.6. Card spin-drag keeps its old feel.
+
+### Part 2: one flowing page
+- Home is now a single natively scrolling page: intro, Prose, Publications, Luck carousels, then ART THAT I LOVE. Each band has a heading, ~20vh of space above and a hairline.
+- Each carousel has its own WebGL renderer (`opts.own`) and band mode (`opts.band`): a vertical wheel always goes to the page; only deltaX, shift+wheel or a horizontal drag moves the carousel. A vertical touch is left to the browser (`touch-action: pan-y`, and pointercancel never opens a piece).
+- Bands pause their renderer when offscreen (IntersectionObserver). Nav glides to the band; the pen ring follows the band in view.
+- Back from a piece restores the band and the exact scroll position.
