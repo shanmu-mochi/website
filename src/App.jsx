@@ -378,11 +378,8 @@ const STORIES = [
   { title: 'Got Your Toe!', kind: 'Essay · A skilled nursing facility', venue: 'Medium', excerpt: 'At the nursing home, the body keeps a longer memory than the mind.', href: 'https://shanmuraja.medium.com/got-your-toe-472b0e2a74cb', first: "The doctor and I walk down the long dreary-colored hallway, an indication that you’re in a hospital, a reason for the goosebumps and anxious memories many others have.", published: 'Aug 2023' },
 ]
 
-/* ===== Stories phone =====
-   Each story's painting (filenames from META/POOL above). Edit freely: key = story title. */
-/* Stories stage look: 'paintings' (flat tilted plates) or 'chapbooks' (3D pamphlets, same as Papers) */
-const STORY_STAGE_VARIANT = 'paintings' // 'paintings' | 'chapbooks'
-
+/* ===== Reading Room (redesign-v2) =====
+   Paris Review contents page + A24 full-viewport takeover. Hover/focus previews, ONE click reads. */
 const STORY_PAINTING = {
   'A Young Lady’s Photograph Album': 'degas-photographer.jpg',
   'To Get the Face Right': 'peschka.jpg',
@@ -400,97 +397,206 @@ const STORY_PAINTING = {
   'Do You Lift, Bro?': 'bellows-stag.jpg',
   'Got Your Toe!': 'schjerfbeck-convalescent.jpg',
 }
-/* Substack (CSP frame-ancestors *.substack.com) and Medium (X-Frame-Options: SAMEORIGIN) refuse to be
-   iframed, so the phone shows a real mobile rendering captured once by `npm run previews`. */
+/* Substack/Medium refuse to be iframed, so the phone shows a real mobile rendering captured by `npm run previews`. */
 const previewOf = (href) => `/story-previews/${new URL(href).pathname.split('/').filter(Boolean).pop()}.webp`
-const isDesk = () => typeof window !== 'undefined' && window.matchMedia('(min-width: 721px)').matches
-
-function StoryArt({ s, w }) {
-  const src = STORY_PAINTING[s.title]
-  const m = META[src] || {}
-  if (!src) return null
-  return (
-    <figure className="sp-art">
-      <img src={variantFor(src, w)} alt={m.title || ''} loading="lazy" decoding="async" style={{ background: placeholderOf(src) }} />
-      <figcaption><em>{m.title}</em>{m.artist ? `, ${m.artist}` : ''}{m.year ? `, ${m.year}` : ''}</figcaption>
-    </figure>
-  )
-}
-
+const credit = (m) => m.title ? <><em>{m.title}</em>{m.artist ? `, ${m.artist}` : ''}{m.year ? `, ${m.year}` : ''}</> : null
 const N_STORIES = STORIES.length
-/* a pencil ring: an ellipse drawn by hand, overshooting where it closes */
-const RING = 'M50 4 C77 3 97 21 97 49 C98 78 79 97 50 97 C22 98 3 79 4 50 C4 23 22 5 47 4.5 C49 4.4 51 4.6 53 5.2'
+const pad2 = (n) => String(n).padStart(2, '0')
+/* the wash tint: the painting's dominant colour, pushed dark enough that white type always reads */
+const tintOf = (src) => {
+  const c = (COLORS[src] && COLORS[src][0]) || [20, 20, 20]
+  const lum = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+  const k = Math.min(1, 34 / Math.max(lum, 1))
+  return c.map((v) => Math.round(v * Math.max(0.35, k))).join(', ')
+}
+const usePointerFine = () => {
+  const q = '(min-width: 721px) and (not (pointer: coarse))'
+  const [fine, setFine] = useState(() => typeof window !== 'undefined' && window.matchMedia(q).matches)
+  useEffect(() => { const m = window.matchMedia(q); const on = () => setFine(m.matches); m.addEventListener('change', on); return () => m.removeEventListener('change', on) }, [])
+  return fine
+}
+const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-/* A reusable 3D stage: items on a curved track, the active one ringed. Controlled (idx/onIdx) so an index list can stay in sync. */
-function Stage({ items, idx, onIdx, renderItem, renderInfo, onOpen, flippable = false, label, className = '' }) {
-  const N = items.length
-  const [moving, setMoving] = useState(false)
-  const [flip, setFlip] = useState(false)
+function Phone({ s, lit }) {
   const ref = useRef(null)
-  const inView = useRef(false)
-  const drag = useRef(null)
-  const st = useRef({})
-  st.current = { idx, onIdx, onOpen, N, flippable }
-  const off = (i) => { let d = i - idx; if (d > N / 2) d -= N; if (d < -N / 2) d += N; return d }
-  const go = (i) => { const n = ((i % N) + N) % N; if (n !== idx) { setMoving(true); onIdx(n) } }
-  useEffect(() => { setFlip(false) }, [idx])
-  useEffect(() => { if (!moving) return; const t = setTimeout(() => setMoving(false), 480); return () => clearTimeout(t) }, [moving, idx])
+  const user = useRef(false)
+  // the page drifts down on its own (like someone reading); any wheel/touch hands control to the visitor
   useEffect(() => {
     const el = ref.current
-    const io = new IntersectionObserver(([e]) => { inView.current = e.isIntersecting && e.intersectionRatio >= 0.5 }, { threshold: [0, 0.5, 1] })
-    io.observe(el)
-    const onKey = (e) => {
-      const t = e.target
-      if (t && (t.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(t.tagName))) return
-      if (document.documentElement.classList.contains('sp-lock') && !el.classList.contains('stg-stories')) return
-      if (!inView.current) return   // only the stage on screen reacts (focus can be left behind in another stage)
-      const c = st.current
-      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); setMoving(true); c.onIdx((c.idx + (e.key === 'ArrowRight' ? 1 : -1) + c.N) % c.N) }
-      else if (e.key === ' ' && c.flippable && !t.closest?.('.ix, a, button, .index-list') && isDesk()) { e.preventDefault(); setFlip((f) => !f) }
-      else if (e.key === 'Enter' && c.onOpen && !t.closest?.('a, button, .ix, .index-list')) { e.preventDefault(); c.onOpen(c.idx) }
+    if (!el) return
+    el.scrollTop = 0; user.current = false
+    if (!lit || reducedMotion()) return
+    let raf, last = performance.now(), acc = 0
+    const t0 = last + 900
+    const step = (now) => {
+      const dt = now - last; last = now
+      if (!user.current && now > t0) { acc += dt * 0.028; if (acc >= 1) { el.scrollTop += Math.floor(acc); acc -= Math.floor(acc) } }
+      raf = requestAnimationFrame(step)
     }
-    window.addEventListener('keydown', onKey)
-    return () => { io.disconnect(); window.removeEventListener('keydown', onKey) }
-  }, [])
-  const onDown = (e) => { drag.current = { x: e.clientX } }
-  const onUp = (e) => {
-    const d = drag.current; drag.current = null
-    if (!d) return
-    const dx = e.clientX - d.x
-    if (Math.abs(dx) > 40) { go(idx + (dx < 0 ? 1 : -1)); ref.current.dataset.dragged = '1'; setTimeout(() => { if (ref.current) delete ref.current.dataset.dragged }, 0) }
-  }
-  const onItem = (e, i) => { if (ref.current.dataset.dragged || e.target.closest('a')) return; if (i === idx) { if (onOpen) onOpen(i) } else go(i) }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [s, lit])
+  const Tag = s && s.href ? 'a' : 'div'
   return (
-    <div className={`stg ${className}${moving ? ' is-moving' : ''}`} ref={ref} tabIndex={0} role="region" aria-roledescription="carousel"
-      aria-label={label} onPointerDown={onDown} onPointerUp={onUp} onPointerCancel={() => { drag.current = null }}>
-      <div className="stg-info" aria-live="polite">
-        {renderInfo(items[idx], idx)}
-        {flippable && <button type="button" className="stg-flip" onClick={() => setFlip((f) => !f)} aria-pressed={flip}>{flip ? 'Flip to cover' : 'Flip'} ↻ <kbd>Space</kbd></button>}
-      </div>
-      <div className="stg-track">
-        {items.map((it, i) => {
-          const d = off(i)
-          if (Math.abs(d) > 3) return null
-          const on = d === 0
-          return (
-            <div role="button" key={i} className={`stg-item${on ? ' is-active' : ''}${on && flip ? ' is-flipped' : ''}${d < -1 ? ' is-far-left' : ''}`} style={{ '--d': d, '--ad': Math.abs(d) }}
-              tabIndex={-1} aria-hidden={!on} onClick={(e) => onItem(e, i)}>
-              {renderItem(it, i, { on, flip: on && flip })}
-              {on && (
-                <svg className="stg-ring" viewBox="0 0 101 101" preserveAspectRatio="none" aria-hidden="true" key={idx}>
-                  <path d={RING} pathLength="1" />
-                </svg>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </div>
+    <Tag className="phone rr-phone" {...(s && s.href ? { href: s.href, target: '_blank', rel: 'noreferrer', 'aria-label': `Read ${s.title} on ${s.venue}`, tabIndex: -1 } : {})}>
+      <i className="phone-btn b-action" /><i className="phone-btn b-volup" /><i className="phone-btn b-voldn" /><i className="phone-btn b-power" />
+      <span className="phone-screen">
+        <span className="phone-status" aria-hidden="true">
+          <span>9:41</span>
+          <span className="phone-island"><i className="phone-pill" /></span>
+          <span className="phone-icons">
+            <svg viewBox="0 0 18 12" width="16" height="11"><path d="M9 11.2l2.4-2.9a3.6 3.6 0 0 0-4.8 0zM4.3 6.6a7 7 0 0 1 9.4 0l1.4-1.7a9.2 9.2 0 0 0-12.2 0zM1.3 3a11.6 11.6 0 0 1 15.4 0L18 1.4A13.6 13.6 0 0 0 0 1.4z" fill="currentColor" /></svg>
+            <svg viewBox="0 0 27 13" width="24" height="12"><rect x=".5" y=".5" width="23" height="12" rx="3.5" fill="none" stroke="currentColor" opacity=".45" /><rect x="2" y="2" width="18" height="9" rx="2" fill="currentColor" /><path d="M25 4.5v4a2 2 0 0 0 0-4z" fill="currentColor" opacity=".5" /></svg>
+          </span>
+        </span>
+        <span className="phone-home" aria-hidden="true" />
+        {s && s.href
+          ? <span className="phone-page" ref={ref} onWheel={() => { user.current = true }} onTouchStart={() => { user.current = true }}>
+              <img src={previewOf(s.href)} alt="" draggable="false" />
+            </span>
+          : <span className="phone-lock rr-lock" ref={ref}>
+              <span className="rr-lock-t">{s ? s.title : ''}</span>
+              <span className="rr-lock-k">Not yet published</span>
+            </span>}
+        {s && s.href && <span className="phone-cta">Read on {s.venue} ↗</span>}
+      </span>
+    </Tag>
   )
 }
 
-/* A chapbook: a thin saddle-stitched pamphlet. Front and back are real data only. */
-function Chapbook({ plate, title, by, kind, no, back, flip }) {
+function ReadingRoom() {
+  useEffect(() => { document.documentElement.classList.add('past-gallery') }, [])
+  const fine = usePointerFine()
+  const [idx, setIdx] = useState(0)          // last story previewed (drives the wash)
+  const [lit, setLit] = useState(false)      // a story is under the pointer / focus
+  const [seen, setSeen] = useState(() => new Set([0]))
+  const [exp, setExp] = useState(null)       // touch: the row opened inline
+  const leaveT = useRef(null)
+  const rows = useRef([])
+  const secRef = useRef(null)
+  const [inView, setInView] = useState(false)   // the list is on screen: show the fixed index
+  useEffect(() => {
+    const el = secRef.current && secRef.current.querySelector('.rr-list')
+    if (!el) return
+    const io = new IntersectionObserver(([e]) => { setInView(e.isIntersecting); if (!e.isIntersecting) setLit(false) }, { rootMargin: '-90px 0px -120px 0px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [fine])
+  const show = (i) => {
+    clearTimeout(leaveT.current)
+    setIdx(i); setLit(true)
+    setSeen((S) => (S.has(i) ? S : new Set(S).add(i)))
+  }
+  const hide = () => { clearTimeout(leaveT.current); leaveT.current = setTimeout(() => setLit(false), 160) }
+  useEffect(() => {
+    const on = (e) => { if (e.key === 'Escape') { setLit(false); if (document.activeElement && document.activeElement.blur) document.activeElement.blur() } }
+    window.addEventListener('keydown', on)
+    return () => { window.removeEventListener('keydown', on); clearTimeout(leaveT.current) }
+  }, [])
+  // warm the cache for the neighbours so the next wash is instant
+  useEffect(() => {
+    if (!fine || !lit) return
+    ;[idx - 1, idx + 1].forEach((j) => { const st = STORIES[j]; if (!st) return; const im = new Image(); im.src = variantFor(STORY_PAINTING[st.title], window.innerWidth) })
+  }, [idx, lit, fine])
+  const on = fine && lit
+  const s = STORIES[idx]
+  const m = META[STORY_PAINTING[s.title]] || {}
+  const move = (e, i) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+    e.preventDefault()
+    const n = (i + (e.key === 'ArrowDown' ? 1 : -1) + N_STORIES) % N_STORIES
+    rows.current[n] && rows.current[n].focus()
+  }
+  return (
+    <section ref={secRef} className={`rr${on ? ' is-lit' : ''}${inView ? ' in-view' : ''}`} id="stories" aria-label="Stories" style={{ '--tint': tintOf(STORY_PAINTING[s.title]) }}>
+      {fine && (
+        <div className="rr-wash" aria-hidden="true">
+          {[...seen].map((i) => {
+            const src = STORY_PAINTING[STORIES[i].title]
+            return (
+              <div className={`rr-plate${on && i === idx ? ' is-on' : ''}`} key={i} style={{ '--tint': tintOf(src), background: placeholderOf(src) }}>
+                <img src={variantFor(src, window.innerWidth)} alt="" decoding="async" />
+              </div>
+            )
+          })}
+          <div className="rr-cap"><span className="rr-cap-n">{pad2(idx + 1)} / {pad2(N_STORIES)}</span>{credit(m)}</div>
+        </div>
+      )}
+
+      <header className="rr-mast">
+        <p className="rr-kicker">Fiction &amp; essays on medicine and humanity</p>
+        <h1 className="rr-epigraph">I’m a writer who works in medicine, or a medical person who writes. <span>The order keeps changing.</span></h1>
+        <div className="rr-mast-foot">
+          <span>Stories, {N_STORIES}</span>
+          <span>{fine ? 'Hover a title to see it. Click to read.' : 'Tap a title to see it.'}</span>
+        </div>
+      </header>
+
+      <div className="rr-body" onMouseLeave={hide}>
+        <ol className="rr-list">
+          {STORIES.map((st, i) => {
+            const open = !fine && exp === i
+            const src = STORY_PAINTING[st.title]
+            const pm = META[src] || {}
+            const by = <span className="rr-by">{st.kind.split(' · ')[0]}<span className="rr-dot">·</span>{st.venue}{st.published ? <><span className="rr-dot">·</span>{st.published}</> : null}</span>
+            const inner = (<>
+              <span className="rr-num">{pad2(i + 1)}</span>
+              <span className="rr-main">
+                <span className="rr-title">{st.title}{st.latest && <span className="rr-new">New</span>}</span>
+                {by}
+                {st.first && <span className="rr-first">{st.first}</span>}
+              </span>
+              {fine && <span className="rr-go" aria-hidden="true">{st.href ? `Read ↗` : 'Unpublished'}</span>}
+            </>)
+            const common = {
+              className: `rr-row${on && idx === i ? ' is-on' : ''}`,
+              ref: (el) => { rows.current[i] = el },
+              onMouseEnter: () => fine && show(i),
+              onFocus: () => fine && show(i),
+              onBlur: hide,
+              onKeyDown: (e) => move(e, i),
+            }
+            return (
+              <li className={`rr-item${open ? ' is-open' : ''}`} key={st.title}>
+                {fine && st.href
+                  ? <a {...common} href={st.href} target="_blank" rel="noreferrer">{inner}</a>
+                  : <div {...common} tabIndex={0} role="button" aria-expanded={fine ? undefined : open}
+                      onClick={() => { if (!fine) setExp((x) => (x === i ? null : i)) }}
+                      onKeyDown={(e) => { move(e, i); if (!fine && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); setExp((x) => (x === i ? null : i)) } }}>{inner}</div>}
+                {open && (
+                  <div className="rr-card">
+                    <img src={variantFor(src, 720)} alt={pm.title || ''} loading="lazy" decoding="async" style={{ background: placeholderOf(src), aspectRatio: DIMS[src] ? `${DIMS[src].w} / ${DIMS[src].h}` : undefined }} />
+                    <p className="rr-card-cap">{credit(pm)}</p>
+                    {st.href
+                      ? <a className="rr-read" href={st.href} target="_blank" rel="noreferrer">Read on {st.venue} ↗</a>
+                      : <span className="rr-read is-muted">Not yet published</span>}
+                  </div>
+                )}
+              </li>
+            )
+          })}
+        </ol>
+        {fine && (
+          <aside className="rr-aside" aria-hidden={!on}>
+            <div className="rr-sticky">
+              <div className="rr-phone-wrap"><Phone s={s} lit={on} /></div>
+              <nav className="rr-index" aria-label="Story index">
+                {STORIES.map((st, i) => {
+                  const T = st.href ? 'a' : 'span'
+                  return <T key={i} className={on && idx === i ? 'is-on' : ''} {...(st.href ? { href: st.href, target: '_blank', rel: 'noreferrer', tabIndex: -1 } : {})}
+                    onMouseEnter={() => show(i)} title={st.title}>{pad2(i + 1)}</T>
+                })}
+              </nav>
+            </div>
+          </aside>
+        )}
+      </div>
+    </section>
+  )
+}
+
+/* A chapbook cover: type only, real data only. */
+function Chapbook({ plate, title, by, kind, no }) {
   return (
     <div className="cb">
       <div className="cb-face cb-front">
@@ -500,146 +606,11 @@ function Chapbook({ plate, title, by, kind, no, back, flip }) {
         <div className="cb-title">{title.split(' ').map((w, k) => <span key={k}>{k ? ' ' : ''}{w.includes('-') ? <span className="nobr">{w}</span> : w}</span>)}</div>
         <div className="cb-by">{by}</div>
         <div className="cb-kind">{kind}</div>
-        <div className="cb-no">No. {String(no).padStart(2, '0')}</div>
-      </div>
-      <div className="cb-face cb-back" aria-hidden={!flip}>
-        <i className="cb-spine" />
-        {back}
+        <div className="cb-no">No. {pad2(no)}</div>
       </div>
     </div>
   )
 }
-const paintImg = (src, w) => src ? <img src={variantFor(src, w)} alt="" draggable="false" style={{ background: placeholderOf(src) }} /> : null
-const credit = (m) => m.title ? <><em>{m.title}</em>{m.artist ? `, ${m.artist}` : ''}{m.year ? `, ${m.year}` : ''}</> : null
-
-const CHAP = STORY_STAGE_VARIANT === 'chapbooks'
-function StoriesStage() {
-  const [idx, setIdx] = useState(0)            // the stage always has an active story (first by default)
-  const [open, setOpen] = useState(false)      // phone panel (desktop)
-  const [exp, setExp] = useState(null)         // inline card (mobile)
-  const [loaded, setLoaded] = useState(() => new Set())   // previews mounted once, then kept (hidden) so they stick
-  const s = STORIES[idx]
-  const openPhone = (i) => {
-    setIdx(i)
-    if (!isDesk()) { setExp((e) => (e === i ? null : i)); return }
-    if (STORIES[i].href) setLoaded((L) => (L.has(i) ? L : new Set(L).add(i)))
-    setOpen(true)
-  }
-  useEffect(() => { if (open && s.href) setLoaded((L) => (L.has(idx) ? L : new Set(L).add(idx))) }, [open, idx, s.href])
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
-  useEffect(() => { document.documentElement.classList.toggle('sp-lock', open); return () => document.documentElement.classList.remove('sp-lock') }, [open])
-  // past the gallery, the nav/footer glass stops refracting (the displacement smeared headings under the pill)
-  useEffect(() => {
-    const gal = document.querySelector('.gallery')
-    if (!gal) return
-    const io = new IntersectionObserver(([e]) => document.documentElement.classList.toggle('past-gallery', !e.isIntersecting))
-    io.observe(gal)
-    return () => { io.disconnect(); document.documentElement.classList.remove('past-gallery') }
-  }, [])
-
-  return (
-    <>
-      <Stage items={STORIES} idx={idx} onIdx={setIdx} onOpen={openPhone} flippable={CHAP} className={`stg-stories ${CHAP ? 'stg-cb' : 'stg-paint'}`}
-        label={`Stories. Left and right arrows browse, ${CHAP ? 'Space flips the chapbook, ' : ''}Enter opens.`}
-        renderInfo={(x, i) => {
-          const m = META[STORY_PAINTING[x.title]] || {}
-          return (<>
-            <h3 className="stg-title">{x.title}</h3>
-            <table className="stg-table"><tbody>
-              <tr><th>Kind</th><td>{x.kind.split(' · ')[0]}</td></tr>
-              <tr><th>Venue</th><td>{x.venue}</td></tr>
-              {x.published && <tr><th>Published</th><td>{x.published}</td></tr>}
-              <tr><th>Story</th><td>{i + 1} of {N_STORIES}</td></tr>
-            </tbody></table>
-            <p className="stg-cap">{credit(m)}</p>
-            <p className="stg-hint">{x.href ? `Click the ${CHAP ? 'chapbook' : 'painting'} or press Enter to read` : 'Not yet published'}</p>
-          </>)
-        }}
-        renderItem={(x, i, { on, flip }) => {
-          const src = STORY_PAINTING[x.title]
-          const m = META[src] || {}
-          if (!CHAP) return paintImg(src, on ? 520 : 300)
-          return <Chapbook flip={flip} no={i + 1} title={x.title} by="Shanmu Raja" kind={`A ${x.kind.split(' · ')[0]}`} plate={paintImg(src, on ? 420 : 240)}
-            back={<>
-              <p className="cb-first">{x.first || x.excerpt}</p>
-              <div className="cb-venue">{x.venue}{x.published ? ` · ${x.published}` : ''}</div>
-              {x.href ? <a className="cb-link" href={x.href} target="_blank" rel="noreferrer" tabIndex={flip ? 0 : -1}>Read at {x.venue} ↗</a> : <span className="cb-link">Not yet published</span>}
-              {m.title && <div className="cb-colo">Cover: {credit(m)}</div>}
-            </>} />
-        }} />
-
-      <div className="ix" role="list">
-        {STORIES.map((st, i) => {
-          const Tag = st.href ? 'a' : 'div'
-          return (
-            <div className={`ix-item${exp === i ? ' ix-open' : ''}`} role="listitem" key={st.title}>
-              <Tag className={`ix-row${idx === i ? ' ix-on' : ''}`} {...(st.href ? { href: st.href, target: '_blank', rel: 'noreferrer' } : { tabIndex: 0, role: 'button' })}
-                aria-expanded={exp === i} onMouseEnter={() => setIdx(i)} onFocus={() => setIdx(i)}
-                onClick={(e) => { e.preventDefault(); openPhone(i) }}
-                onKeyDown={(e) => { if (!st.href && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openPhone(i) } }}>
-                <span className="ix-num">{String(i + 1).padStart(2, '0')}</span>
-                <span className="ix-main">
-                  <span className="ix-head">
-                    <span className="ix-title">{st.title}</span>
-                    {st.latest && (<span className="st-new"><i className="st-new-dot" aria-hidden="true" />Just Published</span>)}
-                  </span>
-                  <span className="ix-by">{st.kind} · {st.venue}</span>
-                  <span className="ix-first">{st.first || st.excerpt}</span>
-                </span>
-              </Tag>
-              {exp === i && (
-                <div className="sp-card">
-                  <StoryArt s={st} w={720} />
-                  {st.href
-                    ? <a className="sp-cta" href={st.href} target="_blank" rel="noreferrer">Continue reading on {st.venue} ↗</a>
-                    : <div className="sp-note">Not yet published</div>}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-
-      <div className={`sp-panel${open ? ' is-open' : ''}`} aria-hidden={!open}>
-        <button type="button" className="sp-scrim" tabIndex={-1} aria-label="Close preview" onClick={() => setOpen(false)} />
-        <aside className="sp-side" aria-label="Story preview">
-          <button type="button" className="sp-close" onClick={() => setOpen(false)} tabIndex={open ? 0 : -1}>Close ✕</button>
-          <div className="phone">
-            <i className="phone-btn b-action" /><i className="phone-btn b-volup" /><i className="phone-btn b-voldn" /><i className="phone-btn b-power" />
-            <div className="phone-screen">
-              <div className="phone-status" aria-hidden="true">
-                <span>9:41</span>
-                <span className="phone-island"><i className="phone-pill" /></span>
-                <span className="phone-icons">
-                  <svg viewBox="0 0 18 12" width="16" height="11"><path d="M9 11.2l2.4-2.9a3.6 3.6 0 0 0-4.8 0zM4.3 6.6a7 7 0 0 1 9.4 0l1.4-1.7a9.2 9.2 0 0 0-12.2 0zM1.3 3a11.6 11.6 0 0 1 15.4 0L18 1.4A13.6 13.6 0 0 0 0 1.4z" fill="currentColor" /></svg>
-                  <svg viewBox="0 0 27 13" width="24" height="12"><rect x=".5" y=".5" width="23" height="12" rx="3.5" fill="none" stroke="currentColor" opacity=".45" /><rect x="2" y="2" width="18" height="9" rx="2" fill="currentColor" /><path d="M25 4.5v4a2 2 0 0 0 0-4z" fill="currentColor" opacity=".5" /></svg>
-                </span>
-              </div>
-              <div className="phone-home" aria-hidden="true" />
-              <div className={`phone-lock${s.href && loaded.has(idx) ? ' is-hidden' : ''}`}>
-                <div className="phone-time">{String(idx + 1).padStart(2, '0')}</div>
-                <StoryArt s={s} w={340} />
-                <div className="phone-lock-t">{s.title}</div>
-                <div className="phone-lock-k">{s.href ? 'Click to open' : 'Not yet published'}</div>
-              </div>
-              {[...loaded].map((i) => (
-                <div className={`phone-page${idx === i ? '' : ' is-hidden'}`} key={i} aria-hidden={idx !== i}>
-                  <img src={previewOf(STORIES[i].href)} alt={`${STORIES[i].title} on ${STORIES[i].venue}`} />
-                </div>
-              ))}
-              {s.href && <a className="phone-cta" href={s.href} target="_blank" rel="noreferrer" tabIndex={open ? 0 : -1}>Continue reading on {s.venue} ↗</a>}
-            </div>
-          </div>
-        </aside>
-      </div>
-    </>
-  )
-}
-
 
 /* Papers as chapbooks: the research list plus the two white papers from Deep dives (same text, same links) */
 const WHITE_PAPERS = [
@@ -652,67 +623,40 @@ const linkOf = (p) => p.href || (p.doi ? 'https://doi.org/' + p.doi : null)
 
 function PapersShelf() {
   const [idx, setIdx] = useState(0)
-  const open = (i) => { const u = linkOf(SHELF[i]); if (u) window.open(u, '_blank', 'noopener') }
+  const p = SHELF[idx]
   return (
-    <>
-      <Stage items={SHELF} idx={idx} onIdx={setIdx} onOpen={open} flippable className="stg-cb stg-papers"
-        label="Papers. Left and right arrows browse, Space flips, Enter opens the paper."
-        renderInfo={(p, i) => (<>
-          <h3 className="stg-title stg-title-sm">{p.title}</h3>
-          <table className="stg-table"><tbody>
-            <tr><th>Kind</th><td>{p.kindLabel}</td></tr>
-            {p.doiVia && <tr><th>Via</th><td>{p.doiVia}</td></tr>}
-            <tr><th>Paper</th><td>{i + 1} of {SHELF.length}</td></tr>
-          </tbody></table>
-          <p className="stg-hint">{linkOf(p) ? 'Click the chapbook or press Enter to open' : 'Not yet available'}</p>
-        </>)}
-        renderItem={(p, i, { flip }) => (
-          <Chapbook flip={flip} no={i + 1} title={p.title} by={p.authors} kind={p.kindLabel}
-            plate={<div className="cb-type-plate"><span>{p.venue}</span></div>}
-            back={<>
-              <p className="cb-first">{p.sub}</p>
-              <div className="cb-venue">{p.kindLabel}</div>
-              {p.doi && <a className="cb-link" href={'https://doi.org/' + p.doi} target="_blank" rel="noreferrer" tabIndex={flip ? 0 : -1}>doi.org/{p.doi}</a>}
-              {(p.pdf || (p.href && p.href.endsWith('.pdf'))) && <a className="cb-link" href={p.pdf || p.href} target="_blank" rel="noreferrer" tabIndex={flip ? 0 : -1}>Read PDF ↗</a>}
-              {p.pdf && <a className="cb-link" href={p.href} tabIndex={flip ? 0 : -1}>Read the white paper ↗</a>}
-              {!linkOf(p) && <span className="cb-link">In preparation</span>}
-            </>} />
-        )} />
-      <div className="index-list papers-ix">
-        {SHELF.map((p, i) => (
-          <div className={'row' + (p.href ? ' row-linked' : '') + (idx === i ? ' ix-on' : '')} key={p.title} onMouseEnter={() => setIdx(i)} onFocus={() => setIdx(i)}>
-            <span className="num">{String(i + 1).padStart(2, '0')}</span>
-            <div>
-              <div className="title">{p.href ? <a className="title-link" href={p.href} target="_blank" rel="noreferrer">{p.title}</a> : p.title}</div>
-              <div className="excerpt"><em>{p.sub}</em></div>
-              <div className="rkick" style={{ marginTop: '0.5rem', marginBottom: 0 }}>{p.authors}{p.pdf ? ` · ${p.venue}` : ''}</div>
-              {p.href && p.href.endsWith('.pdf') && <span className="go">Read PDF <span className="arrow">→</span></span>}
-              {p.pdf && <a className="go" href={p.pdf} target="_blank" rel="noreferrer">Read PDF <span className="arrow">→</span></a>}
-              {p.doi && <a className="doi" href={'https://doi.org/' + p.doi} target="_blank" rel="noreferrer">doi.org/{p.doi} · {p.doiVia}</a>}
-            </div>
-            {!p.href && <span className="meta">{p.badge}</span>}
-          </div>
-        ))}
+    <div className="pp">
+      <div className="pp-slip" aria-live="polite">
+        <div className="pp-slip-n">No. {pad2(idx + 1)} <span>/ {pad2(SHELF.length)}</span></div>
+        <h3 className="pp-slip-t">{p.title}</h3>
+        <p className="pp-slip-sub">{p.sub}</p>
+        <dl className="pp-slip-meta">
+          <div><dt>Kind</dt><dd>{p.kindLabel}</dd></div>
+          <div><dt>Authors</dt><dd>{p.authors}</dd></div>
+          {p.doi && <div><dt>DOI</dt><dd>{p.doi}</dd></div>}
+        </dl>
+        <p className="pp-slip-hint">{linkOf(p) ? 'Click the chapbook to open' : 'In preparation, not yet available'}</p>
       </div>
-    </>
-  )
-}
-
-/* the painting-only stage, kept as its own section */
-const STAGE_PAINTINGS = Object.values(STORY_PAINTING)
-function PaintingsStage() {
-  const [idx, setIdx] = useState(0)
-  return (
-    <Stage items={STAGE_PAINTINGS} idx={idx} onIdx={setIdx} className="stg-paint stg-art" label="Paintings. Left and right arrows browse."
-      renderInfo={(src, i) => { const m = META[src] || {}; return (<>
-        <h3 className="stg-title stg-title-sm">{m.title}</h3>
-        <table className="stg-table"><tbody>
-          {m.artist && <tr><th>Artist</th><td>{m.artist}</td></tr>}
-          {m.year && <tr><th>Year</th><td>{m.year}</td></tr>}
-          <tr><th>Plate</th><td>{i + 1} of {STAGE_PAINTINGS.length}</td></tr>
-        </tbody></table>
-      </>) }}
-      renderItem={(src, i, { on }) => paintImg(src, on ? 720 : 300)} />
+      <ol className="pp-shelf">
+        {SHELF.map((x, i) => {
+          const u = linkOf(x)
+          const T = u ? 'a' : 'div'
+          return (
+            <li key={x.title} className="pp-item">
+              <T className={`pp-book${idx === i ? ' is-on' : ''}${u ? '' : ' is-wip'}`} {...(u ? { href: u, target: '_blank', rel: 'noreferrer' } : { tabIndex: 0 })}
+                aria-label={`${x.title}${u ? '' : ' (in preparation)'}`} onMouseEnter={() => setIdx(i)} onFocus={() => setIdx(i)}>
+                <Chapbook no={i + 1} title={x.title} by={x.authors} kind={x.kindLabel} plate={<div className="cb-type-plate"><span>{x.venue}</span></div>} />
+              </T>
+              <div className="pp-mobile">
+                <div className="pp-mobile-k">{x.kindLabel}</div>
+                <p>{x.sub}</p>
+                {u ? <a className="rr-read" href={u} target="_blank" rel="noreferrer">Open ↗</a> : <span className="rr-read is-muted">In preparation</span>}
+              </div>
+            </li>
+          )
+        })}
+      </ol>
+    </div>
   )
 }
 
@@ -1139,39 +1083,10 @@ export default function App() {
       </header>
 
       <main id="top" className="wrap">
-        {/* LANDING GALLERY — full-viewport horizontal montage, Cargo-style */}
-        <section className="gallery" aria-label="Selected paintings">
-          <div className={`marquee-track${fading ? ' fading' : ''}`} ref={trackRef}>
-            {loop.map((p, i) => {
-              const copy = i >= gallery.length          // 2nd copy makes the loop seamless; it is decorative
-              return (
-                <figure
-                  className="m-item" key={`${p.src}:${copy ? 'b' : 'a'}`} data-src={p.src}
-                  aria-hidden={copy || undefined} role={copy ? undefined : 'button'} tabIndex={copy ? -1 : 0}
-                  aria-label={copy ? undefined : ([p.title, p.artist].filter(Boolean).join(', ') || 'Painting')}
-                  style={{ width: `${p.w}vh`, height: `${p.h}vh`, marginRight: `${p.gap}vw`, transform: `translateY(${p.y}vh)`, background: p.bg, visibility: hiddenSrc === p.src ? 'hidden' : '' }}
-                  onClick={(e) => openItem(p, e)}
-                  onKeyDown={(e) => { if (!copy && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openItem(p, e) } }}
-                >
-                  <img src={p.url} alt={p.title} loading={i < 2 ? 'eager' : 'lazy'} decoding="async"
-                    onError={(e) => e.currentTarget.closest('figure').classList.add('broken')} />
-                </figure>
-              )
-            })}
-          </div>
-          {hint !== 'none' && (
-            <div className={`gallery-hint${hint === 'in' ? ' gh-on' : ''}`} role="status" aria-live="polite">Explore more paintings</div>
-          )}
-          <button className="gallery-redo" onClick={redo} aria-label="Show another gallery">
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20 11a8 8 0 1 0-.6 4M20 4v5h-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          </button>
-          <div className={`gallery-tip${hint === 'in' ? ' gt-hide' : ''}`} aria-hidden="true">Refresh carousel</div>
-        </section>
 
         {/* STORIES */}
-        <section className="section" id="stories">
-          <div className="section-head rv"><h2 className="section-title">Stories</h2><p className="section-lead">Fiction &amp; essays on medicine and humanity.</p></div>
-          <StoriesStage />
+        <ReadingRoom />
+        <section className="section rr-after" aria-label="In progress">
           <div className="inprog rv">
             <div className="inprog-k">In progress</div>
             <div className="index-list">
@@ -1257,8 +1172,34 @@ export default function App() {
 
         {/* PAINTINGS */}
         <section className="section" id="paintings">
-          <div className="section-head rv"><h2 className="section-title">Paintings</h2><p className="section-lead">The paintings paired with each story.</p></div>
-          <PaintingsStage />
+          <div className="section-head rv"><h2 className="section-title">Paintings</h2><p className="section-lead">The collection the stories borrow from. Drag, or let it drift.</p></div>
+        <section className="gallery" aria-label="Selected paintings">
+          <div className={`marquee-track${fading ? ' fading' : ''}`} ref={trackRef}>
+            {loop.map((p, i) => {
+              const copy = i >= gallery.length          // 2nd copy makes the loop seamless; it is decorative
+              return (
+                <figure
+                  className="m-item" key={`${p.src}:${copy ? 'b' : 'a'}`} data-src={p.src}
+                  aria-hidden={copy || undefined} role={copy ? undefined : 'button'} tabIndex={copy ? -1 : 0}
+                  aria-label={copy ? undefined : ([p.title, p.artist].filter(Boolean).join(', ') || 'Painting')}
+                  style={{ width: `${p.w}vh`, height: `${p.h}vh`, marginRight: `${p.gap}vw`, transform: `translateY(${p.y}vh)`, background: p.bg, visibility: hiddenSrc === p.src ? 'hidden' : '' }}
+                  onClick={(e) => openItem(p, e)}
+                  onKeyDown={(e) => { if (!copy && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openItem(p, e) } }}
+                >
+                  <img src={p.url} alt={p.title} loading={i < 2 ? 'eager' : 'lazy'} decoding="async"
+                    onError={(e) => e.currentTarget.closest('figure').classList.add('broken')} />
+                </figure>
+              )
+            })}
+          </div>
+          {hint !== 'none' && (
+            <div className={`gallery-hint${hint === 'in' ? ' gh-on' : ''}`} role="status" aria-live="polite">Explore more paintings</div>
+          )}
+          <button className="gallery-redo" onClick={redo} aria-label="Show another gallery">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20 11a8 8 0 1 0-.6 4M20 4v5h-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </button>
+          <div className={`gallery-tip${hint === 'in' ? ' gt-hide' : ''}`} aria-hidden="true">Refresh carousel</div>
+        </section>
         </section>
 
         <div className="prairie" />
