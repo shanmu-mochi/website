@@ -6,7 +6,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import gsap from 'gsap'
-import { CATS, META, PAINTINGS, SOCIALS, variantFor, aspectOf, placeholderOf, tintOf, creditText } from './pieces'
+import { CATS, META, PAINTINGS, SOCIALS, SELECTED_ITEMS, variantFor, aspectOf, placeholderOf, tintOf, creditText } from './pieces'
 import NOTES from './pieceNotes'
 import PaperPage from './PaperPage'
 import Gallery, { GLIDE, imageTexture, texture, plateSize, SECTIONS } from './gallery/Gallery'
@@ -17,9 +17,18 @@ const BIO = 'I’m a writer who works in medicine, or a medical person who write
 const pad2 = (n) => String(n).padStart(2, '0')
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const isTouch = () => window.matchMedia('(max-width: 720px), (pointer: coarse)').matches
-const catOf = (id) => CATS.find((c) => c.id === id) || CATS[0]
-const lastIdx = { prose: 0, publications: 0, luck: 0 }
-const lastCat = { current: 'prose' }
+// iteration 12: home is its own row, "Selected", a hand-picked mix (src/selected.js)
+const HOME_CAT = { id: 'home', label: 'Selected', items: SELECTED_ITEMS }
+const catOf = (id) => (id === 'home' ? HOME_CAT : CATS.find((c) => c.id === id) || CATS[0])
+const ORDER = ['home', 'prose', 'publications', 'luck']   // where "Next: …" at the end of a row leads
+const lastIdx = { home: 0, prose: 0, publications: 0, luck: 0 }
+const lastCat = { current: 'home' }
+// the piece behind slot i of a row (home slots point into the real sections)
+const pieceRoute = (mode, i) => {
+  if (mode !== 'home') return { view: 'piece', cat: mode, i }
+  const it = HOME_CAT.items[i]
+  return { view: 'piece', cat: it.cat, i: catOf(it.cat).items.indexOf(it), via: 'home' }
+}
 // a hash deep-link (#/prose/…, #/about…) skips the name-first opening
 const session = { introDone: typeof location !== "undefined" && /^#\/./.test(location.hash) }
 const WIDE = '"Lora", Georgia, serif'
@@ -27,20 +36,21 @@ const LABEL = '"Archivo", "Helvetica Neue", Arial, sans-serif'
 const BOOK = '"Lora", Georgia, serif'
 const TONE = { prose: 'rgb(242,242,240)', publications: 'rgb(235,238,241)', luck: 'rgb(244,238,228)' }
 const bgFor = (it) => it.cat === 'prose' && it.src ? tintOf(it.src, 0.06) : TONE[it.cat]
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v))
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 
 function parse(h) {
   const p = (h || '').replace(/^#\/?/, '').split('/').filter(Boolean)
   if (p[0] === 'about') return { view: 'about' }
   if (p[0] === 'paintings') return { view: 'paintings' }
-  const cat = CATS.some((c) => c.id === p[0]) ? p[0] : 'prose'
+  const cat = CATS.some((c) => c.id === p[0]) ? p[0] : 'home'
   if (p[1]) {
     const i = catOf(cat).items.findIndex((x) => x.slug === p[1])
     if (i >= 0) return { view: 'piece', cat, i }
   }
   return { view: 'browse', cat }
 }
-const hashOf = (r) => r.view === 'piece' ? `#/${r.cat}/${catOf(r.cat).items[r.i].slug}` : r.view === 'browse' ? `#/${r.cat}` : `#/${r.view}`
+const hashOf = (r) => r.view === 'piece' ? `#/${r.cat}/${catOf(r.cat).items[r.i].slug}` : r.view === 'browse' ? (r.cat === 'home' ? '#/' : `#/${r.cat}`) : `#/${r.view}`
 
 /* ---------------- canvas faces (only real data) ---------------- */
 let fontsP = null
@@ -109,36 +119,62 @@ function faceCanvas(it, side) {
     lines.forEach((l, k) => ctx.fillText(l, W / 2, y0 + k * fs))
     smallCaps(ctx, 18, 4); ctx.fillText('SHANMU RAJA', W / 2, H - 120)
   })
-  // the back of every object: a label in the language of its section
+  // iteration 12: the back of every object says something the front doesn't (never the title again).
+  // Every field comes from the repo's own data; a field that isn't there is simply left off.
   return drawFace(key, aspect, (ctx, W, H) => {
     ctx.fillStyle = it.cat === 'luck' ? '#f6efe0' : '#f7f6f2'; ctx.fillRect(0, 0, W, H)
     grain(ctx, W, H, 6)
     const m = W * 0.1, maxW = W - 2 * m
+    const { label, body, quoteIt, note, rows } = backOf(it)
     ctx.fillStyle = '#161616'
-    smallCaps(ctx, 18, 4); ctx.fillText(it.cat === 'prose' ? String(it.kind || 'Prose').toUpperCase() : it.cat === 'publications' ? 'ABSTRACT' : 'CITATION', m, m)
-    ctx.fillRect(m, m + 34, maxW, 2)
+    smallCaps(ctx, 17, 4); ctx.fillText(label.toUpperCase(), m, m)
+    ctx.fillRect(m, m + 34, maxW, 1.5)
     ctx.letterSpacing = '0px'
-    const t = fitTitle(ctx, it.title.toUpperCase(), maxW, H * 0.24, 56, 28, 1.02)
-    t.lines.forEach((l, k) => ctx.fillText(l, m, m + 66 + k * t.fs * 1.02))
-    let y = m + 66 + t.lines.length * t.fs * 1.02 + 30
-    const body = it.cat === 'prose' ? it.line : it.line
+    const rs = rows.filter(([, v]) => v).slice(0, 5)
+    const top = H - m - rs.length * 50
+    let y = m + 70
     if (body) {
-      ctx.font = `italic 400 32px ${BOOK}`; ctx.fontStretch = 'normal'; ctx.letterSpacing = '0px'
-      const ls = wrap(ctx, it.cat === 'prose' ? `“${body}”` : body, maxW)
-      ls.slice(0, 9).forEach((l, k) => ctx.fillText(l, m, y + k * 38)); y += Math.min(9, ls.length) * 38 + 24
+      // calm Lora, sized down until it fits the room above the rows
+      let fs = 38, ls
+      for (; fs > 24; fs -= 2) { ctx.font = `${quoteIt ? 'italic ' : ''}400 ${fs}px ${BOOK}`; ls = wrap(ctx, quoteIt ? `“${body}”` : body, maxW); if (ls.length * fs * 1.32 < (top - y) * (note ? 0.55 : 0.9)) break }
+      ls.forEach((l, k) => ctx.fillText(l, m, y + k * fs * 1.32)); y += ls.length * fs * 1.32 + 30
     }
-    const rows = it.meta.filter(([, v]) => v).slice(0, 4)
-    const top = H - m - rows.length * 52
-    rows.forEach(([k, v], n) => {
-      const ry = top + n * 52
+    if (note && top - y > 120) {
+      smallCaps(ctx, 13, 3); ctx.fillText('ON THE PAINTING', m, y); ctx.letterSpacing = '0px'; y += 30
+      ctx.font = `400 22px ${BOOK}`; ctx.fillStyle = '#3a3a3a'
+      const ls = wrap(ctx, note, maxW), room = Math.max(1, Math.floor((top - y - 24) / 30))
+      ls.slice(0, room).forEach((l, k) => ctx.fillText(k === room - 1 && ls.length > room ? `${l.replace(/[\s,.;:]+\S*$/, '')}…` : l, m, y + k * 30))
+      ctx.fillStyle = '#161616'
+    }
+    rs.forEach(([k, v], n) => {
+      const ry = top + n * 50
       ctx.fillRect(m, ry, maxW, 1)
-      smallCaps(ctx, 14, 3); ctx.textAlign = 'left'; ctx.fillText(k.toUpperCase(), m, ry + 18)
-      ctx.font = `400 21px ${WIDE}`; ctx.fontStretch = 'normal'; ctx.letterSpacing = '0px'; ctx.textAlign = 'right'
-      let s = String(v); while (ctx.measureText(s).width > maxW * 0.7 && s.length > 4) s = s.slice(0, -2)
-      ctx.fillText(s === String(v) ? s : `${s.trim()}…`, W - m, ry + 15)
+      smallCaps(ctx, 13, 3); ctx.textAlign = 'left'; ctx.fillText(k.toUpperCase(), m, ry + 18)
+      ctx.font = `400 20px ${BOOK}`; ctx.fontStretch = 'normal'; ctx.letterSpacing = '0px'; ctx.textAlign = 'right'
+      let t = String(v); while (ctx.measureText(t).width > maxW * 0.68 && t.length > 4) t = t.slice(0, -2)
+      ctx.fillText(t === String(v) ? t : `${t.trim()}…`, W - m, ry + 15)
     })
     ctx.textAlign = 'left'
   })
+}
+const metaOf = (it, k) => { const r = it.meta.find(([n]) => n === k); return r ? r[1] : '' }
+const fileOf = (p) => (p ? p.split('/').pop() : '')
+function backOf(it) {
+  if (it.cat === 'prose') return {
+    label: metaOf(it, 'Kind') || it.kind || 'Prose', body: it.line, quoteIt: true, note: NOTES[`prose/${it.slug}`] || '',
+    rows: [['Recognition', metaOf(it, 'Recognition')], ['Venue', metaOf(it, 'Venue')], ['Published', metaOf(it, 'Published')], ['Painting', metaOf(it, 'Painting')]],
+  }
+  if (it.cat === 'publications') {
+    const body = it.finding || (it.line && it.line !== it.venueFull ? it.line : '')
+    return {
+      label: it.finding ? 'Main finding' : it.kind || 'Paper', body,
+      rows: [['N', it.n], ['Venue', it.venueFull || metaOf(it, 'Venue')], ['DOI', it.doi], ['PDF', fileOf(it.pdfPath)], ['Recognition', metaOf(it, 'Recognition')]],
+    }
+  }
+  return {
+    label: it.kind || 'Recognition', body: it.line,
+    rows: [['Event', it.event], ['Related', it.related ? it.related.title : ''], ['Painting', metaOf(it, 'Painting')]],
+  }
 }
 const canvasTexture = (c) => { const t = new THREE.CanvasTexture(c); return t }
 const frontTexture = (it) => it.cat === 'prose' && it.src ? imageTexture(variantFor(it.src, 900)) : texture(faceKey(it, 'front'), () => fontsReady().then(() => canvasTexture(faceCanvas(it, 'front'))))
@@ -251,10 +287,11 @@ function SiteNav({ go, active, className = '', onHover }) {
   )
   return (
     <header className={`sn ${className}`}>
-      <a className="h-mark" href="#/prose" onClick={(e) => { e.preventDefault(); if (e.detail) e.currentTarget.blur(); go({ view: 'browse', cat: 'prose' }) }}>Shanmu Raja</a>
-      <nav className="sn-nav h-nav" aria-label="Sections">
+      <a className="h-mark" href="#/" aria-label="Shanmu Raja, home" onClick={(e) => { e.preventDefault(); if (e.detail) e.currentTarget.blur(); go({ view: 'browse', cat: 'home' }) }}>Shanmu Raja</a>
+      <nav className="sn-nav sn-l h-nav" aria-label="Sections">
         {CATS.map((c) => item(c.id, c.label, { view: 'browse', cat: c.id }, c.items.length))}
-        <i className="sn-sep" aria-hidden="true" />
+      </nav>
+      <nav className="sn-nav sn-r h-nav" aria-label="Pages">
         {item('paintings', 'Paintings', { view: 'paintings' })}
         {item('about', 'About', { view: 'about' })}
       </nav>
@@ -289,7 +326,7 @@ function fadeOutPage() {
 function Home({ cat, go }) {
   const host = useRef(null), gal = useRef(null), ring = useRef(null), mainRef = useRef(null)
   const items = catOf(cat).items
-  const returning = FLY.dir === 'out' && FLY.data && FLY.data.cat === cat
+  const returning = FLY.dir === 'out' && FLY.data && (FLY.data.mode || FLY.data.cat) === cat
   const [cur, setCur] = useState(lastIdx[cat] || 0)
   const [shown, setShown] = useState(cat)            // the section whose objects are on screen
   const [hov, setHov] = useState(-1)
@@ -311,21 +348,49 @@ function Home({ cat, go }) {
   const [fontOk, setFontOk] = useState(false)
   const nameRef = useRef(null)
   const hovRef = useRef(-1)
+  const ptr = useRef({ x: 0, y: 0 })
+  useEffect(() => { const on = (e) => { ptr.current = { x: e.clientX, y: e.clientY } }; window.addEventListener('pointermove', on, { passive: true }); return () => window.removeEventListener('pointermove', on) }, [])
   const goRef = useRef(go); goRef.current = go
   const token = useRef(0)
+  // iteration 12: the end of a row. The first push past it shows "Next: …"; a second, separate push
+  // (or a click on the caption) moves to that section. Nothing ever scrolls you through every story.
+  const [edge, setEdge] = useState(0)
+  const edgeAt = useRef({ s: 0, t: 0 })
+  const nextOf = (c, sg) => ORDER[ORDER.indexOf(c) + sg] || null
+  const edgeRef = useRef(null)
+  edgeRef.current = (sg, fresh) => {
+    const g = gal.current
+    if (!g || NAV.busy) return
+    const to = nextOf(g.mode, sg)
+    if (!to) return
+    const now = performance.now(), a = edgeAt.current
+    if (a.s === sg && fresh && now - a.t > 550) { a.s = 0; setEdge(0); goRef.current({ view: 'browse', cat: to }); return }
+    if (a.s !== sg) { a.s = sg; a.t = now; setEdge(sg) }
+  }
+  useEffect(() => { edgeAt.current = { s: 0, t: 0 }; setEdge(0) }, [cat])
+  useEffect(() => { if (!edge) edgeAt.current.s = 0 }, [edge])
 
   useLayoutEffect(() => {
     const el = host.current
     const g = gal.current = new Gallery(el, {
       touch: isTouch, frontTexture, backTexture,
-      onChange: (i) => { lastIdx[g.mode] = i; setCur(i) },
+      onChange: (i) => { lastIdx[g.mode] = i; setCur(i); setEdge(0) },
       onHover: (i) => { hovRef.current = i; setHov(i) },
-      onOpen: (i) => goRef.current({ view: 'piece', cat: g.mode, i }),
+      onOpen: (i) => goRef.current(pieceRoute(g.mode, i)),
+      onEdge: (sg, fresh) => edgeRef.current(sg, fresh),
       onFrame: () => {
         const r = ring.current
         if (!r || hovRef.current < 0 || hovRef.current !== g.index()) return
-        const b = g.rectOf(g.index())
+        let b = g.rectOf(g.index())
         if (!b) return
+        // iteration 12: on paper / certificate cards the pen circles a modest spot under the pointer
+        // (about a third of the card, kept inside it), not the whole card; paintings keep the full ring
+        const pit = catOf(g.mode).items[g.index()]
+        if (pit && pit.cat !== 'prose') {
+          const w = b.w * 0.34, h = Math.min(b.h * 0.2, w * 0.62), pt = ptr.current
+          const cx = clamp(pt.x || b.x + b.w / 2, b.x + w * 0.6, b.x + b.w - w * 0.6), cy = clamp(pt.y || b.y + b.h / 2, b.y + h * 0.6, b.y + b.h - h * 0.6)
+          b = { x: Math.round(cx - w / 2), y: Math.round(cy - h / 2), w: Math.round(w), h: Math.round(h) }
+        }
         r.style.transform = `translate3d(${b.x.toFixed(1)}px, ${b.y.toFixed(1)}px, 0)`
         if (!r._b || Math.abs(r._b.w - b.w) > 2 || Math.abs(r._b.h - b.h) > 2) { r._b = { w: b.w, h: b.h }; setBox(r._b) }
       },
@@ -409,7 +474,8 @@ function Home({ cat, go }) {
         await Promise.all([...n.querySelectorAll('img')].map(decoded))
         await frames(1)
         g.hidePlate(i)
-        FLY.dir = 'in'; FLY.data = { cat: g.mode, i, back }
+        const pr = pieceRoute(g.mode, i)
+        FLY.dir = 'in'; FLY.data = { cat: pr.cat, i: pr.i, back, mode: g.mode }
         setLeaving(true)
         return i
       },
@@ -426,7 +492,7 @@ function Home({ cat, go }) {
       const free = !(document.activeElement && document.activeElement.closest('a, button'))
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); g.step(1, 'key') }
       else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); g.step(-1, 'key') }
-      else if (e.key === 'Enter' && free) { e.preventDefault(); goRef.current({ view: 'piece', cat: g.mode, i: g.index() }) }
+      else if (e.key === 'Enter' && free) { e.preventDefault(); goRef.current(pieceRoute(g.mode, g.index())) }
       else if (e.key === ' ' && free) { e.preventDefault(); g.flip() }
     }
     window.addEventListener('keydown', on)
@@ -449,7 +515,7 @@ function Home({ cat, go }) {
       <SiteNav go={go} active={cat} className={`h-top${chrome ? ' is-on' : ''}`} />
 
       <section className={`h-info${show ? ' is-on' : ''}`} key={`${shown}-${cur}`} aria-live="polite">
-        <h1 className="h-title"><a href={`#/${shown}/${it.slug}`} onClick={(e) => { e.preventDefault(); go({ view: 'piece', cat: shown, i: cur }) }}>{it.title}</a></h1>
+        <h1 className="h-title"><a href={`#/${it.cat}/${it.slug}`} onClick={(e) => { e.preventDefault(); go(pieceRoute(shown, cur)) }}>{it.title}</a></h1>
         <dl className="h-meta">
           {meta.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
         </dl>
@@ -463,6 +529,11 @@ function Home({ cat, go }) {
           {pad2(cur + 1)} <i>/</i> {pad2(list.length)}
         </button>
       </div>
+      {[-1, 1].map((sg) => { const to = nextOf(shown, sg); return to && (
+        <button key={sg} type="button" className={`h-edge h-edge-${sg > 0 ? 'n' : 'p'}${edge === sg && show ? ' is-on' : ''}`} tabIndex={edge === sg ? 0 : -1}
+          onClick={() => { setEdge(0); go({ view: 'browse', cat: to }) }}>
+          {sg < 0 && <b aria-hidden="true">←</b>}<span>{sg > 0 ? 'Next' : 'Back to'}: {catOf(to).label}</span>{sg > 0 && <b aria-hidden="true">→</b>}
+        </button>) })}
       {/* iteration 10: socials live bottom-left, away from the counter and the screen corner */}
       <div className={`h-sfoot${foot ? ' is-on' : ''}`}><Socials /></div>
 
@@ -488,7 +559,8 @@ function PageTop({ back, backLabel, go, right, active }) {
   )
 }
 
-function Piece({ cat, i, go }) {
+function Piece({ cat, i, go, via }) {
+  const home = via === 'home' ? { view: 'browse', cat: 'home' } : { view: 'browse', cat }
   const items = catOf(cat).items
   const it = items[i]
   const note = NOTES[`${cat}/${it.slug}`]
@@ -527,8 +599,8 @@ function Piece({ cat, i, go }) {
         const n = flyNode(rectOfEl(a), it, false)
         await Promise.all([...n.querySelectorAll('img')].map(decoded))
         a.style.visibility = 'hidden'
-        FLY.dir = 'out'; FLY.data = { cat, i, back: false }
-        lastIdx[cat] = i
+        FLY.dir = 'out'; FLY.data = { cat, i, back: false, mode: home.cat }
+        lastIdx[home.cat] = home.cat === 'home' ? Math.max(0, SELECTED_ITEMS.indexOf(it)) : i
         return fadeOutPage()
       },
     }
@@ -536,9 +608,10 @@ function Piece({ cat, i, go }) {
   })
 
   useEffect(() => {
-    const on = (e) => { if (e.key === 'Escape') goRef.current({ view: 'browse', cat }) }
+    const on = (e) => { if (e.key === 'Escape') goRef.current(home) }
     window.addEventListener('keydown', on)
     return () => window.removeEventListener('keydown', on)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cat])
 
   const meta = it.meta.filter(([, v]) => v)
@@ -558,14 +631,14 @@ function Piece({ cat, i, go }) {
     return (
       <PaperPage
         it={it} honors={honors} nav={pgNav}
-        top={<PageTop back={() => go({ view: 'browse', cat })} backLabel={catOf(cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(items.length)}`} />}
+        top={<PageTop back={() => go(home)} backLabel={catOf(home.cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(items.length)}`} />}
         cover={<div ref={art} className="pg-art" style={{ '--ar': ar, aspectRatio: String(ar), background: '#f9f8f4', visibility: hold ? 'hidden' : undefined }}>{face && <img src={face} alt={`${it.title}, cover`} decoding="async" />}</div>}
       />
     )
   }
   return (
     <article className={`pg pg-piece pg-c-${cat}${flying ? ' is-flown' : ' is-direct'}${dir ? ` is-step is-step-${dir > 0 ? 'n' : 'p'}` : ''}`}>
-      <PageTop back={() => go({ view: 'browse', cat })} backLabel={catOf(cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(items.length)}`} />
+      <PageTop back={() => go(home)} backLabel={catOf(home.cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(items.length)}`} />
       <div className="pg-head">
         <i className="pg-x pg-x-l" aria-hidden="true" /><i className="pg-x pg-x-r" aria-hidden="true" />
         <h1 className="pg-title"><span>{it.title}</span></h1>
@@ -585,6 +658,7 @@ function Piece({ cat, i, go }) {
             {meta.map(([k, v], n) => <div key={k} style={{ '--n': n }}><dt>{k}</dt><dd>{v}</dd></div>)}
           </dl>
           {cta && <div className="pg-cta">{cta}</div>}
+          {it.related && <p className="pg-related"><small>Related</small><a href={it.related.href} onClick={(e) => { e.preventDefault(); go(parse(it.related.href)) }}>{it.related.title}</a> <em>· {it.related.kind}</em></p>}
           {it.quote && <blockquote className="pg-quote"><span>{it.quote}</span></blockquote>}
           {cat !== 'prose' && it.line && <p className="pg-line">{it.line}</p>}
           {cat !== 'prose' && it.src && credit && <p className="pg-credit">Painting: {credit}</p>}
@@ -637,7 +711,7 @@ export default function Browser() {
   useEffect(() => { document.documentElement.classList.remove('pre') }, [])
   const [route, setRoute] = useState(() => parse(window.location.hash))
   const routeRef = useRef(route); routeRef.current = route
-  if (route.cat) lastCat.current = route.cat
+  if (route.view === 'browse') lastCat.current = route.cat
 
   const go = useCallback(async (r, opts = {}) => {
     if (NAV.busy) { NAV.pending = [r, opts]; return }
@@ -647,14 +721,15 @@ export default function Browser() {
     try {
       if (NAV.hold && !(from.view === 'browse' && r.view === 'browse')) { await Promise.race([NAV.hold, wait(2500)]); NAV.hold = null }
       if (from.view === 'browse') {
-        if (r.view === 'piece' && HOME.api && r.cat === from.cat) {
-          if (HOME.api.index() !== r.i) r = { ...r, i: HOME.api.index() }
+        if (r.view === 'piece' && HOME.api && (r.cat === from.cat || from.cat === 'home')) {
+          const now = pieceRoute(from.cat, HOME.api.index())
+          if (!same(now, r)) r = now
           if (!reduced()) await HOME.api.open()
         } else if (r.view !== 'browse' && HOME.api && !reduced()) await HOME.api.leave()
       } else if (from.view === 'piece' && r.view === 'piece' && r.cat === from.cat) {
         NAV.dir = (r.i > from.i && !(from.i === 0 && r.i === catOf(r.cat).items.length - 1)) || (from.i === catOf(r.cat).items.length - 1 && r.i === 0) ? 1 : -1
         if (!reduced()) { const el = document.querySelector('.pg'); if (el) { el.classList.add(NAV.dir > 0 ? 'is-out-n' : 'is-out-p'); await wait(240) } }
-      } else if (from.view === 'piece' && r.view === 'browse' && r.cat === from.cat && PAGE.api) await PAGE.api.toGallery()
+      } else if (from.view === 'piece' && r.view === 'browse' && (r.cat === from.cat || (r.cat === 'home' && from.via === 'home')) && PAGE.api) await PAGE.api.toGallery()
       else if (from.view !== 'browse') await fadeOutPage()
     } catch (e) { void e }
     const h = hashOf(r)
@@ -691,7 +766,7 @@ export default function Browser() {
     return () => window.removeEventListener('keydown', on)
   }, [])
 
-  if (route.view === 'piece') return <Piece key={`${route.cat}-${route.i}`} cat={route.cat} i={route.i} go={go} />
+  if (route.view === 'piece') return <Piece key={`${route.cat}-${route.i}`} cat={route.cat} i={route.i} via={route.via} go={go} />
   if (route.view === 'about') return <About go={go} />
   if (route.view === 'paintings') return <Paintings go={go} />
   return <Home cat={route.cat} go={go} />

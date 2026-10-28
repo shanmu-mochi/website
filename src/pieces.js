@@ -1,5 +1,7 @@
 /* Data for the A24-style browser (redesign iteration 4). Copied verbatim from App.jsx; nothing invented. */
 import DIMS from './paintingsData'
+import { FINDINGS } from './data/findings'
+import SELECTED from './selected'
 import COLORS from './colorsData'
 import { PAPERS } from './data/papers'
 
@@ -181,7 +183,7 @@ export const AWARDS = [
   { kind: 'Shortlist', title: 'The New Yorker', desc: 'For the historical short fiction “Burnt Red Tongues.”', story: 'Burnt Red Tongues' },
   { kind: 'Shortlist', title: 'Paul Kalanithi Writing Competition', desc: 'Stanford’s national essay prize, in memory of the late neurosurgeon and author of When Breath Becomes Air.' },
   { kind: 'Winner', title: 'Massachusetts Undergraduate Poetry Festival', desc: 'First prize, statewide juried competition.' },
-  { kind: 'Finalist', title: 'American College of Preventive Medicine', desc: 'Annual Meeting, Baltimore, MD. Selected abstract: Branded Wegovy™ vs. Compounded Semaglutide + Cyanocobalamin.', paper: 'Branded Wegovy™ vs. Compounded Semaglutide + Cyanocobalamin' },
+  { kind: 'Finalist', title: 'American College of Preventive Medicine', desc: 'Annual Meeting, Baltimore, MD. Selected abstract: Branded Wegovy™ vs. Compounded Semaglutide + Cyanocobalamin.', event: 'ACPM Annual Meeting 2026', paper: 'Branded Wegovy™ vs. Compounded Semaglutide + Cyanocobalamin' },
 ]
 
 export const slugify = (t) => t.toLowerCase().normalize('NFKD').replace(/[’'™]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -225,6 +227,8 @@ const pubs = [...PAPERS.map((p) => ({ ...p, kindLabel: BADGE_LABEL[p.badge] || p
     by: p.kindLabel, line: p.sub, quote: p.sub, cover: p.doiVia || p.venue || p.kindLabel,
     authors: p.authors, doi: p.doi, pdf: p.pdf, venueFull: p.venue || (p.doiVia === 'medRxiv' ? 'medRxiv preprint' : p.badge === 'Pub.' ? p.sub : null),
     pdfDoc: !!(p.href && p.href.endsWith('.pdf')),
+    pdfPath: p.pdf || (p.href && p.href.endsWith('.pdf') ? p.href : null),
+    finding: (FINDINGS[p.title] || {}).finding || '', n: (FINDINGS[p.title] || {}).n || '',
     href, cta: !href ? 'In preparation' : p.href && p.href.endsWith('.pdf') ? 'Open the PDF' : p.href ? 'Read the white paper' : `Read via DOI`,
     meta: [['Kind', p.kindLabel], ['Authors', p.authors], ['Venue', p.doiVia || p.venue], ['DOI', p.doi]],
   }
@@ -237,6 +241,9 @@ const luck = AWARDS.map((a) => {
     by: a.kind, line: a.desc, quote: a.desc, cover: a.kind,
     href: st ? st.href : null, cta: st ? `Read “${st.title}” on Medium` : pp ? 'See the abstract' : '',
     internal: pp ? `#/publications/${pp.slug}` : null,
+    // iteration 12: the piece this recognition belongs to, linked from the Luck page and card back
+    related: st ? { href: `#/prose/${st.slug}`, title: st.title, kind: st.kind } : pp ? { href: `#/publications/${pp.slug}`, title: pp.title, kind: 'Abstract' } : null,
+    event: a.event || '',   // only where the repo states it (ACPM: "ACPM 2026 Finalist", src/data/papers.js)
     meta: [['Recognition', a.kind], ['Painting', st ? creditText(st.src) : '']],
   }
 })
@@ -254,6 +261,9 @@ export const CATS = [
   { id: 'publications', label: 'Publications', items: pubs },
   { id: 'luck', label: 'Luck', items: luck },
 ]
+// iteration 12: the home carousel, a hand-picked mix across sections (edit src/selected.js)
+const all = [...prose, ...pubs, ...luck]
+export const SELECTED_ITEMS = SELECTED.map((k) => all.find((x) => `${x.cat}/${x.slug}` === k)).filter(Boolean)
 export const SOCIALS = [
   ['Medium', 'https://shanmuraja.medium.com/'],
   ['Substack', 'https://shanmuraja.substack.com/'],

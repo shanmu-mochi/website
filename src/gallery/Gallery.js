@@ -46,6 +46,8 @@ export const CFG = {
 export const SECTIONS = {
   prose: { tiltX: TILT, tiltY: TILT, area: 2.9, maxSide: 2.1, depth: 0.024, edge: 0xffffff, spine: 0xffffff },
   publications: { tiltX: TILT * 0.55, tiltY: TILT * 0.7, aspect: 0.72, area: 2.2, maxSide: 2, depth: 0.075, edge: 0xf3f0e8, spine: 0xe6e1d6 },
+  // iteration 12: the home "Selected" row stages like prose; each plate keeps its own section's shape
+  get home() { return this.prose },
   luck: { tiltX: TILT * 0.45, tiltY: TILT * 0.85, aspect: 1, area: 1.9, maxSide: 1.5, depth: 0.04, edge: 0xefe6d2, spine: 0xefe6d2 },
 }
 
@@ -135,7 +137,7 @@ export default class Gallery {
     this.plates = []
   }
   makePlate(it, i) {
-    const sec = this.sec, [w, h] = plateSize(it, sec)
+    const sec = this.mode === 'home' ? (SECTIONS[it.cat] || this.sec) : this.sec, [w, h] = plateSize(it, sec)
     const geo = new THREE.BoxGeometry(w, h, sec.depth)
     const edge = new THREE.MeshBasicMaterial({ color: sec.edge })
     const spine = new THREE.MeshBasicMaterial({ color: sec.spine })
@@ -177,7 +179,16 @@ export default class Gallery {
       onComplete: () => { this.L = n; this.tweening = false; this.target = -1 },
     })
   }
-  step(k, source) { this.to(this.settled() + k, source) }
+  step(k, source) {
+    const n = this.settled() + k
+    if (n < 0 || n > this.N - 1) { this.nudge(Math.sign(k)); if (this.o.onEdge) this.o.onEdge(Math.sign(k), true); return }
+    this.to(n, source)
+  }
+  // a small give at the end of the row: the line leans out a little and springs back
+  nudge(s) {
+    if (this.reduced || this.tweening || Math.abs(this.Te) > 0.3) return
+    this.Te += s * 0.9
+  }
 
   /* upload textures + compile shaders ahead of the intro so the first frames don't stall */
   warm() {
@@ -332,6 +343,10 @@ export default class Gallery {
     if (Math.abs(d) < CFG.wheelFloor) return
     const w = this.wheel, now = performance.now()
     const fresh = now - w.t > CFG.mFresh                 // a pause means a new gesture, don't inherit the old speed
+    // iteration 12: scrolling stays inside the section. Pushing past either end meets resistance and
+    // tells the page (onEdge), which shows "Next: …" and moves on only on a second, separate push.
+    const sg = Math.sign(d), edge = (sg > 0 && this.L >= this.N - 1 - 0.02) || (sg < 0 && this.L <= 0.02)
+    if (edge && Math.abs(this.Se) < 0.02) { w.t = now; w.v = 0; this.Se = 0; this.nudge(sg); this.o.onEdge && this.o.onEdge(sg, fresh); return }
     // a mouse wheel notch (big, whole, isolated delta) moves exactly one piece; trackpads coast
     if (fresh && (e.deltaMode === 1 || (Math.abs(d) >= 50 && Number.isInteger(d)))) { w.t = now; w.v = 0; this.step(Math.sign(d), 'wheel'); return }
     const dt = fresh ? 0.016 : Math.max(0.008, Math.min(0.05, (now - w.t) / 1000))
@@ -402,7 +417,9 @@ export default class Gallery {
     if (performance.now() - d.t > 110) this.Se = 0
     if (this.touch) {
       const v = this.Se; this.Se = 0
-      if (Math.abs(v) > CFG.touchFlick) this.to(Math.round(this.L + Math.sign(v) * 0.5), 'flick')
+      const tgt = Math.round(this.L + Math.sign(v) * 0.5)
+      if (Math.abs(v) > CFG.touchFlick && (tgt < 0 || tgt > this.N - 1) && Math.round(this.L) === clamp(tgt, 0, this.N - 1)) { this.to(Math.round(this.L)); if (this.o.onEdge) this.o.onEdge(Math.sign(v), true) }
+      else if (Math.abs(v) > CFG.touchFlick) this.to(tgt, 'flick')
       else this.to(Math.round(this.L))
       return
     }
@@ -571,7 +588,9 @@ export default class Gallery {
         }
       }
     }
-    this.L = clamp(this.L, -0.05, this.N - 0.95)
+    // resistance past the ends: any coast that runs over the edge is braked hard
+    if ((this.L > this.N - 1 && this.Se > 0) || (this.L < 0 && this.Se < 0)) this.Se *= 0.5
+    this.L = clamp(this.L, -0.08, this.N - 0.92)
     if (this.reduced || this.flight) { this.Ce = 0; this.we = this.L } else {
       const e = clamp((this.L - this.we) / Math.max(dt, 0.001), -40, 40)
       this.we = this.L

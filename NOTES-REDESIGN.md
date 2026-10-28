@@ -109,3 +109,16 @@ seamlessly into its spot on the page; fix details, smoothness and nav.
 - The top bar Contact mailto link is gone at every viewport. The bar is now the name plus links: Prose / Publications / Luck | Paintings / About.
 - Desktop: the links sit flush right on one row. Phone: the links share the second row evenly.
 - The email stays reachable elsewhere and is untouched: the About page (ab-links), the papers index, and the legacy App.jsx contact section.
+
+## Iteration 12
+
+- **Scroll model:** clicking opens a piece, and scrolling browses only within the current section. At the end of a section the gallery resists, then shows a "Next: X →" or "← Back to: X" caption (`.h-edge`). You can click the caption, or push past it once more (after 550 ms) to move to the next section. Order: Selected → Prose → Publications → Luck. Reduced motion skips the nudge.
+- **Home:** a "Selected" carousel of 8 pieces driven by `src/selected.js`. The wordmark returns home (`#/`) and the intro plays on home. A piece opened from home goes back to home.
+- **Header:** the name is centered. Prose / Publications / Luck sit on the left and Paintings / About on the right, with 28px gutters on both sides at 1440 and 1280. At 390 the name is on top and the links are on a row below. The pen ring is kept.
+- **Related links:** The New Yorker ↔ Burnt Red Tongues and ACPM ↔ Branded Wegovy vs Compounded Semaglutide, in both directions.
+- **Card backs** (no title on the back; fields that can't be sourced are left out):
+  - prose: kind, opening line and painting note.
+  - publications: main finding from the abstract (`src/data/findings.js`), N, venue, DOI and PDF.
+  - luck: event, related piece and painting.
+- **Hover ring:** on non-prose cards the ring is about 0.34 of the card width, follows the pointer and is clamped inside the card.
+- **QA:** screenshots and contact sheets are in `/workspace/redesign-shots-v12/`. No page errors. Lint is at 9.
