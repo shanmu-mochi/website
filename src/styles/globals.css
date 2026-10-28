@@ -9,6 +9,10 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face { font-family: 'Lora'; font-style: normal; font-weight: 400 700; font-display: swap; src: url('/fonts/lora-latin-wght.woff2') format('woff2-variations'); }
+@font-face { font-family: 'Lora'; font-style: italic; font-weight: 400 700; font-display: swap; src: url('/fonts/lora-latin-wght-italic.woff2') format('woff2-variations'); }
+@font-face { font-family: 'Archivo'; font-style: normal; font-weight: 100 900; font-stretch: 62% 125%; font-display: swap; src: url('/fonts/archivo-latin-wdth-wght.woff2') format('woff2-variations'); }
+@font-face { font-family: 'Archivo'; font-style: italic; font-weight: 100 900; font-stretch: 62% 125%; font-display: swap; src: url('/fonts/archivo-latin-wdth-wght-italic.woff2') format('woff2-variations'); }
 @font-face {
   font-family: 'Inter';
   font-style: normal;
@@ -45,12 +49,12 @@
   --red:     #0b0b0b;   /* monochrome — Cargo is pure black/white */
   --accent:  #0b0b0b;   /* set from the painting in view; falls back to ink */
 
-  /* Palatino carries the display and the prose. Inter handles the small
-     mechanical type: labels, numerals, nav, captions, axis text. */
-  --serif: 'Palatino', 'Palatino Linotype', 'Book Antiqua', 'URW Palladio L', Georgia, serif;
-  --black: 'Palatino', 'Palatino Linotype', 'Book Antiqua', 'URW Palladio L', Georgia, serif;
-  --sans:  'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
-  --mono:  'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  /* Lora carries everything readable: titles, prose, quotes, nav. Archivo only
+     for tiny labels, captions and axis text. Both OFL, self-hosted. */
+  --serif: 'Lora', Georgia, serif;
+  --black: 'Lora', Georgia, serif;
+  --sans:  'Archivo', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --mono:  'Archivo', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
 
   --maxw: 1600px;
   --gutter: clamp(1.25rem, 3vw, 3rem);

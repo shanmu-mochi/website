@@ -39,3 +39,10 @@ Scroll order: **gallery → "Shanmu Raja" masthead → Stories → Papers → Aw
   a one-year immutable cache on Cloudflare.
 - **Deploy:** `npm run build`, then rsync `dist/` into `public/` of the `shanmu-mochi/shanmuraja-site` repo
   (remote `cf`) and push `main`; Cloudflare Workers Builds deploys it.
+
+## Iteration 8 — readability, nav, white papers, Lora
+
+- **Type:** Lora (Cyreal, SIL OFL 1.1, self-hosted variable woff2 in `public/fonts`, licence `lora-OFL.txt`) for all titles, body, pull quotes, nav, paper pages, About and gallery canvas titles. Titles 600–700, body 400 at ~1.6–1.65. Bodoni Moda and Newsreader removed. Archivo kept only for tiny labels (meta keys, kickers, small counts).
+- **Comments:** About lead/body set in Lora at larger size; Young Boy Blues line/tease and Burnt Red Tongues quote in Lora italic 400 at 1.5 leading; Burnt Red Tongues shows "Shortlisted by The New Yorker" via HONOR.
+- **Nav:** one top bar (Prose / Publications / Luck switch wheel sections, divider, Paintings, About; Contact quiet). Pen ring marks the active item; counts as superscripts. The bottom-left section list was removed as redundant. Socials 24px with hover labels, bottom-right and on About. Home caption moved below the bar.
+- **Publications:** full white-paper pages (TOC scroll-spy, progress, figures, tables, refs) for the four medRxiv GLP-1 preprints extracted from their PDFs; AI Trap and Medi-Cal keep their hand-built pages embedded. JTCVS/JVS items and WIP get partial pages (citation/DOI only) — need PDFs or abstracts+figures from Shanmu.

@@ -171,7 +171,7 @@ export const STORY_PAINTING = {
 }
 
 const WHITE_PAPERS = [
-  { title: 'Healthcare’s AI Trap', sub: 'When automation skims the cream and starves the pipeline at once.', authors: 'Shanmugesh Raja, MS', href: '/papers/ai-trap', pdf: '/papers/healthcares-ai-trap.pdf', kindLabel: 'White paper', venue: 'Economics' },
+  { title: 'Healthcare’s AI Trap', sub: 'When automation skims the cream and starves the pipeline at once.', authors: 'Shanmugesh Raja, MS', href: '/papers/ai-trap', doi: '10.2139/ssrn.7119078', pdf: '/papers/healthcares-ai-trap.pdf', kindLabel: 'White paper', venue: 'Economics' },
   { title: 'Mapping Medi-Cal Deserts in California', sub: 'Provider shortages, preventable hospitalizations, and the limits of workforce policy in Medi-Cal: an empirical study of California’s 58 counties, with five causal identification strategies and a portfolio policy response.', authors: 'Shanmugesh Raja', href: '/papers/medi-cal-deserts', pdf: '/papers/medi-cal-deserts.pdf', kindLabel: 'White paper · Master’s Thesis', venue: 'UCSF · Health Policy & Law · April 2026' },
 ]
 
@@ -223,7 +223,8 @@ const pubs = [...PAPERS.map((p) => ({ ...p, kindLabel: BADGE_LABEL[p.badge] || p
   return {
     cat: 'publications', slug: slugify(p.title), title: p.title, src: null, kind: p.kindLabel,
     by: p.kindLabel, line: p.sub, quote: p.sub, cover: p.doiVia || p.venue || p.kindLabel,
-    authors: p.authors,
+    authors: p.authors, doi: p.doi, pdf: p.pdf, venueFull: p.venue || (p.doiVia === 'medRxiv' ? 'medRxiv preprint' : p.badge === 'Pub.' ? p.sub : null),
+    pdfDoc: !!(p.href && p.href.endsWith('.pdf')),
     href, cta: !href ? 'In preparation' : p.href && p.href.endsWith('.pdf') ? 'Open the PDF' : p.href ? 'Read the white paper' : `Read via DOI`,
     meta: [['Kind', p.kindLabel], ['Authors', p.authors], ['Venue', p.doiVia || p.venue], ['DOI', p.doi]],
   }
@@ -238,6 +239,15 @@ const luck = AWARDS.map((a) => {
     internal: pp ? `#/publications/${pp.slug}` : null,
     meta: [['Recognition', a.kind], ['Painting', st ? creditText(st.src) : '']],
   }
+})
+// any piece with a matching Luck award shows its recognition on its own page
+const HONOR = { Shortlist: 'Shortlisted by', Finalist: 'Finalist at', Winner: 'Winner,' }
+AWARDS.forEach((a, n) => {
+  const it = (a.story && prose.find((x) => x.title === a.story)) || (a.paper && pubs.find((x) => x.title === a.paper))
+  if (!it) return
+  const text = `${HONOR[a.kind] || `${a.kind},`} ${a.title}`
+  ;(it.honors = it.honors || []).push({ text, href: `#/luck/${luck[n].slug}` })
+  it.meta.splice(1, 0, ['Recognition', text])
 })
 export const CATS = [
   { id: 'prose', label: 'Prose', items: prose },

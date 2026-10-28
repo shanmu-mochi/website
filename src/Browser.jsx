@@ -8,6 +8,7 @@ import * as THREE from 'three'
 import gsap from 'gsap'
 import { CATS, META, PAINTINGS, SOCIALS, variantFor, aspectOf, placeholderOf, tintOf, creditText } from './pieces'
 import NOTES from './pieceNotes'
+import PaperPage from './PaperPage'
 import Gallery, { GLIDE, imageTexture, texture, plateSize, SECTIONS } from './gallery/Gallery'
 import './styles/globals.css'
 import './styles/a24.css'
@@ -20,7 +21,9 @@ const catOf = (id) => CATS.find((c) => c.id === id) || CATS[0]
 const lastIdx = { prose: 0, publications: 0, luck: 0 }
 const lastCat = { current: 'prose' }
 const session = { introDone: false }
-const SERIF = '"Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif'
+const WIDE = '"Lora", Georgia, serif'
+const LABEL = '"Archivo", "Helvetica Neue", Arial, sans-serif'
+const BOOK = '"Lora", Georgia, serif'
 const TONE = { prose: 'rgb(242,242,240)', publications: 'rgb(235,238,241)', luck: 'rgb(244,238,228)' }
 const bgFor = (it) => it.cat === 'prose' && it.src ? tintOf(it.src, 0.06) : TONE[it.cat]
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
@@ -40,7 +43,7 @@ const hashOf = (r) => r.view === 'piece' ? `#/${r.cat}/${catOf(r.cat).items[r.i]
 
 /* ---------------- canvas faces (only real data) ---------------- */
 let fontsP = null
-const fontsReady = () => fontsP || (fontsP = document.fonts ? Promise.all([document.fonts.load(`400 40px "Bodoni Moda"`), document.fonts.load('600 20px Inter'), document.fonts.load('400 20px Inter')]).catch(() => {}) : Promise.resolve())
+const fontsReady = () => fontsP || (fontsP = document.fonts ? Promise.all([document.fonts.load(`700 40px "Archivo"`), document.fonts.load('600 20px "Archivo"'), document.fonts.load('400 20px "Archivo"'), document.fonts.load('italic 400 30px "Lora"'), document.fonts.load('700 40px "Lora"'), document.fonts.load('600 30px "Lora"'), document.fonts.ready]).catch(() => {}) : Promise.resolve())
 const CANVAS = new Map()
 function wrap(ctx, text, maxW) {
   const words = String(text || '').split(/\s+/).filter(Boolean), lines = []
@@ -56,12 +59,12 @@ function grain(ctx, W, H, k) {
   for (let j = 0; j < d.length; j += 4) { s = (s * 16807) % 2147483647; const n = ((s / 2147483647) - 0.5) * k; d[j] += n; d[j + 1] += n; d[j + 2] += n }
   ctx.putImageData(img, 0, 0)
 }
-function fitTitle(ctx, text, maxW, maxH, from, min, lh, weight = 400) {
+function fitTitle(ctx, text, maxW, maxH, from, min, lh, weight = 700) {
   let fs = from, lines
-  for (; fs > min; fs -= 3) { ctx.font = `${weight} ${fs}px ${SERIF}`; lines = wrap(ctx, text, maxW); if (lines.length * fs * lh < maxH && lines.every((l) => ctx.measureText(l).width <= maxW)) break }
+  for (; fs > min; fs -= 3) { ctx.font = `${weight} ${fs}px ${WIDE}`; ctx.fontStretch = 'normal'; lines = wrap(ctx, text, maxW); if (lines.length * fs * lh < maxH && lines.every((l) => ctx.measureText(l).width <= maxW)) break }
   return { fs, lines }
 }
-const smallCaps = (ctx, size, track = 4) => { ctx.font = `600 ${size}px Inter`; ctx.letterSpacing = `${track}px` }
+const smallCaps = (ctx, size, track = 4) => { ctx.font = `600 ${size}px ${LABEL}`; ctx.fontStretch = 'normal'; ctx.letterSpacing = `${track}px` }
 function drawFace(key, aspect, draw) {
   if (CANVAS.has(key)) return CANVAS.get(key)
   const H = 1024, W = Math.round(H * aspect)
@@ -84,7 +87,7 @@ function faceCanvas(it, side) {
     ctx.fillStyle = '#151515'
     smallCaps(ctx, 20); ctx.fillText(String(it.kind || '').toUpperCase(), m, m)
     ctx.fillRect(m, m + 38, W - 2 * m, 2)
-    ctx.letterSpacing = '-1px'
+    ctx.letterSpacing = '0px'
     const { fs, lines } = fitTitle(ctx, it.title, W - 2 * m, H * 0.56, 84, 34, 1.08)
     lines.forEach((l, k) => ctx.fillText(l, m, m + 80 + k * fs * 1.08))
     ctx.fillRect(m, H - m - 78, W - 2 * m, 2)
@@ -99,7 +102,7 @@ function faceCanvas(it, side) {
     ctx.fillStyle = '#151515'; ctx.textAlign = 'center'
     smallCaps(ctx, 20, 5); ctx.fillText(String(it.kind || '').toUpperCase(), W / 2, 110)
     ctx.fillRect(W / 2 - 40, 150, 80, 2)
-    ctx.letterSpacing = '-1px'
+    ctx.letterSpacing = '0px'
     const { fs, lines } = fitTitle(ctx, it.title.toUpperCase(), W - 220, H * 0.5, 104, 40, 1.0)
     const y0 = H / 2 - (lines.length * fs) / 2 + 20
     lines.forEach((l, k) => ctx.fillText(l, W / 2, y0 + k * fs))
@@ -113,13 +116,13 @@ function faceCanvas(it, side) {
     ctx.fillStyle = '#161616'
     smallCaps(ctx, 18, 4); ctx.fillText(it.cat === 'prose' ? String(it.kind || 'Prose').toUpperCase() : it.cat === 'publications' ? 'ABSTRACT' : 'CITATION', m, m)
     ctx.fillRect(m, m + 34, maxW, 2)
-    ctx.letterSpacing = '-.5px'
+    ctx.letterSpacing = '0px'
     const t = fitTitle(ctx, it.title.toUpperCase(), maxW, H * 0.24, 56, 28, 1.02)
     t.lines.forEach((l, k) => ctx.fillText(l, m, m + 66 + k * t.fs * 1.02))
     let y = m + 66 + t.lines.length * t.fs * 1.02 + 30
     const body = it.cat === 'prose' ? it.line : it.line
     if (body) {
-      ctx.font = `italic 400 30px ${SERIF}`; ctx.letterSpacing = '0px'
+      ctx.font = `italic 400 32px ${BOOK}`; ctx.fontStretch = 'normal'; ctx.letterSpacing = '0px'
       const ls = wrap(ctx, it.cat === 'prose' ? `“${body}”` : body, maxW)
       ls.slice(0, 9).forEach((l, k) => ctx.fillText(l, m, y + k * 38)); y += Math.min(9, ls.length) * 38 + 24
     }
@@ -129,7 +132,7 @@ function faceCanvas(it, side) {
       const ry = top + n * 52
       ctx.fillRect(m, ry, maxW, 1)
       smallCaps(ctx, 14, 3); ctx.textAlign = 'left'; ctx.fillText(k.toUpperCase(), m, ry + 18)
-      ctx.font = '400 20px Inter'; ctx.letterSpacing = '0px'; ctx.textAlign = 'right'
+      ctx.font = `400 21px ${WIDE}`; ctx.fontStretch = 'normal'; ctx.letterSpacing = '0px'; ctx.textAlign = 'right'
       let s = String(v); while (ctx.measureText(s).width > maxW * 0.7 && s.length > 4) s = s.slice(0, -2)
       ctx.fillText(s === String(v) ? s : `${s.trim()}…`, W - m, ry + 15)
     })
@@ -245,6 +248,37 @@ function CatRing({ on }) {
   useLayoutEffect(() => { const p = ref.current && ref.current.parentElement; if (p) setS({ w: p.offsetWidth, h: p.offsetHeight }) }, [])
   return <span ref={ref} className="h-cat-ring">{s && <Scribble w={s.w} h={s.h} on={on} pad={0.16} />}</span>
 }
+/* One top bar everywhere: name left, the three wheel sections + the two pages right, contact quiet at the end */
+function SiteNav({ go, active, className = '', onHover }) {
+  const [hov, setHov] = useState(null)
+  const h = (id) => { setHov(id); if (onHover) onHover(id) }
+  const item = (id, label, r, n) => (
+    <a key={id} href={`#/${id}`} className={id === active ? 'is-on' : ''} aria-current={id === active ? 'page' : undefined}
+      onMouseEnter={() => h(id)} onMouseLeave={() => h(null)} onFocus={() => h(id)} onBlur={() => h(null)}
+      onClick={(e) => { e.preventDefault(); if (e.detail) e.currentTarget.blur(); go(r) }}>
+      <span className="h-cat-l">{label}<CatRing on={hov === id || (hov === null && id === active)} /></span>{n != null && <sup>{n}</sup>}
+    </a>
+  )
+  return (
+    <header className={`sn ${className}`}>
+      <a className="h-mark" href="#/prose" onClick={(e) => { e.preventDefault(); if (e.detail) e.currentTarget.blur(); go({ view: 'browse', cat: 'prose' }) }}>Shanmu Raja</a>
+      <nav className="sn-nav h-nav" aria-label="Sections">
+        {CATS.map((c) => item(c.id, c.label, { view: 'browse', cat: c.id }, c.items.length))}
+        <i className="sn-sep" aria-hidden="true" />
+        {item('paintings', 'Paintings', { view: 'paintings' })}
+        {item('about', 'About', { view: 'about' })}
+      </nav>
+      <a className="sn-mail" href="mailto:shanmur@uclawsf.edu">Contact</a>
+    </header>
+  )
+}
+function Socials({ className = '' }) {
+  return (
+    <nav className={`h-social ${className}`} aria-label="Elsewhere">
+      {SOCIALS.map(([l, h]) => <a key={l} href={h} target="_blank" rel="noreferrer" aria-label={l} data-l={l}><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{ICONS[l.toLowerCase()]}</svg></a>)}
+    </nav>
+  )
+}
 const ICONS = {
   medium: <path d="M2.5 5.5h6.6l3.1 7.4 3-7.4H21.5v.4l-1.6 1.5v8.7l1.6 1.5v.4h-6.4v-.4l1.7-1.6v-7.6l-3.9 9.6h-.5l-4.4-9.6v6.6l1.9 2.2v.4H4.7v-.4l1.9-2.2V7.4L4.5 5.9v-.4z" />,
   substack: <path d="M5 4.5h14v2.2H5V4.5zM5 8.6h14v2.2H5V8.6zM5 12.7l7 3.9 7-3.9V20l-7-3.9L5 20v-7.3z" />,
@@ -273,7 +307,6 @@ function Home({ cat, go }) {
   const [phase, setPhase] = useState(session.introDone || reduced() ? (returning ? 'return' : 'enter') : 'loading')
   const [pct, setPct] = useState(0)
   const [box, setBox] = useState(null)
-  const [catHover, setCatHover] = useState(null)
   const [leaving, setLeaving] = useState(false)
   const [bgOn, setBgOn] = useState(false)
   const hovRef = useRef(-1)
@@ -392,13 +425,7 @@ function Home({ cat, go }) {
       <div className="h-gl" ref={host} />
       <div className="h-ring" ref={ring} aria-hidden="true"><Scribble w={box && box.w} h={box && box.h} on={hov >= 0 && hov === cur && show} pad={0.09} /></div>
 
-      <header className={`h-top${chrome ? ' is-on' : ''}`}>
-        <a className="h-mark" href="#/prose" onClick={(e) => { e.preventDefault(); if (e.detail) e.currentTarget.blur(); go({ view: 'browse', cat: 'prose' }) }}>Shanmu Raja</a>
-        <nav className="h-nav">
-          <a href="#/paintings" onClick={(e) => { e.preventDefault(); go({ view: 'paintings' }) }}>Paintings</a>
-          <a href="#/about" onClick={(e) => { e.preventDefault(); go({ view: 'about' }) }}>About</a>
-        </nav>
-      </header>
+      <SiteNav go={go} active={cat} className={`h-top${chrome ? ' is-on' : ''}`} />
 
       <section className={`h-info${show ? ' is-on' : ''}`} key={`${shown}-${cur}`} aria-live="polite">
         <h1 className="h-title"><a href={`#/${shown}/${it.slug}`} onClick={(e) => { e.preventDefault(); go({ view: 'piece', cat: shown, i: cur }) }}>{it.title}</a></h1>
@@ -409,23 +436,12 @@ function Home({ cat, go }) {
 
       {it.line && <blockquote className={`h-quote${show ? ' is-on' : ''}`} key={`q-${shown}-${cur}`}>{it.line}</blockquote>}
 
-      <nav className={`h-cats${chrome ? ' is-on' : ''}`} aria-label="Sections">
-        {CATS.map((c) => (
-          <a key={c.id} href={`#/${c.id}`} className={c.id === cat ? 'is-on' : ''} aria-current={c.id === cat ? 'true' : undefined}
-            onMouseEnter={() => setCatHover(c.id)} onMouseLeave={() => setCatHover(null)} onFocus={() => setCatHover(c.id)} onBlur={() => setCatHover(null)}
-            onClick={(e) => { e.preventDefault(); if (e.detail) e.currentTarget.blur(); go({ view: 'browse', cat: c.id }) }}>
-            <span className="h-cat-l">{c.label}<CatRing on={catHover === c.id || (catHover === null && c.id === cat)} /></span><sup>{c.items.length}</sup>
-          </a>
-        ))}
-      </nav>
 
       <div className={`h-foot${chrome ? ' is-on' : ''}`}>
         <button type="button" className="h-count" aria-label="Next piece" onClick={() => { const g = gal.current; if (g && !g.busy()) g.to((g.settled() + 1) % g.N, 'click') }}>
           {pad2(cur + 1)} <i>/</i> {pad2(list.length)}
         </button>
-        <nav className="h-social" aria-label="Elsewhere">
-          {SOCIALS.map(([l, h]) => <a key={l} href={h} target="_blank" rel="noreferrer" aria-label={l} title={l}><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">{ICONS[l.toLowerCase()]}</svg></a>)}
-        </nav>
+        <Socials />
       </div>
 
       {phase === 'loading' && <div className="h-load" aria-hidden="true"><Odometer value={pct} /></div>}
@@ -434,13 +450,15 @@ function Home({ cat, go }) {
   )
 }
 
-function PageTop({ back, backLabel, go, right }) {
+function PageTop({ back, backLabel, go, right, active }) {
   return (
-    <header className="pg-top">
-      <a href="#/" className="pg-back" onClick={(e) => { e.preventDefault(); back() }}><span aria-hidden="true">←</span> {backLabel}</a>
-      <a href="#/prose" className="pg-name" onClick={(e) => { e.preventDefault(); go({ view: 'browse', cat: 'prose' }) }}>Shanmu Raja</a>
-      <span className="pg-count">{right}</span>
-    </header>
+    <>
+      <SiteNav go={go} active={active} className="pg-sn" />
+      <div className="pg-top">
+        <a href="#/" className="pg-back" onClick={(e) => { e.preventDefault(); back() }}><span aria-hidden="true">←</span> {backLabel}</a>
+        <span className="pg-count">{right}</span>
+      </div>
+    </>
   )
 }
 
@@ -503,14 +521,31 @@ function Piece({ cat, i, go }) {
     : it.internal ? <a className="pg-cta-a" href={it.internal}><span>{it.cta}</span><b aria-hidden="true">→</b></a>
       : it.cta ? <span className="pg-cta-a is-muted"><span>{it.cta}</span></span> : null
   const credit = it.src ? creditText(it.src) : ''
+  const honors = it.honors && it.honors.map((h) => <p key={h.href} className="pg-honor"><a href={h.href} onClick={(e) => { e.preventDefault(); go(parse(h.href)) }}>{h.text}</a></p>)
+  const pgNav = (
+    <nav className="pg-nav">
+      <a href={`#/${cat}/${items[prev].slug}`} onClick={(e) => { e.preventDefault(); go({ view: 'piece', cat, i: prev }) }}><small>Previous</small>{items[prev].title}</a>
+      <a href={`#/${cat}/${items[next].slug}`} onClick={(e) => { e.preventDefault(); go({ view: 'piece', cat, i: next }) }}><small>Next</small>{items[next].title}</a>
+    </nav>
+  )
+  if (cat === 'publications') {
+    return (
+      <PaperPage
+        it={it} honors={honors} nav={pgNav}
+        top={<PageTop back={() => go({ view: 'browse', cat })} backLabel={catOf(cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(items.length)}`} />}
+        cover={<div ref={art} className="pg-art" style={{ '--ar': ar, aspectRatio: String(ar), background: '#f9f8f4', visibility: hold ? 'hidden' : undefined }}>{face && <img src={face} alt={`${it.title}, cover`} decoding="async" />}</div>}
+      />
+    )
+  }
   return (
     <article className={`pg pg-piece pg-c-${cat}${flying ? ' is-flown' : ' is-direct'}${dir ? ` is-step is-step-${dir > 0 ? 'n' : 'p'}` : ''}`}>
-      <PageTop back={() => go({ view: 'browse', cat })} backLabel={catOf(cat).label} go={go} right={`${pad2(i + 1)} / ${pad2(items.length)}`} />
+      <PageTop back={() => go({ view: 'browse', cat })} backLabel={catOf(cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(items.length)}`} />
       <div className="pg-head">
         <i className="pg-x pg-x-l" aria-hidden="true" /><i className="pg-x pg-x-r" aria-hidden="true" />
         <h1 className="pg-title"><span>{it.title}</span></h1>
         <hr className="pg-rule" />
         <p className="pg-by"><span>{it.by}</span></p>
+        {honors}
       </div>
       <div className="pg-body">
         <figure className="pg-fig">
@@ -530,10 +565,7 @@ function Piece({ cat, i, go }) {
         </div>
       </div>
       {note ? <section className="pg-note"><h2>On the painting</h2><p>{note}</p></section> : null}
-      <nav className="pg-nav">
-        <a href={`#/${cat}/${items[prev].slug}`} onClick={(e) => { e.preventDefault(); go({ view: 'piece', cat, i: prev }) }}><small>Previous</small>{items[prev].title}</a>
-        <a href={`#/${cat}/${items[next].slug}`} onClick={(e) => { e.preventDefault(); go({ view: 'piece', cat, i: next }) }}><small>Next</small>{items[next].title}</a>
-      </nav>
+      {pgNav}
     </article>
   )
 }
@@ -542,7 +574,7 @@ function About({ go }) {
   useLayoutEffect(() => { window.scrollTo(0, 0) }, [])
   return (
     <article className="pg pg-about">
-      <PageTop back={() => go({ view: 'browse', cat: lastCat.current })} backLabel="Back" go={go} right="About" />
+      <PageTop back={() => go({ view: 'browse', cat: lastCat.current })} backLabel="Back" go={go} active="about" right="" />
       <div className="pg-head"><h1 className="pg-title"><span>About</span></h1><hr className="pg-rule" /></div>
       <div className="ab">
         <img src="/headshot-700.webp" alt="Shanmu Raja" width="700" height="1049" />
@@ -552,7 +584,8 @@ function About({ go }) {
           <p>I have a master’s from UCSF in healthcare economics and health policy. My thesis looked at access deserts in Medi-Cal. My research lives in clinical medicine and surgery.</p>
           <p>My fiction has been recognized by <em>The New Yorker</em>, the Paul Kalanithi Writing Competition, and the Massachusetts Undergraduate Poetry Festival. My research has appeared in <em>The Journal of Thoracic and Cardiovascular Surgery</em> and <em>Journal of Vascular Surgery</em>.</p>
           <p>Off the page: squash, piano, a steady diet of cinema.</p>
-          <p className="ab-links"><a href="mailto:shanmur@uclawsf.edu">shanmur@uclawsf.edu</a>{SOCIALS.map(([l, h]) => <a key={l} href={h} target="_blank" rel="noreferrer">{l}</a>)}</p>
+          <p className="ab-links"><a href="mailto:shanmur@uclawsf.edu">shanmur@uclawsf.edu</a></p>
+          <Socials className="ab-social" />
         </div>
       </div>
     </article>
@@ -562,7 +595,7 @@ function Paintings({ go }) {
   useLayoutEffect(() => { window.scrollTo(0, 0) }, [])
   return (
     <article className="pg pg-paint">
-      <PageTop back={() => go({ view: 'browse', cat: lastCat.current })} backLabel="Back" go={go} right={`${PAINTINGS.length} paintings`} />
+      <PageTop back={() => go({ view: 'browse', cat: lastCat.current })} backLabel="Back" go={go} active="paintings" right={`${PAINTINGS.length} paintings`} />
       <div className="pg-head"><h1 className="pg-title"><span>Paintings</span></h1><hr className="pg-rule" /></div>
       <ul className="pt-grid">
         {PAINTINGS.map((s, n) => (
