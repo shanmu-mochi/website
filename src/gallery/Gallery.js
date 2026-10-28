@@ -27,22 +27,24 @@ const pressure = (v) => {
 }
 export const CFG = {
   galleryScale: 1.08, camDist: 4.4, fov: 40,
-  hoverTilt: 0.21, dragSens: 0.95, dragSmooth: 0.32, dragMaxV: 0.5, dragStart: 5,
-  glideTau: 0.55, glideMaxV: 0.2,              // release coast: the original carousel's TAU
-  snapDuration: 0.46, snapFreq: 9.5, snapDamping: 12,
+  hoverTilt: 0.21, dragSens: 0.6, dragSmooth: 0.32, dragMaxV: 0.32, dragStart: 5,
+  glideTau: 0.36, glideMaxV: 0.125,              // release coast: the original carousel's TAU
+  snapDuration: 0.62, snapFreq: 9.5, snapDamping: 12,
   flowLean: 0.055, flowLeanMax: 0.3, flowBank: 0.32, flowDip: 0.014, flowDipMax: 0.09,
   followTight: 15, followBase: 11, followFalloff: 1.15, followMin: 6.5,
   flightRecede: 2.2, flightStagger: 0.45, flightStaggerIn: 0.28, flightStaggerMax: 4, popOut: 0.35, popIn: 0.02,
   preloadBoost: 0.8, preloadGrowBy: 0.5, preloadSpin: 1.1, preloadRise: 3, preloadDepth: 0.7, fanDuration: 1.15,
-  touchGap: 2.2, touchDepth: 0.5, touchDrop: 1, touchActive: 1.5, touchInactive: 0.6, touchFlick: 0.035, touchSpan: 1.8,
+  touchGap: 2.2, touchDepth: 0.5, touchDrop: 1, touchActive: 1.5, touchInactive: 0.6, touchFlick: 0.035, touchSpan: 1.15,
   resetDuration: 1.2, renderRadius: 6,
   wheelFloor: 0.3,
   // iteration 14: vertical intent. A gesture ends after gestureGap ms without events; sectionPx of
   // vertical travel inside one gesture (or one mouse-wheel notch) asks for the next section.
   gestureGap: 220, sectionPx: 70, sectionDrag: 90,
+  // iteration 17: side scroll slowed ~35-40% (dragSens .95->.6, dragMaxV .5->.32, glideTau .55->.36,
+  // glideMaxV .2->.125, mPower .8->.5, wheelPx 420->650, touchSpan 1.8->1.15, snapDuration .46->.62)
   // momentum ported from the deployed site (main: src/App.jsx gallery drift): px/s hand speed ->
   // pressure curve -> exponential coast (glideTau). wheelPx = screen px that count as one piece.
-  mPower: 0.8, mMax: 3800, mRef: 1200, mGamma: 1.5, mSample: 110, mFresh: 140, wheelPx: 420,
+  mPower: 0.5, mMax: 3800, mRef: 1200, mGamma: 1.5, mSample: 110, mFresh: 140, wheelPx: 650,
 }
 
 /* per-section staging: group tilt, object proportions, arrangement */
@@ -167,9 +169,9 @@ export default class Gallery {
   to(i, source = 'snap') {
     if (!this.N) return
     const n = clamp(i, 0, this.N - 1), dist = Math.abs(n - this.L), d = CFG.snapDuration
-    const a = source === 'wheel' ? { duration: d + 0.05, kick: 2.5 }
-      : source === 'key' ? { duration: Math.min(0.6, d - 0.04 + dist * 0.05), kick: 4 }
-        : source === 'click' ? { duration: clamp(0.45 + dist * 0.11, d, 1.05), kick: Math.min(5, dist * 1.4) }
+    const a = source === 'wheel' ? { duration: d + 0.07, kick: 1.6 }
+      : source === 'key' ? { duration: Math.min(0.82, d - 0.04 + dist * 0.07), kick: 2.5 }
+        : source === 'click' ? { duration: clamp(0.62 + dist * 0.15, d, 1.4), kick: Math.min(3.2, dist * 0.9) }
           : source === 'flick' ? { duration: d + 0.1, kick: 0 } : { duration: d, kick: 0, ease: 'power3.out' }
     this.target = n; this.Se = 0; this.Te = 0
     gsap.killTweensOf(this.tw)
@@ -418,7 +420,7 @@ export default class Gallery {
     ;(d.sm || (d.sm = [])).push({ t: now, p: d.px })
     while (d.sm.length > 2 && now - d.sm[0].t > CFG.mSample) d.sm.shift()
     if (d.spin >= 0) {
-      const p = this.plates[d.spin], k = CFG.dragSens * 0.0045
+      const p = this.plates[d.spin], k = 0.95 * 0.0045
       gsap.killTweensOf(p)
       p.spinY = clamp(p.spinY + dx * k, -Math.PI * 2, Math.PI * 2); p.spinX = clamp(p.spinX + dy * k, -Math.PI, Math.PI)
       return

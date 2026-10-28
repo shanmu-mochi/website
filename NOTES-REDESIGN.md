@@ -157,3 +157,8 @@ seamlessly into its spot on the page; fix details, smoothness and nav.
 - Slop audit of the text we wrote: AI Trap card sub-line replaced with an abstract sentence; seven section sub-lines on AiTrap/MediCal rewritten plainly. Authors' abstracts not touched.
 - The wheel meta for new papers is two rows (Kind, Authors · affiliation) so it clears the card stack. The duplicate PDF link is removed.
 - QA: /workspace/redesign-shots-v16/ (1440, 1280, 390; card front/back, pages, sheet-*.png, chart crops). No page errors, no horizontal overflow. Lint is at 9. dist 96,708,924 → 100,231,138 bytes (+3.52 MB, mostly the PDFs, webp figures and texDocs JSON).
+
+## Iteration 17
+
+### Part 1: slower side scroll
+Gallery.js CFG: dragSens .95->.6, dragMaxV .5->.32, glideTau .55->.36, glideMaxV .2->.125, mPower .8->.5, wheelPx 420->650, touchSpan 1.8->1.15, snapDuration .46->.62; key step duration cap .6->.82 (kick 4->2.5), click glide .45+.11d->.62+.15d (cap 1.4s), wheel-notch kick 2.5->1.6. Card spin-drag keeps its old feel.
