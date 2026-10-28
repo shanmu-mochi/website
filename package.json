@@ -11,7 +11,8 @@
     "paintings": "node scripts/build-paintings.cjs",
     "prebuild": "node scripts/build-paintings.cjs",
     "og": "node scripts/build-og.cjs",
-    "prerender": "node scripts/prerender.cjs"
+    "prerender": "node scripts/prerender.cjs",
+    "previews": "node scripts/build-previews.cjs"
   },
   "dependencies": {
     "@react-three/drei": "^9.88.13",

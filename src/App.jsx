@@ -376,6 +376,114 @@ const STORIES = [
   { title: 'Got Your Toe!', kind: 'Essay · A skilled nursing facility', venue: 'Medium', excerpt: 'At the nursing home, the body keeps a longer memory than the mind.', href: 'https://shanmuraja.medium.com/got-your-toe-472b0e2a74cb' },
 ]
 
+/* ===== Stories phone =====
+   Each story's painting (filenames from META/POOL above). Edit freely: key = story title. */
+const STORY_PAINTING = {
+  'A Young Lady’s Photograph Album': 'degas-photographer.jpg',
+  'To Get the Face Right': 'peschka.jpg',
+  'How to Be Thanked': 'sargent-dinner.jpg',
+  'Burnt Red Tongues': 'vishnu-shesha.jpg',
+  'Fugue State': 'automat.jpg',
+  'A Pound of Flesh': 'vonmax-anatom.jpg',
+  'a boring call': 'hopper-elevenam.jpg',
+  'The Sound and the Fury': 'turner-rain.jpg',
+  'Birds Do Not Sing in Caves': 'sargent-gassed.jpg',
+  'Young Boy Blues': 'munch-sick.jpg',
+  'I’ve Gone to the Country Spa': 'vangogh-oldman.jpg',
+  'Jack of All Trades, Master of None': 'vangogh-ward.jpg',
+  'Sonder': 'shergil-fruitvendors.jpg',
+  'Do You Lift, Bro?': 'bellows-stag.jpg',
+  'Got Your Toe!': 'schjerfbeck-convalescent.jpg',
+}
+/* Substack (CSP frame-ancestors *.substack.com) and Medium (X-Frame-Options: SAMEORIGIN) refuse to be
+   iframed, so the phone shows a real mobile rendering captured once by `npm run previews`. */
+const previewOf = (href) => `/story-previews/${new URL(href).pathname.split('/').filter(Boolean).pop()}.webp`
+const isDesk = () => typeof window !== 'undefined' && window.matchMedia('(min-width: 721px)').matches
+
+function StoryArt({ s, w }) {
+  const src = STORY_PAINTING[s.title]
+  const m = META[src] || {}
+  if (!src) return null
+  return (
+    <figure className="sp-art">
+      <img src={variantFor(src, w)} alt={m.title || ''} loading="lazy" decoding="async" style={{ background: placeholderOf(src) }} />
+      <figcaption><em>{m.title}</em>{m.artist ? `, ${m.artist}` : ''}{m.year ? `, ${m.year}` : ''}</figcaption>
+    </figure>
+  )
+}
+
+function StoriesPhone() {
+  const [hover, setHover] = useState(0)        // row under the pointer / keyboard focus -> lock screen
+  const [sel, setSel] = useState(null)         // clicked row -> its page inside the phone
+  const [loaded, setLoaded] = useState(() => new Set())   // previews mounted once, then kept (hidden) so they stick
+  const shown = sel ?? hover
+  const s = STORIES[shown]
+  const choose = (i, e) => {
+    if (e) e.preventDefault()
+    if (sel === i) { setSel(null); return }
+    setSel(i); setHover(i)
+    if (STORIES[i].href && isDesk()) setLoaded((L) => (L.has(i) ? L : new Set(L).add(i)))
+  }
+  const reading = sel !== null && s.href
+  return (
+    <div className="sp-wrap">
+      <div className="sp-list">
+        {STORIES.map((st, i) => {
+          const Tag = st.href ? 'a' : 'div'
+          const open = sel === i
+          return (
+            <div className={`sp-item${open ? ' sp-open' : ''}`} key={st.title}>
+              <Tag className={`story rv${shown === i ? ' sp-on' : ''}`} {...(st.href ? { href: st.href, target: '_blank', rel: 'noreferrer' } : { tabIndex: 0, role: 'button' })}
+                aria-expanded={open} onMouseEnter={() => setHover(i)} onFocus={() => setHover(i)}
+                onClick={(e) => choose(i, e)} onKeyDown={(e) => { if (!st.href && (e.key === 'Enter' || e.key === ' ')) choose(i, e) }}>
+                <span className="st-num">{String(i + 1).padStart(2, '0')}</span>
+                <div className="st-body">
+                  <div className="st-kicker">{st.kind}</div>
+                  <div className="st-head">
+                    <span className="st-title">{st.title}</span>
+                    {st.latest && (<span className="st-new"><i className="st-new-dot" aria-hidden="true" />Just Published</span>)}
+                    <span className="st-leader" aria-hidden="true" />
+                    <span className="st-venue">{st.venue}</span>
+                  </div>
+                  {st.excerpt && (<div className="st-excerpt-wrap"><p className="st-excerpt">{st.excerpt}</p></div>)}
+                </div>
+              </Tag>
+              {/* mobile only: the row opens into a card, painting on top */}
+              {open && (
+                <div className="sp-card">
+                  <StoryArt s={st} w={720} />
+                  {st.href
+                    ? <a className="sp-cta" href={st.href} target="_blank" rel="noreferrer">Continue reading on {st.venue} ↗</a>
+                    : <div className="sp-note">Not yet published</div>}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+      <aside className="sp-side" aria-label="Story preview">
+        <div className="phone">
+          <div className="phone-screen">
+            <div className="phone-island" aria-hidden="true" />
+            <div className={`phone-lock${reading ? ' is-hidden' : ''}`}>
+              <div className="phone-time">{String(shown + 1).padStart(2, '0')}</div>
+              <StoryArt s={s} w={340} />
+              <div className="phone-lock-t">{s.title}</div>
+              <div className="phone-lock-k">{s.href ? (sel === null ? 'Click to open' : '') : 'Not yet published'}</div>
+            </div>
+            {[...loaded].map((i) => (
+              <div className={`phone-page${reading && sel === i ? '' : ' is-hidden'}`} key={i} aria-hidden={!(reading && sel === i)}>
+                <img src={previewOf(STORIES[i].href)} alt={`${STORIES[i].title} on ${STORIES[i].venue}`} />
+              </div>
+            ))}
+            {reading && <a className="phone-cta" href={s.href} target="_blank" rel="noreferrer">Continue reading on {s.venue} ↗</a>}
+          </div>
+        </div>
+      </aside>
+    </div>
+  )
+}
+
 const AWARDS = [
   { rn: 'I', kind: 'Shortlist', title: 'The New Yorker', desc: <>For the historical short fiction <em>“Burnt Red Tongues.”</em></> },
   { rn: 'II', kind: 'Shortlist', title: 'Paul Kalanithi Writing Competition', desc: <>Stanford’s national essay prize, in memory of the late neurosurgeon and author of <em>When Breath Becomes Air.</em></> },
@@ -831,33 +939,7 @@ export default function App() {
         {/* STORIES */}
         <section className="section" id="stories">
           <div className="section-head rv"><h2 className="section-title">Stories</h2><p className="section-lead">Fiction &amp; essays on medicine and humanity.</p></div>
-          <div className="contents">
-            {STORIES.map((s, i) => {
-              const Tag = s.href ? 'a' : 'div'   // unlinked pieces (unpublished / in submission) are plain rows
-              return (
-                <Tag className="story rv" key={s.title} {...(s.href ? { href: s.href, target: '_blank', rel: 'noreferrer' } : {})}>
-                  <span className="st-num">{String(i + 1).padStart(2, '0')}</span>
-                  <div className="st-body">
-                    <div className="st-kicker">{s.kind}</div>
-                    <div className="st-head">
-                      <span className="st-title">{s.title}</span>
-                      {s.latest && (
-                        <span className="st-new">
-                          <i className="st-new-dot" aria-hidden="true" />
-                          Just Published
-                        </span>
-                      )}
-                      <span className="st-leader" aria-hidden="true" />
-                      <span className="st-venue">{s.venue}</span>
-                    </div>
-                    {s.excerpt && (
-                      <div className="st-excerpt-wrap"><p className="st-excerpt">{s.excerpt}</p></div>
-                    )}
-                  </div>
-                </Tag>
-              )
-            })}
-          </div>
+          <StoriesPhone />
           <div className="inprog rv">
             <div className="inprog-k">In progress</div>
             <div className="index-list">
