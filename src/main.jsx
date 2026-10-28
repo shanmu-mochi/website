@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
+import Browser from './Browser.jsx'
 
 /* The browser restores the last scroll position on reload, which on a one-page
    site means opening halfway down instead of at the gallery. Paper pages keep
@@ -10,6 +10,6 @@ if (!window.location.hash) window.scrollTo(0, 0)
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <Browser />
   </React.StrictMode>,
 )
