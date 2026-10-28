@@ -14,7 +14,7 @@
     "prerender": "node scripts/prerender.cjs",
     "previews": "node scripts/build-previews.cjs",
     "build:preview": "VITE_FEEDBACK=1 vite build && cp scripts/serve.py dist/serve.py",
-    "live": "npm run build:preview && cd dist && python3 serve.py 8123"
+    "live": "npm run paintings && npm run build:preview && cd dist && python3 serve.py 8123"
   },
   "dependencies": {
     "@react-three/drei": "^9.88.13",
