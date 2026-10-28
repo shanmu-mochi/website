@@ -103,3 +103,9 @@ seamlessly into its spot on the page; fix details, smoothness and nav.
 - "Scroll, drag, or use the arrow keys" used to sit at top-right, on top of Paintings, About and Contact at 1280. It now sits bottom-right, just above the counter.
 - It appears only once the intro is done (phase ready), fades in and out over about 6s, and disappears on the first wheel, pointer, key or touch.
 - It is still hidden on phones and touch devices, so 390 is unaffected.
+
+## Iteration 11: no Contact button
+
+- The top bar Contact mailto link is gone at every viewport. The bar is now the name plus links: Prose / Publications / Luck | Paintings / About.
+- Desktop: the links sit flush right on one row. Phone: the links share the second row evenly.
+- The email stays reachable elsewhere and is untouched: the About page (ab-links), the papers index, and the legacy App.jsx contact section.

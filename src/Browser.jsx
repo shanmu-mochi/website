@@ -258,7 +258,6 @@ function SiteNav({ go, active, className = '', onHover }) {
         {item('paintings', 'Paintings', { view: 'paintings' })}
         {item('about', 'About', { view: 'about' })}
       </nav>
-      <a className="sn-mail" href="mailto:shanmur@uclawsf.edu">Contact</a>
     </header>
   )
 }

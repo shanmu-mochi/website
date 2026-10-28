@@ -408,3 +408,9 @@ a.pg-cta-a:hover b { transform: translate(3px, -3px); }
 /* iteration 10b: the hint sits just above the counter (bottom-right), never in the nav row */
 .h-hint { top: auto; right: 26px; bottom: 66px; text-align: right; }
 .h-hint.is-gone { animation: none; opacity: 0; transition: opacity .35s; }
+
+/* iteration 11: no Contact button; the bar is name + links, links flush right */
+.sn { grid-template-columns: auto 1fr; }
+.sn-nav { justify-content: flex-end; }
+@media (max-width: 760px) { .sn { grid-template-columns: 1fr; } }
+@media (max-width: 520px) { .sn-nav { justify-content: space-between; } }
