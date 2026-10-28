@@ -454,8 +454,9 @@ function Home({ cat, go }) {
         <button type="button" className="h-count" aria-label="Next piece" onClick={() => { const g = gal.current; if (g && !g.busy()) g.to((g.settled() + 1) % g.N, 'click') }}>
           {pad2(cur + 1)} <i>/</i> {pad2(list.length)}
         </button>
-        <Socials />
       </div>
+      {/* iteration 10: socials live bottom-left, away from the counter and the screen corner */}
+      <div className={`h-sfoot${foot ? ' is-on' : ''}`}><Socials /></div>
 
       {nameOn && (
         <div ref={nameRef} className={`h-iname${fontOk ? ' is-f' : ''}`} aria-hidden="true">

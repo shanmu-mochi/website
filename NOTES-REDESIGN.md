@@ -86,3 +86,14 @@ seamlessly into its spot on the page; fix details, smoothness and nav.
 - Details: Bodoni kerning/optical sizing/word spacing, mark tracking, piece page is now a two-column body
   (art left within the viewport, meta/CTA/quote right), comment pill moved to bottom right, mobile counter + 16px
   section labels + larger meta rows, clickable counter, grab cursor.
+
+## Iteration 10: socials move to the bottom-left
+
+- The Medium, Substack, Instagram and LinkedIn icons leave the bottom-right corner, where they sat under the counter.
+  They now live in their own `.h-sfoot` at the bottom-left of the gallery view, at 24px, dark, and with hover labels.
+- **Desktop:** the icons sit on the left column's edge, on the caption's baseline row, clear of the centred quote and
+  the details table. On Luck, the left-column quote moves up to bottom 80px so it stays above them.
+- **Phone (≤760px):** one bottom row, icons on the left and the counter on the right, with `env(safe-area-inset-*)`
+  padding via `max()`. Note that `viewport-fit=cover` is not set, so the insets read as 0 and the minimum padding applies.
+- They fade in with the counter, on the same `foot` flag, so the intro brings them in with the rest of the UI.
+  The About page icons are unchanged.

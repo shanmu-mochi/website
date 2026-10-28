@@ -392,3 +392,15 @@ a.pg-cta-a:hover b { transform: translate(3px, -3px); }
 @media (max-width: 370px) { .sn-nav a { font-size: 12px; } }
 /* Luck stacks vertically through the centre, so its line sits in the left column instead of on the cards */
 .h-m-luck .h-quote { left: 26px; bottom: 28px; width: min(330px, 30vw); margin: 0; text-align: left; font-size: 18px; }
+
+/* iteration 10: social icons move to the bottom-left of the gallery view. Desktop: under the left
+   column, on the caption's baseline row (the centred quote never reaches the left column). Phone: one
+   bottom row, icons left and counter right, inside the safe area. On Luck the left-column quote lifts above them. */
+.h-sfoot { position: absolute; left: 18px; bottom: 16px; z-index: 3; opacity: 0; transition: opacity .45s var(--glide); }
+.h-sfoot.is-on { opacity: 1; transition-duration: .7s; }
+.h-m-luck .h-quote { bottom: 80px; }
+@media (max-width: 760px) {
+  .h-sfoot { left: max(10px, env(safe-area-inset-left)); bottom: max(14px, calc(env(safe-area-inset-bottom) + 8px)); }
+  .h-sfoot .h-social { display: flex; }
+  .h-foot { right: max(18px, calc(env(safe-area-inset-right) + 12px)); bottom: max(22px, calc(env(safe-area-inset-bottom) + 16px)); }
+}
