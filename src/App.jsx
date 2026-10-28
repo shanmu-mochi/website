@@ -460,7 +460,7 @@ function Phone({ s, lit }) {
 /* hand-drawn pencil loop around the centred plate (A24's ring), redrawn on every arrival */
 const RING = 'M52 6 C80 4 98 22 97 50 C96 79 76 97 49 96 C21 95 3 77 4 49 C5 22 24 5 55 7 C70 8 82 13 89 20'
 const wrapD = (d, n) => { d = ((d % n) + n) % n; return d > n / 2 ? d - n : d }
-const mixPaper = (src, k = 0.13) => {
+const mixPaper = (src, k = 0.06) => {
   const c = (COLORS[src] && COLORS[src][1]) || (COLORS[src] && COLORS[src][0]) || [200, 200, 200]
   const P = [253, 252, 250]
   return `rgb(${P.map((v, j) => Math.round(v * (1 - k) + c[j] * k)).join(',')})`
@@ -479,6 +479,7 @@ function StoriesWheel() {
   const drag = useRef(null)
   const moved = useRef(false)
   const dwell = useRef(null)
+  const [hov, setHov] = useState(-1)
   const inView = useRef(false)
 
   const goTo = (i) => { target.current = pos.current + wrapD(i - pos.current, N) }
@@ -491,22 +492,22 @@ function StoriesWheel() {
     const rm = reducedMotion()
     const tick = () => {
       const p = pos.current, t = target.current
-      pos.current = rm ? t : p + (t - p) * 0.12
+      pos.current = rm ? t : p + (t - p) * 0.075
       if (Math.abs(t - pos.current) < 0.0008) pos.current = t
       const vw = window.innerWidth
       const R = Math.min(vw * 0.5, 760)
       items.current.forEach((el, i) => {
         if (!el) return
         const d = wrapD(i - pos.current, N)
-        const a = d * 0.42                      // radians per step on the ring
-        const x = Math.sin(a) * R
+        const a = d * 0.36                      // radians per step on the ring
+        const x = Math.sin(a) * R * 1.32
         const z = (Math.cos(a) - 1) * R
         const ad = Math.abs(d)
-        const vis = ad > 3.2 ? 0 : 1
-        el.style.transform = `translate(-50%, -50%) translate3d(${x.toFixed(1)}px, ${(ad * ad * 6).toFixed(1)}px, ${z.toFixed(1)}px) rotateY(${(-a * 57.3 * 0.62).toFixed(2)}deg) rotateZ(${(d * -1.1).toFixed(2)}deg)`
-        el.style.opacity = vis ? String(Math.max(0, 1 - Math.max(0, ad - 1.1) * 0.42)) : '0'
+        const vis = ad > 3.4 ? 0 : 1
+        el.style.transform = `translate(-50%, -50%) translate3d(${x.toFixed(1)}px, 0px, ${z.toFixed(1)}px) rotateY(${(-a * 57.3 * 0.5).toFixed(2)}deg) scale(${(1 - Math.min(ad, 3) * 0.1).toFixed(3)})`
+        el.style.opacity = vis ? String(Math.max(0, ad <= 1 ? 1 - 0.12 * ad : ad <= 2 ? 0.88 - 0.38 * (ad - 1) : 0.5 - 0.32 * (ad - 2))) : '0'
         el.style.zIndex = String(100 - Math.round(ad * 10))
-        el.style.pointerEvents = ad > 2.6 ? 'none' : ''
+        el.style.pointerEvents = ad > 3.1 ? 'none' : ''
         el.classList.toggle('is-center', ad < 0.5)
       })
       const c = ((Math.round(pos.current) % N) + N) % N
@@ -531,7 +532,7 @@ function StoriesWheel() {
       e.preventDefault()
       acc += dl
       const now = performance.now()
-      if (Math.abs(acc) > 40 && now - last > 260) { step(acc > 0 ? 1 : -1); acc = 0; last = now }
+      if (Math.abs(acc) > 40 && now - last > 420) { step(acc > 0 ? 1 : -1); acc = 0; last = now }
     }
     el.addEventListener('wheel', onWheel, { passive: false })
     const io = new IntersectionObserver(([e]) => { inView.current = e.intersectionRatio > 0.45 }, { threshold: [0, 0.45, 1] })
@@ -581,17 +582,13 @@ function StoriesWheel() {
                 <div className="swm-plate" style={{ background: placeholderOf(ps) }}>
                   <img src={variantFor(ps, 700)} alt={pm.title || ''} loading={i < 2 ? 'eager' : 'lazy'} decoding="async" />
                 </div>
-                <div className="swm-n">{pad2(i + 1)} / {pad2(N)}</div>
                 <h3 className="swm-t">{st.title}</h3>
-                <div className="rr-by">{st.kind.split(' · ')[0]}<span className="rr-dot">·</span>{st.venue}{st.published ? <><span className="rr-dot">·</span>{st.published}</> : null}</div>
                 {st.first && <p className="swm-first">{st.first}</p>}
-                {st.href ? <a className="rr-read" href={st.href} target="_blank" rel="noreferrer">Read on {st.venue} ↗</a> : <span className="rr-read is-muted">Not yet published</span>}
-                <p className="swm-cap">{credit(pm)}</p>
+                {st.href ? <a className="rr-read" href={st.href} target="_blank" rel="noreferrer">Read ↗</a> : <span className="rr-read is-muted">Not yet published</span>}
               </li>
             )
           })}
         </ol>
-        <div className="swm-hint">Swipe for more stories →</div>
       </section>
     )
   }
@@ -599,14 +596,7 @@ function StoriesWheel() {
   return (
     <section className="sw" id="stories" aria-label="Stories" style={{ '--tintbg': mixPaper(src) }}>
       <div className="sw-stage" ref={stageRef} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerLeave={onUp}>
-        <dl className="sw-meta" aria-live="polite">
-          <div className="sw-meta-n">No. {pad2(cur + 1)} <span>/ {pad2(N)}</span></div>
-          <div><dt>Kind</dt><dd>{s.kind.split(' · ')[0]}</dd></div>
-          <div><dt>Venue</dt><dd>{s.venue}</dd></div>
-          <div><dt>Published</dt><dd>{s.published || '—'}</dd></div>
-          <div><dt>Painting</dt><dd>{credit(m)}</dd></div>
-        </dl>
-
+        
         <div className="sw-wheel">
           {STORIES.map((st, i) => {
             const ps = STORY_PAINTING[st.title]
@@ -622,31 +612,27 @@ function StoriesWheel() {
                 draggable="false"
                 onClick={(e) => { if (moved.current || i !== cur || !st.href) { e.preventDefault(); if (!moved.current) goTo(i) } }}
                 onMouseEnter={() => { clearTimeout(dwell.current); if (i !== cur) dwell.current = setTimeout(() => { if (!drag.current) goTo(i) }, 320) }}
-                onMouseLeave={() => clearTimeout(dwell.current)}>
+                onMouseLeave={() => { clearTimeout(dwell.current); setHov(-1) }}
+                onMouseMove={() => { if (i === cur && hov !== i) setHov(i) }}>
                 <img src={variantFor(ps, 900)} alt="" draggable="false" decoding="async" />
                 {i === cur && <>
-                  <svg className="sw-ring" viewBox="0 0 101 101" preserveAspectRatio="none" aria-hidden="true" key={`r${cur}`}><path d={RING} pathLength="1" /></svg>
-                  <span className="sw-badge">{st.href ? 'Read ↗' : 'Unpublished'}</span>
+                  {st.href && <span className="sw-badge">Read ↗</span>}
+                  {m.title && <span className="sw-credit">{credit(m)}</span>}
                 </>}
               </T>
             )
           })}
         </div>
 
-        <div className="sw-cap">
+        <div className="sw-cap" aria-live="polite">
           {s.href
             ? <a className="sw-title" href={s.href} target="_blank" rel="noreferrer">{s.title}</a>
             : <span className="sw-title">{s.title}</span>}
-          {s.first && <p className="sw-first">“{s.first}”</p>}
-          <div className="sw-ctl">
-            <button type="button" onClick={() => step(-1)} aria-label="Previous story">←</button>
-            {s.href ? <a className="sw-read" href={s.href} target="_blank" rel="noreferrer">Read on {s.venue} ↗</a> : <span className="sw-read is-muted">Not yet published</span>}
-            <button type="button" onClick={() => step(1)} aria-label="Next story">→</button>
-          </div>
+          <div className="sw-by">{s.venue}{s.published ? <> · {s.published}</> : null}</div>
+          {s.first && <p className="sw-first">{s.first}</p>}
         </div>
 
-        <div className="sw-phone"><Phone s={s} lit /></div>
-        <div className="sw-hint" aria-hidden="true">Scroll, drag or ← → to turn · click the centre to read</div>
+        <div className={`sw-phone${hov === cur ? ' is-on' : ''}`} aria-hidden="true"><Phone s={s} lit /></div>
       </div>
 
       <ol className="sw-index" aria-label="All stories">
@@ -657,8 +643,7 @@ function StoriesWheel() {
               <T className={`sw-ix${i === cur ? ' is-on' : ''}`} {...(st.href ? { href: st.href, target: '_blank', rel: 'noreferrer' } : {})}
                 onMouseEnter={() => goTo(i)} onFocus={() => goTo(i)}>
                 <span className="sw-ix-n">{pad2(i + 1)}</span>
-                <span className="sw-ix-t">{st.title}{st.latest && <span className="rr-new">New</span>}</span>
-                <span className="sw-ix-v">{st.href ? st.venue : 'Unpublished'}</span>
+                <span className="sw-ix-t">{st.title}</span>
               </T>
             </li>
           )
@@ -669,7 +654,7 @@ function StoriesWheel() {
 }
 
 /* A chapbook cover: type only, real data only. */
-function Chapbook({ plate, title, by, kind, no }) {
+function Chapbook({ plate, title, by }) {
   return (
     <div className="cb">
       <div className="cb-face cb-front">
@@ -678,8 +663,6 @@ function Chapbook({ plate, title, by, kind, no }) {
         <div className="cb-plate">{plate}</div>
         <div className="cb-title">{title.split(' ').map((w, k) => <span key={k}>{k ? ' ' : ''}{w.includes('-') ? <span className="nobr">{w}</span> : w}</span>)}</div>
         <div className="cb-by">{by}</div>
-        <div className="cb-kind">{kind}</div>
-        <div className="cb-no">No. {pad2(no)}</div>
       </div>
     </div>
   )
@@ -700,15 +683,9 @@ function PapersShelf() {
   return (
     <div className="pp">
       <div className="pp-slip" aria-live="polite">
-        <div className="pp-slip-n">No. {pad2(idx + 1)} <span>/ {pad2(SHELF.length)}</span></div>
         <h3 className="pp-slip-t">{p.title}</h3>
         <p className="pp-slip-sub">{p.sub}</p>
-        <dl className="pp-slip-meta">
-          <div><dt>Kind</dt><dd>{p.kindLabel}</dd></div>
-          <div><dt>Authors</dt><dd>{p.authors}</dd></div>
-          {p.doi && <div><dt>DOI</dt><dd>{p.doi}</dd></div>}
-        </dl>
-        <p className="pp-slip-hint">{linkOf(p) ? 'Click the chapbook to open' : 'In preparation, not yet available'}</p>
+        <p className="pp-slip-by">{p.authors}{linkOf(p) ? null : <> · in preparation</>}</p>
       </div>
       <ol className="pp-shelf">
         {SHELF.map((x, i) => {
@@ -721,7 +698,6 @@ function PapersShelf() {
                 <Chapbook no={i + 1} title={x.title} by={x.authors} kind={x.kindLabel} plate={<div className="cb-type-plate"><span>{x.venue}</span></div>} />
               </T>
               <div className="pp-mobile">
-                <div className="pp-mobile-k">{x.kindLabel}</div>
                 <p>{x.sub}</p>
                 {u ? <a className="rr-read" href={u} target="_blank" rel="noreferrer">Open ↗</a> : <span className="rr-read is-muted">In preparation</span>}
               </div>
@@ -1159,7 +1135,6 @@ export default function App() {
 
         {/* STORIES */}
         <header className="mast">
-          <p className="rr-kicker">Fiction &amp; essays on medicine and humanity</p>
           <h1 className="rr-epigraph">I’m a writer who works in medicine, or a medical person who writes. <span>The order keeps changing.</span></h1>
         </header>
         <StoriesWheel />
@@ -1197,7 +1172,6 @@ export default function App() {
           <div className="section-head rv"><h2 className="section-title">Awards</h2><p className="section-lead">A small archive of luck.</p></div>
           <div className="awards-list">{AWARDS.map((a) => (
             <div className="award rv" key={a.rn}>
-              <span className="rn">{a.rn}</span>
               <div><h4>{a.title}</h4><p>{a.desc}</p></div>
               <span className="award-kind">{a.kind}</span>
             </div>
@@ -1249,7 +1223,7 @@ export default function App() {
 
         {/* PAINTINGS */}
         <section className="section" id="paintings">
-          <div className="section-head rv"><h2 className="section-title">Paintings</h2><p className="section-lead">The collection the stories borrow from. Drag, or let it drift.</p></div>
+          <div className="section-head rv"><h2 className="section-title">Paintings</h2><p className="section-lead">The collection the stories borrow from.</p></div>
         <section className="gallery" aria-label="Selected paintings">
           <div className={`marquee-track${fading ? ' fading' : ''}`} ref={trackRef}>
             {loop.map((p, i) => {
@@ -1275,7 +1249,6 @@ export default function App() {
           <button className="gallery-redo" onClick={redo} aria-label="Show another gallery">
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20 11a8 8 0 1 0-.6 4M20 4v5h-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
-          <div className={`gallery-tip${hint === 'in' ? ' gt-hide' : ''}`} aria-hidden="true">Refresh carousel</div>
         </section>
         </section>
 
