@@ -485,3 +485,12 @@ a.pg-cta-a:hover b { transform: translate(3px, -3px); }
   .h-down.is-on { transform: none; }
   .h-hint { bottom: 100px; }
 }
+
+/* iteration 15: the centred line sits above the "Scroll down" caption, the first-visit hint above both;
+   long author lists stay on one line so the panel never runs into the cards */
+@media (min-width: 761px) {
+  .h-quote { bottom: 62px; }
+  .h-hint { bottom: 150px; }
+  .h-meta dd { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+.h-meta dd { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

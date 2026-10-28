@@ -103,8 +103,20 @@ function faceCanvas(it, side) {
     smallCaps(ctx, 20); ctx.fillText(String(it.kind || '').toUpperCase(), m, m)
     ctx.fillRect(m, m + 38, W - 2 * m, 2)
     ctx.letterSpacing = '0px'
-    const { fs, lines } = fitTitle(ctx, it.title, W - 2 * m, H * 0.56, 84, 34, 1.08)
+    const { fs, lines } = fitTitle(ctx, it.title, W - 2 * m, H * (it.excerpt ? 0.34 : 0.5), 76, 32, 1.08)
     lines.forEach((l, k) => ctx.fillText(l, m, m + 80 + k * fs * 1.08))
+    // iteration 15: who and where, then a line from the abstract, so no card front is near-empty
+    let y = m + 80 + lines.length * fs * 1.08 + 4
+    const who = String(it.authors || '').replace(/\s*·\s*in preparation$/, '')
+    if (who) { ctx.font = `400 22px ${BOOK}`; ctx.fillStyle = '#4a4a4a'; wrap(ctx, who, W - 2 * m).slice(0, 2).forEach((l) => { ctx.fillText(l, m, y); y += 30 }); ctx.fillStyle = '#151515' }
+    const room = H - m - 110 - y
+    if (it.excerpt && room > 80) {
+      y += 22; ctx.fillRect(m, y - 4, 60, 1.5); y += 34
+      let efs = 28, ls
+      for (; efs > 20; efs -= 2) { ctx.font = `italic 400 ${efs}px ${BOOK}`; ls = wrap(ctx, it.excerpt, W - 2 * m); if (ls.length * efs * 1.3 < room - 60) break }
+      const max = Math.max(1, Math.floor((room - 60) / (efs * 1.3)))
+      ls.slice(0, max).forEach((l, k) => ctx.fillText(k === max - 1 && ls.length > max ? `${l.replace(/[\s,.;:]+\S*$/, '')}…` : l, m, y + k * efs * 1.3))
+    }
     ctx.fillRect(m, H - m - 78, W - 2 * m, 2)
     smallCaps(ctx, 18, 3)
     wrap(ctx, String(it.cover || '').toUpperCase(), W - 2 * m).slice(0, 2).forEach((l, k) => ctx.fillText(l, m, H - m - 60 + k * 26))
@@ -172,7 +184,7 @@ function backOf(it) {
     const body = it.finding || (it.line && it.line !== it.venueFull ? it.line : '')
     return {
       label: it.finding ? 'Main finding' : it.kind || 'Paper', body,
-      rows: [['N', it.n], ['Venue', it.venueFull || metaOf(it, 'Venue')], ['DOI', it.doi], ['PDF', fileOf(it.pdfPath)], ['Recognition', metaOf(it, 'Recognition')]],
+      rows: [['N', it.n], ['Venue', (it.ab && it.ab.cite) || it.venueFull || metaOf(it, 'Venue')], ['DOI', it.doi], ['PDF', fileOf(it.pdfPath)], ['PubMed', it.ab && it.ab.pmid ? `PMID ${it.ab.pmid}` : ''], ['Status', it.ab && it.ab.wip ? 'In preparation' : ''], ['Recognition', metaOf(it, 'Recognition')]],
     }
   }
   return {

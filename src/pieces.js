@@ -1,6 +1,7 @@
 /* Data for the A24-style browser (redesign iteration 4). Copied verbatim from App.jsx; nothing invented. */
 import DIMS from './paintingsData'
 import { FINDINGS } from './data/findings'
+import { ABSTRACTS } from './data/abstracts'
 import SELECTED from './selected'
 import COLORS from './colorsData'
 import { PAPERS } from './data/papers'
@@ -228,9 +229,10 @@ const pubs = [...PAPERS.map((p) => ({ ...p, kindLabel: BADGE_LABEL[p.badge] || p
     authors: p.authors, doi: p.doi, pdf: p.pdf, venueFull: p.venue || (p.doiVia === 'medRxiv' ? 'medRxiv preprint' : p.badge === 'Pub.' ? p.sub : null),
     pdfDoc: !!(p.href && p.href.endsWith('.pdf')),
     pdfPath: p.pdf || (p.href && p.href.endsWith('.pdf') ? p.href : null),
-    finding: (FINDINGS[p.title] || {}).finding || '', n: (FINDINGS[p.title] || {}).n || '',
+    finding: (FINDINGS[p.title] || ABSTRACTS[p.title] || {}).finding || '', n: (FINDINGS[p.title] || ABSTRACTS[p.title] || {}).n || '',
+    ab: ABSTRACTS[p.title] || null, excerpt: (ABSTRACTS[p.title] || {}).excerpt || '',
     href, cta: !href ? 'In preparation' : p.href && p.href.endsWith('.pdf') ? 'Open the PDF' : p.href ? 'Read the white paper' : `Read via DOI`,
-    meta: [['Kind', p.kindLabel], ['Authors', p.authors], ['Venue', p.doiVia || p.venue], ['DOI', p.doi]],
+    meta: [['Kind', p.kindLabel], ['Authors', p.authors], ['Venue', (ABSTRACTS[p.title] || {}).journal || p.doiVia || p.venue], ['DOI', p.doi]],
   }
 })
 const luck = AWARDS.map((a) => {

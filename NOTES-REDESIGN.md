@@ -135,3 +135,15 @@ seamlessly into its spot on the page; fix details, smoothness and nav.
 - Luck pose is now a sideways drum so all sections browse horizontally.
 - Flip button (icon + "Flip", Lora, hairline box, aria-label) bottom right in every section, before the counter; Space still flips; visible on mobile; rect-checked for no overlap with hint/counter/caption.
 - Verified with simulated wheel/drag/key/touch events (a24-study/s14.cjs); screenshots + contact sheets in /workspace/redesign-shots-v14/.
+
+## Iteration 15 — fill out all papers
+- New src/data/abstracts.js: verbatim published abstracts (structured: Objective/Methods/Results/Conclusions), keywords, full titles, citations, N and a main finding copied from each abstract, plus a front-of-card excerpt for every paper. Sources:
+  - Helical classification: PubMed PMID 42305171 + Crossref. Venue corrected to JTCVS Structural and Endovascular 8:100069 (Dec 2025), not "The Journal of Thoracic and Cardiovascular Surgery".
+  - PETTICOAT geometric analysis: J Vasc Surg 79(6):e149–e150 (poster IP057), abstract from the journal article page; not in PubMed.
+  - Longitudinal mapping: J Vasc Surg 77(4 Suppl):64S–65S, abstract from the journal/doi page; author list corrected from Crossref/ORCID to Bondesson, Raja, Suh, Dake, Lee, Cheng. Public text breaks off at the end of the conclusions; shown with an ellipsis and a note.
+  - TEVAR + PETTICOAT: J Vasc Surg Cases Innov Tech 12(5):102363 (Oct 2026), PubMed PMID 42494499.
+  - Preprints / white papers: excerpt is the first abstract sentence from the repo PDFs.
+- Card fronts now carry kicker, title, authors and an italic abstract excerpt. Backs: main finding, N, full citation, DOI, PubMed ID (or "In preparation").
+- Paper pages for the journal papers: structured abstract, key points (the abstract's Results sentences), citation with DOI/PMID links, a source note. Works in progress get an honest "In preparation" page; the Wegovy study links its public "article in process" listing (J Obes Metab Dis, JScholar).
+- Layout fix: the home caption line now sits above the "Scroll down" caption and the first-visit hint (they overlapped in v14); meta values stay on one line.
+- Screenshots: /workspace/redesign-shots-v15/ ({W}-{k}-front/back/page.png, sheets).

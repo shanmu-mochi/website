@@ -15,7 +15,7 @@ const plain = (x) => x.runs.map((r) => r[1]).join('')
 function Runs({ runs }) {
   return runs.map(([k, t], n) => k === 'b' ? <strong key={n}>{t}</strong> : k === 'i' ? <em key={n}>{t}</em> : k === 'sup' ? <sup key={n}>{t}</sup> : <React.Fragment key={n}>{t}</React.Fragment>)
 }
-const sentences = (s) => s.split(/(?<=[.;])\s+(?=[A-Z(])/).map((x) => x.trim()).filter(Boolean)
+const sentences = (s) => s.split(/(?<!\b[A-Z]\.)(?<=[.;])\s+(?=[A-Z(])/).map((x) => x.trim()).filter(Boolean)
 
 function shape(flow) {
   const abstract = [], secs = []
@@ -152,19 +152,52 @@ function PdfBody({ slug, it }) {
 }
 
 function Partial({ it }) {
+  const ab = it.ab || {}
   const wip = !it.href
-  return (
+  const parts = ab.abstract || []
+  const results = parts.find(([l]) => /^Results?$/i.test(l))
+  const toc = parts.length ? [{ id: 'abstract', title: 'Abstract' }, results && { id: 'key', title: 'Key points' }, { id: 'cite', title: 'Citation' }].filter(Boolean) : []
+  const on = useSpy(useMemo(() => toc.map((t) => t.id), [toc.length]))  // eslint-disable-line react-hooks/exhaustive-deps
+  if (!parts.length) return (
     <div className="wp-grid wp-partial">
       <div className="wp-toc" />
       <div className="wp-main">
         <section className="wp-sec" id="summary">
           {it.line && it.line !== it.venueFull && <><h2 className="wp-h2">Summary</h2><p className="wp-p wp-lede">{it.line}</p></>}
           <aside className="wp-key">
-            <p className="wp-label">{wip ? 'Status' : 'Full paper'}</p>
-            <p className="wp-p">{wip ? 'This study is in preparation. The full text will appear here once it is out.' : 'The full text is published with the journal. This page carries the citation only; the abstract and figures are with the publisher.'}</p>
+            <p className="wp-label">{wip ? 'In preparation' : 'Full paper'}</p>
+            <p className="wp-p">{wip ? 'This study is in preparation. No abstract has been published yet; it will appear here once it is out.' : 'The full text is published with the journal.'}</p>
+            {ab.status && <p className="wp-p">{ab.status}{ab.statusHref && <> <a href={ab.statusHref} target="_blank" rel="noreferrer">Journal listing ↗</a></>}</p>}
             {it.href && <a className="wp-btn" href={it.href} target="_blank" rel="noreferrer">Full paper{it.doi ? ` · doi ${it.doi}` : ''} <b aria-hidden="true">↗</b></a>}
           </aside>
         </section>
+      </div>
+    </div>
+  )
+  return (
+    <div className="wp-grid">
+      <Toc secs={toc} on={on} />
+      <div className="wp-main">
+        <section id="abstract" className="wp-sec wp-abstract">
+          <h2 className="wp-h2">Abstract</h2>
+          {ab.fullTitle && ab.fullTitle !== it.title && <p className="wp-p wp-lede">{ab.fullTitle}</p>}
+          {parts.map(([lead, text]) => <p key={lead} className="wp-p">{lead && <span className="wp-sc">{lead}</span>} {text}</p>)}
+          {ab.keywords && <p className="wp-p wp-kw"><span className="wp-sc">Keywords</span> {ab.keywords.join(' · ')}</p>}
+        </section>
+        {results && (
+          <section id="key" className="wp-sec">
+            <aside className="wp-key" aria-label="Key points">
+              <p className="wp-label">Key points <small>from the abstract</small></p>
+              <ol>{sentences(results[1]).map((t) => <li key={t}>{t}</li>)}</ol>
+            </aside>
+          </section>
+        )}
+        <section id="cite" className="wp-sec">
+          <h2 className="wp-h2">Citation</h2>
+          <p className="wp-p">{ab.authors || it.authors}. {ab.fullTitle || it.title}. <em>{ab.cite || it.venueFull}</em>.{it.doi && <> doi:<a href={`https://doi.org/${it.doi}`} target="_blank" rel="noreferrer">{it.doi}</a></>}{ab.pmid && <> · PMID <a href={`https://pubmed.ncbi.nlm.nih.gov/${ab.pmid}/`} target="_blank" rel="noreferrer">{ab.pmid}</a></>}</p>
+          {it.href && <p><a className="wp-btn" href={it.href} target="_blank" rel="noreferrer">Read at the journal <b aria-hidden="true">↗</b></a></p>}
+        </section>
+        <p className="wp-src">{ab.source} Only the published abstract is shown here; the full text is with the publisher.</p>
       </div>
     </div>
   )
@@ -200,7 +233,7 @@ export default function PaperPage({ it, top, cover, nav, honors }) {
           {kind !== 'partial' && it.line && <p className="wp-deck">{it.line}</p>}
           <dl className="wp-facts">
             {it.authors && <div><dt>Authors</dt><dd>{it.authors}</dd></div>}
-            {(it.venueFull || it.cover) && <div><dt>Venue</dt><dd>{it.venueFull || it.cover}</dd></div>}
+            {(it.venueFull || it.cover) && <div><dt>Venue</dt><dd>{(it.ab && it.ab.cite) || it.venueFull || it.cover}</dd></div>}
             {it.doi && <div><dt>DOI</dt><dd><a href={`https://doi.org/${it.doi}`} target="_blank" rel="noreferrer">{it.doi}</a></dd></div>}
           </dl>
           {honors}
