@@ -415,56 +415,119 @@ function StoryArt({ s, w }) {
 }
 
 const N_STORIES = STORIES.length
-const wrapOff = (i, at) => { let d = i - at; if (d > N_STORIES / 2) d -= N_STORIES; if (d < -N_STORIES / 2) d += N_STORIES; return d }
 /* a pencil ring: an ellipse drawn by hand, overshooting where it closes */
 const RING = 'M52 6 C80 4 98 22 97 50 C96 79 76 97 49 96 C21 95 3 77 4 49 C5 22 24 5 55 7 C70 8 82 13 89 20'
 
+/* A reusable 3D stage: items on a curved track, the active one ringed. Controlled (idx/onIdx) so an index list can stay in sync. */
+function Stage({ items, idx, onIdx, renderItem, renderInfo, onOpen, flippable = false, label, className = '' }) {
+  const N = items.length
+  const [moving, setMoving] = useState(false)
+  const [flip, setFlip] = useState(false)
+  const ref = useRef(null)
+  const inView = useRef(false)
+  const drag = useRef(null)
+  const st = useRef({})
+  st.current = { idx, onIdx, onOpen, N, flippable }
+  const off = (i) => { let d = i - idx; if (d > N / 2) d -= N; if (d < -N / 2) d += N; return d }
+  const go = (i) => { const n = ((i % N) + N) % N; if (n !== idx) { setMoving(true); onIdx(n) } }
+  useEffect(() => { setFlip(false) }, [idx])
+  useEffect(() => { if (!moving) return; const t = setTimeout(() => setMoving(false), 480); return () => clearTimeout(t) }, [moving, idx])
+  useEffect(() => {
+    const el = ref.current
+    const io = new IntersectionObserver(([e]) => { inView.current = e.isIntersecting && e.intersectionRatio >= 0.5 }, { threshold: [0, 0.5, 1] })
+    io.observe(el)
+    const onKey = (e) => {
+      const t = e.target
+      if (t && (t.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(t.tagName))) return
+      if (document.documentElement.classList.contains('sp-lock') && !el.classList.contains('stg-stories')) return
+      if (!inView.current) return   // only the stage on screen reacts (focus can be left behind in another stage)
+      const c = st.current
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); setMoving(true); c.onIdx((c.idx + (e.key === 'ArrowRight' ? 1 : -1) + c.N) % c.N) }
+      else if (e.key === ' ' && c.flippable && !t.closest?.('.ix, a, button, .index-list') && isDesk()) { e.preventDefault(); setFlip((f) => !f) }
+      else if (e.key === 'Enter' && c.onOpen && !t.closest?.('a, button, .ix, .index-list')) { e.preventDefault(); c.onOpen(c.idx) }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => { io.disconnect(); window.removeEventListener('keydown', onKey) }
+  }, [])
+  const onDown = (e) => { drag.current = { x: e.clientX } }
+  const onUp = (e) => {
+    const d = drag.current; drag.current = null
+    if (!d) return
+    const dx = e.clientX - d.x
+    if (Math.abs(dx) > 40) { go(idx + (dx < 0 ? 1 : -1)); ref.current.dataset.dragged = '1'; setTimeout(() => { if (ref.current) delete ref.current.dataset.dragged }, 0) }
+  }
+  const onItem = (e, i) => { if (ref.current.dataset.dragged || e.target.closest('a')) return; if (i === idx) { if (onOpen) onOpen(i) } else go(i) }
+  return (
+    <div className={`stg ${className}${moving ? ' is-moving' : ''}`} ref={ref} tabIndex={0} role="region" aria-roledescription="carousel"
+      aria-label={label} onPointerDown={onDown} onPointerUp={onUp} onPointerCancel={() => { drag.current = null }}>
+      <div className="stg-info" aria-live="polite">
+        {renderInfo(items[idx], idx)}
+        {flippable && <button type="button" className="stg-flip" onClick={() => setFlip((f) => !f)} aria-pressed={flip}>{flip ? 'Flip to cover' : 'Flip'} ↻ <kbd>Space</kbd></button>}
+      </div>
+      <div className="stg-track">
+        {items.map((it, i) => {
+          const d = off(i)
+          if (Math.abs(d) > 3) return null
+          const on = d === 0
+          return (
+            <div role="button" key={i} className={`stg-item${on ? ' is-active' : ''}${on && flip ? ' is-flipped' : ''}${d < -1 ? ' is-far-left' : ''}`} style={{ '--d': d, '--ad': Math.abs(d) }}
+              tabIndex={-1} aria-hidden={!on} onClick={(e) => onItem(e, i)}>
+              {renderItem(it, i, { on, flip: on && flip })}
+              {on && (
+                <svg className="stg-ring" viewBox="0 0 101 101" preserveAspectRatio="none" aria-hidden="true" key={idx}>
+                  <path d={RING} pathLength="1" />
+                </svg>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/* A chapbook: a thin saddle-stitched pamphlet. Front and back are real data only. */
+function Chapbook({ plate, title, by, kind, no, back, flip }) {
+  return (
+    <div className="cb">
+      <div className="cb-face cb-front">
+        <i className="cb-spine" />
+        <svg className="cb-staples" viewBox="0 0 6 100" preserveAspectRatio="none" aria-hidden="true"><path d="M3 22v9M3 69v9" /></svg>
+        <div className="cb-plate">{plate}</div>
+        <div className="cb-title">{title}</div>
+        <div className="cb-by">{by}</div>
+        <div className="cb-kind">{kind}</div>
+        <div className="cb-no">No. {String(no).padStart(2, '0')}</div>
+      </div>
+      <div className="cb-face cb-back" aria-hidden={!flip}>
+        <i className="cb-spine" />
+        {back}
+      </div>
+    </div>
+  )
+}
+const paintImg = (src, w) => src ? <img src={variantFor(src, w)} alt="" draggable="false" style={{ background: placeholderOf(src) }} /> : null
+const credit = (m) => m.title ? <><em>{m.title}</em>{m.artist ? `, ${m.artist}` : ''}{m.year ? `, ${m.year}` : ''}</> : null
+
 function StoriesStage() {
   const [idx, setIdx] = useState(0)            // the stage always has an active story (first by default)
-  const [moving, setMoving] = useState(false)  // text fades out while the stage moves
   const [open, setOpen] = useState(false)      // phone panel (desktop)
   const [exp, setExp] = useState(null)         // inline card (mobile)
   const [loaded, setLoaded] = useState(() => new Set())   // previews mounted once, then kept (hidden) so they stick
-  const stageRef = useRef(null)
-  const inView = useRef(false)
-  const drag = useRef(null)
   const s = STORIES[idx]
-  const idxRef = useRef(0)
-  idxRef.current = idx
-
-  const go = (i) => {
-    const n = ((i % N_STORIES) + N_STORIES) % N_STORIES
-    setIdx((cur) => { if (cur !== n) setMoving(true); return n })
-  }
-  useEffect(() => { if (!moving) return; const t = setTimeout(() => setMoving(false), 480); return () => clearTimeout(t) }, [moving, idx])
   const openPhone = (i) => {
-    go(i)
+    setIdx(i)
     if (!isDesk()) { setExp((e) => (e === i ? null : i)); return }
     if (STORIES[i].href) setLoaded((L) => (L.has(i) ? L : new Set(L).add(i)))
     setOpen(true)
   }
-
-  // while the phone is open, browsing loads each linked story once (then it stays mounted)
   useEffect(() => { if (open && s.href) setLoaded((L) => (L.has(idx) ? L : new Set(L).add(idx))) }, [open, idx, s.href])
-
-  // arrows browse while the stage is on screen (or focused); Enter opens; Escape closes the phone
   useEffect(() => {
-    const el = stageRef.current
-    const io = new IntersectionObserver(([e]) => { inView.current = e.isIntersecting }, { threshold: 0.35 })
-    io.observe(el)
-    const onKey = (e) => {
-      if (e.key === 'Escape') { setOpen(false); return }
-      const t = e.target
-      if (t && (t.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(t.tagName))) return
-      if (!inView.current && !el.contains(t)) return
-      if (e.key === 'ArrowRight') { e.preventDefault(); setIdx((c) => { setMoving(true); return (c + 1) % N_STORIES }) }
-      else if (e.key === 'ArrowLeft') { e.preventDefault(); setIdx((c) => { setMoving(true); return (c - 1 + N_STORIES) % N_STORIES }) }
-      else if (e.key === 'Enter' && el.contains(t)) { e.preventDefault(); openPhone(idxRef.current) }
-    }
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
     window.addEventListener('keydown', onKey)
-    return () => { io.disconnect(); window.removeEventListener('keydown', onKey) }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+  useEffect(() => { document.documentElement.classList.toggle('sp-lock', open); return () => document.documentElement.classList.remove('sp-lock') }, [open])
   // past the gallery, the nav/footer glass stops refracting (the displacement smeared headings under the pill)
   useEffect(() => {
     const gal = document.querySelector('.gallery')
@@ -474,50 +537,35 @@ function StoriesStage() {
     return () => { io.disconnect(); document.documentElement.classList.remove('past-gallery') }
   }, [])
 
-  const onDown = (e) => { drag.current = { x: e.clientX, moved: false } }
-  const onUp = (e) => {
-    const d = drag.current; drag.current = null
-    if (!d) return
-    const dx = e.clientX - d.x
-    if (Math.abs(dx) > 40) { go(idx + (dx < 0 ? 1 : -1)); stageRef.current.dataset.dragged = '1'; setTimeout(() => { if (stageRef.current) delete stageRef.current.dataset.dragged }, 0) }
-  }
-  const onItem = (i) => { if (stageRef.current.dataset.dragged) return; i === idx ? openPhone(i) : go(i) }
-
-  const m = META[STORY_PAINTING[s.title]] || {}
   return (
     <>
-      <div className={`stg${moving ? ' is-moving' : ''}`} ref={stageRef} tabIndex={0} role="region" aria-roledescription="carousel"
-        aria-label="Stories. Left and right arrows browse, Enter opens." onPointerDown={onDown} onPointerUp={onUp} onPointerCancel={() => { drag.current = null }}>
-        <div className="stg-info" aria-live="polite">
-          <h3 className="stg-title">{s.title}</h3>
-          <table className="stg-table"><tbody>
-            <tr><th>Kind</th><td>{s.kind.split(' · ')[0]}</td></tr>
-            <tr><th>Venue</th><td>{s.venue}</td></tr>
-            {s.published && <tr><th>Published</th><td>{s.published}</td></tr>}
-            <tr><th>Story</th><td>{idx + 1} of {N_STORIES}</td></tr>
-          </tbody></table>
-          <p className="stg-cap"><em>{m.title}</em>{m.artist ? `, ${m.artist}` : ''}{m.year ? `, ${m.year}` : ''}</p>
-          <p className="stg-hint">{s.href ? 'Click the painting or press Enter to read' : 'Not yet published'}</p>
-        </div>
-        <div className="stg-track">
-          {STORIES.map((st, i) => {
-            const d = wrapOff(i, idx)
-            if (Math.abs(d) > 3) return null
-            const src = STORY_PAINTING[st.title]
-            return (
-              <button type="button" key={st.title} className={`stg-item${d === 0 ? ' is-active' : ''}`} style={{ '--d': d, '--ad': Math.abs(d) }}
-                tabIndex={-1} aria-hidden={d !== 0} onClick={() => onItem(i)} aria-label={d === 0 ? `Open ${st.title}` : `Show ${st.title}`}>
-                {src && <img src={variantFor(src, d === 0 ? 520 : 300)} alt="" draggable="false" style={{ background: placeholderOf(src) }} />}
-                {d === 0 && (
-                  <svg className="stg-ring" viewBox="0 0 101 101" preserveAspectRatio="none" aria-hidden="true" key={idx}>
-                    <path d={RING} pathLength="1" />
-                  </svg>
-                )}
-              </button>
-            )
-          })}
-        </div>
-      </div>
+      <Stage items={STORIES} idx={idx} onIdx={setIdx} onOpen={openPhone} flippable className="stg-stories stg-cb"
+        label="Stories. Left and right arrows browse, Space flips the chapbook, Enter opens."
+        renderInfo={(x, i) => {
+          const m = META[STORY_PAINTING[x.title]] || {}
+          return (<>
+            <h3 className="stg-title">{x.title}</h3>
+            <table className="stg-table"><tbody>
+              <tr><th>Kind</th><td>{x.kind.split(' · ')[0]}</td></tr>
+              <tr><th>Venue</th><td>{x.venue}</td></tr>
+              {x.published && <tr><th>Published</th><td>{x.published}</td></tr>}
+              <tr><th>Story</th><td>{i + 1} of {N_STORIES}</td></tr>
+            </tbody></table>
+            <p className="stg-cap">{credit(m)}</p>
+            <p className="stg-hint">{x.href ? 'Click the chapbook or press Enter to read' : 'Not yet published'}</p>
+          </>)
+        }}
+        renderItem={(x, i, { on, flip }) => {
+          const src = STORY_PAINTING[x.title]
+          const m = META[src] || {}
+          return <Chapbook flip={flip} no={i + 1} title={x.title} by="Shanmu Raja" kind={`A ${x.kind.split(' · ')[0]}`} plate={paintImg(src, on ? 420 : 240)}
+            back={<>
+              <p className="cb-first">{x.first || x.excerpt}</p>
+              <div className="cb-venue">{x.venue}{x.published ? ` · ${x.published}` : ''}</div>
+              {x.href ? <a className="cb-link" href={x.href} target="_blank" rel="noreferrer" tabIndex={flip ? 0 : -1}>Read at {x.venue} ↗</a> : <span className="cb-link">Not yet published</span>}
+              {m.title && <div className="cb-colo">Cover: {credit(m)}</div>}
+            </>} />
+        }} />
 
       <div className="ix" role="list">
         {STORIES.map((st, i) => {
@@ -525,7 +573,7 @@ function StoriesStage() {
           return (
             <div className={`ix-item${exp === i ? ' ix-open' : ''}`} role="listitem" key={st.title}>
               <Tag className={`ix-row${idx === i ? ' ix-on' : ''}`} {...(st.href ? { href: st.href, target: '_blank', rel: 'noreferrer' } : { tabIndex: 0, role: 'button' })}
-                aria-expanded={exp === i} onMouseEnter={() => go(i)} onFocus={() => go(i)}
+                aria-expanded={exp === i} onMouseEnter={() => setIdx(i)} onFocus={() => setIdx(i)}
                 onClick={(e) => { e.preventDefault(); openPhone(i) }}
                 onKeyDown={(e) => { if (!st.href && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openPhone(i) } }}>
                 <span className="ix-num">{String(i + 1).padStart(2, '0')}</span>
@@ -584,6 +632,82 @@ function StoriesStage() {
         </aside>
       </div>
     </>
+  )
+}
+
+
+/* Papers as chapbooks: the research list plus the two white papers from Deep dives (same text, same links) */
+const WHITE_PAPERS = [
+  { title: 'Healthcare’s AI Trap', sub: 'When automation skims the cream and starves the pipeline at once.', authors: 'Shanmugesh Raja, MS', href: '/papers/ai-trap', pdf: '/papers/healthcares-ai-trap.pdf', kindLabel: 'White paper', venue: 'Economics' },
+  { title: 'Mapping Medi-Cal Deserts in California', sub: 'Provider shortages, preventable hospitalizations, and the limits of workforce policy in Medi-Cal: an empirical study of California’s 58 counties, with five causal identification strategies and a portfolio policy response.', authors: 'Shanmugesh Raja', href: '/papers/medi-cal-deserts', pdf: '/papers/medi-cal-deserts.pdf', kindLabel: 'White paper · Master’s Thesis', venue: 'UCSF · Health Policy & Law · April 2026' },
+]
+const BADGE_LABEL = { 'Pub.': 'Peer-reviewed', PDF: 'Preprint', WIP: 'Work in progress' }
+const SHELF = [...PAPERS.map((p) => ({ ...p, kindLabel: BADGE_LABEL[p.badge] || p.badge, venue: p.doiVia && p.badge === 'PDF' ? p.doiVia : p.sub })), ...WHITE_PAPERS]
+const linkOf = (p) => p.href || (p.doi ? 'https://doi.org/' + p.doi : null)
+
+function PapersShelf() {
+  const [idx, setIdx] = useState(0)
+  const open = (i) => { const u = linkOf(SHELF[i]); if (u) window.open(u, '_blank', 'noopener') }
+  return (
+    <>
+      <Stage items={SHELF} idx={idx} onIdx={setIdx} onOpen={open} flippable className="stg-cb stg-papers"
+        label="Papers. Left and right arrows browse, Space flips, Enter opens the paper."
+        renderInfo={(p, i) => (<>
+          <h3 className="stg-title stg-title-sm">{p.title}</h3>
+          <table className="stg-table"><tbody>
+            <tr><th>Kind</th><td>{p.kindLabel}</td></tr>
+            {p.doiVia && <tr><th>Via</th><td>{p.doiVia}</td></tr>}
+            <tr><th>Paper</th><td>{i + 1} of {SHELF.length}</td></tr>
+          </tbody></table>
+          <p className="stg-hint">{linkOf(p) ? 'Click the chapbook or press Enter to open' : 'Not yet available'}</p>
+        </>)}
+        renderItem={(p, i, { flip }) => (
+          <Chapbook flip={flip} no={i + 1} title={p.title} by={p.authors} kind={p.kindLabel}
+            plate={<div className="cb-type-plate"><span>{p.venue}</span></div>}
+            back={<>
+              <p className="cb-first">{p.sub}</p>
+              <div className="cb-venue">{p.kindLabel}</div>
+              {p.doi && <a className="cb-link" href={'https://doi.org/' + p.doi} target="_blank" rel="noreferrer" tabIndex={flip ? 0 : -1}>doi.org/{p.doi}</a>}
+              {(p.pdf || (p.href && p.href.endsWith('.pdf'))) && <a className="cb-link" href={p.pdf || p.href} target="_blank" rel="noreferrer" tabIndex={flip ? 0 : -1}>Read PDF ↗</a>}
+              {p.pdf && <a className="cb-link" href={p.href} tabIndex={flip ? 0 : -1}>Read the white paper ↗</a>}
+              {!linkOf(p) && <span className="cb-link">In preparation</span>}
+            </>} />
+        )} />
+      <div className="index-list papers-ix">
+        {SHELF.map((p, i) => (
+          <div className={'row' + (p.href ? ' row-linked' : '') + (idx === i ? ' ix-on' : '')} key={p.title} onMouseEnter={() => setIdx(i)} onFocus={() => setIdx(i)}>
+            <span className="num">{String(i + 1).padStart(2, '0')}</span>
+            <div>
+              <div className="title">{p.href ? <a className="title-link" href={p.href} target="_blank" rel="noreferrer">{p.title}</a> : p.title}</div>
+              <div className="excerpt"><em>{p.sub}</em></div>
+              <div className="rkick" style={{ marginTop: '0.5rem', marginBottom: 0 }}>{p.authors}{p.pdf ? ` · ${p.venue}` : ''}</div>
+              {p.href && p.href.endsWith('.pdf') && <span className="go">Read PDF <span className="arrow">→</span></span>}
+              {p.pdf && <a className="go" href={p.pdf} target="_blank" rel="noreferrer">Read PDF <span className="arrow">→</span></a>}
+              {p.doi && <a className="doi" href={'https://doi.org/' + p.doi} target="_blank" rel="noreferrer">doi.org/{p.doi} · {p.doiVia}</a>}
+            </div>
+            {!p.href && <span className="meta">{p.badge}</span>}
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
+/* the painting-only stage, kept as its own section */
+const STAGE_PAINTINGS = Object.values(STORY_PAINTING)
+function PaintingsStage() {
+  const [idx, setIdx] = useState(0)
+  return (
+    <Stage items={STAGE_PAINTINGS} idx={idx} onIdx={setIdx} className="stg-paint" label="Paintings. Left and right arrows browse."
+      renderInfo={(src, i) => { const m = META[src] || {}; return (<>
+        <h3 className="stg-title stg-title-sm">{m.title}</h3>
+        <table className="stg-table"><tbody>
+          {m.artist && <tr><th>Artist</th><td>{m.artist}</td></tr>}
+          {m.year && <tr><th>Year</th><td>{m.year}</td></tr>}
+          <tr><th>Plate</th><td>{i + 1} of {STAGE_PAINTINGS.length}</td></tr>
+        </tbody></table>
+      </>) }}
+      renderItem={(src, i, { on }) => paintImg(src, on ? 720 : 300)} />
   )
 }
 
@@ -1065,32 +1189,8 @@ export default function App() {
 
         {/* PAPERS */}
         <section className="section" id="papers">
-          <div className="section-head rv"><h2 className="section-title">Papers</h2><p className="section-lead">Peer-reviewed and working papers.</p></div>
-          <div className="index-list">
-            {PAPERS.map((p, i) => {
-              return (
-                <div className={'row rv' + (p.href ? ' row-linked' : '')} key={p.title}>
-                  <span className="num">{String(i + 1).padStart(2, '0')}</span>
-                  <div>
-                    <div className="title">
-                      {p.href
-                        ? <a className="title-link" href={p.href} target="_blank" rel="noreferrer">{p.title}</a>
-                        : p.title}
-                    </div>
-                    <div className="excerpt"><em>{p.sub}</em></div>
-                    <div className="rkick" style={{ marginTop: '0.5rem', marginBottom: 0 }}>{p.authors}</div>
-                    {p.href && <span className="go">Read PDF <span className="arrow">→</span></span>}
-                    {p.doi && (
-                      <a className="doi" href={'https://doi.org/' + p.doi} target="_blank" rel="noreferrer">
-                        doi.org/{p.doi} · {p.doiVia}
-                      </a>
-                    )}
-                  </div>
-                  {!p.href && <span className="meta">{p.badge}</span>}
-                </div>
-              )
-            })}
-          </div>
+          <div className="section-head rv"><h2 className="section-title">Papers</h2><p className="section-lead">Peer-reviewed, working and white papers.</p></div>
+          <PapersShelf />
         </section>
 
         <div className="prairie" />
@@ -1146,6 +1246,14 @@ export default function App() {
             <p className="fig-caption">The post-2017 narrowing is concentrated in the Prop 56 payment-increase window: 81.8% of the eventual gap closure occurs after 2016.</p>
             <div className="signature">Shanmugesh Raja · UCSF Health Policy & Law · MMXXVI</div>
           </article>
+        </section>
+
+        <div className="prairie" />
+
+        {/* PAINTINGS */}
+        <section className="section" id="paintings">
+          <div className="section-head rv"><h2 className="section-title">Paintings</h2><p className="section-lead">The plates on the chapbook covers.</p></div>
+          <PaintingsStage />
         </section>
 
         <div className="prairie" />
