@@ -25,7 +25,9 @@ a { color: inherit; text-decoration: none; }
 
 .scr { position: absolute; overflow: visible; pointer-events: none; }
 .scr path { fill: none; stroke: #111; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .38s var(--glide); }
-.scr.is-on path { stroke-dashoffset: 0; transition-duration: .5s; }
+.scr.is-on path { stroke-dashoffset: 0; transition: none; animation: scrDraw .62s var(--glide) both; }
+@keyframes scrDraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .scr.is-on path { animation: none; } }
 
 .h-top { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); display: flex; align-items: baseline; gap: 26px; z-index: 3; white-space: nowrap; }
 .h-mark { font: 700 19px/1 var(--disp); letter-spacing: .02em; text-transform: uppercase; }
@@ -78,11 +80,6 @@ a { color: inherit; text-decoration: none; }
 .h-quote, .h-cats a, .pg-quote, .pg-cta-a, .pg-nav a, .ab-lead { }
 
 .h-load { position: absolute; left: 26px; bottom: 6px; z-index: 4; font: 700 clamp(120px, 21vw, 300px)/.9 var(--disp); letter-spacing: -.04em; pointer-events: none; }
-.odo { display: inline-flex; align-items: flex-end; }
-.odo-c { display: inline-block; height: .9em; overflow: hidden; }
-.odo-r { display: flex; flex-direction: column; transition: transform .55s var(--glide); }
-.odo-r span { height: .9em; line-height: .9em; }
-.odo-p { font-size: .3em; line-height: 1; margin: 0 0 .3em .1em; }
 
 .h-hint { position: absolute; right: 26px; top: 24px; margin: 0; font-size: 13px; color: var(--mute); z-index: 3; opacity: 0; pointer-events: none; }
 .h-hint.is-on { animation: hint 6s 1.2s var(--glide) both; }
@@ -369,3 +366,29 @@ a.pg-cta-a:hover b { transform: translate(3px, -3px); }
 @media (max-width: 760px) { .h-info { top: 84px; } }
 .wp-toc a, .wp-toc li { font-family: var(--book); font-size: 14.5px; line-height: 1.45; }
 .sn-nav sup { margin-left: 4px; }
+
+/* iteration 9: name-first opening. The centred wordmark rises out of a mask,
+   holds, then FLIPs onto the real .h-mark while the bar fades in. */
+.h-iname { position: fixed; left: 50%; top: 50%; z-index: 6; transform: translate(-50%, -50%); transform-origin: 0 0;
+  font: 700 min(8.4vw, 124px)/1 var(--disp); letter-spacing: .06em; word-spacing: .12em; text-transform: uppercase;
+  color: var(--ink); white-space: nowrap; pointer-events: none; will-change: transform; }
+.h-iname-m { display: block; overflow: hidden; padding: .04em 0; margin: -.04em 0; }
+.h-iname-m > span { display: block; transform: translateY(110%); }
+.h-iname.is-f .h-iname-m > span { animation: hRise .9s cubic-bezier(.32,.72,0,1) .15s both; }
+@keyframes hRise { from { transform: translateY(110%); } to { transform: none; } }
+.h-top.sn .sn-nav, .h-top.sn .sn-mail { transform: translateY(-8px); opacity: 0; transition: transform .9s cubic-bezier(.32,.72,0,1) .25s, opacity .7s cubic-bezier(.32,.72,0,1) .25s; }
+.h-top.sn.is-on .sn-nav, .h-top.sn.is-on .sn-mail { transform: none; opacity: 1; }
+.h-top.sn { opacity: 1; } .h-top.sn:not(.is-on) { pointer-events: none; }
+.h-top.sn:not(.is-on) .h-mark { opacity: 0; }
+.h-naming .h-top.sn .h-mark { opacity: 1; }
+.h-naming .sn .h-mark { visibility: hidden; }   /* the flying name stands in for it until it lands */
+@media (prefers-reduced-motion: reduce) { .h-iname { display: none; } .h-top.sn .sn-nav, .h-top.sn .sn-mail { transition: none; } }
+/* 390: the five links share the row evenly instead of running off the edge */
+@media (max-width: 520px) {
+  .sn-nav { justify-content: space-between; gap: 0; }
+  .sn-nav a { font-size: 13.5px; }
+  .sn-nav sup { margin-left: 2px; font-size: 9px; }
+}
+@media (max-width: 370px) { .sn-nav a { font-size: 12px; } }
+/* Luck stacks vertically through the centre, so its line sits in the left column instead of on the cards */
+.h-m-luck .h-quote { left: 26px; bottom: 28px; width: min(330px, 30vw); margin: 0; text-align: left; font-size: 18px; }

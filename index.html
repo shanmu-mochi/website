@@ -60,6 +60,11 @@
   }
 }
     </script>
+    <link rel="preload" href="/fonts/lora-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
+    <!-- name-first opening: hide the prerendered snapshot on a cold home load so the first thing
+         painted is the name on the gallery's paper colour, not a nav-only frame or a white one -->
+    <style>.paper, .paper body { background: #ebebe8; } .pre #root { visibility: hidden; }</style>
+    <script>if (!/^#\/./.test(location.hash) && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('pre', 'paper')</script>
   </head>
   <body>
     <div id="root"></div>

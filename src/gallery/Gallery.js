@@ -20,6 +20,11 @@ export const GLIDE = CustomEase.create('discGlide', '0.32, 0.72, 0, 1')
 /* The diagonal. A24 uses -30° on both axes; Shanmu found that a tad steep (iteration 7). */
 export const TILT = -19
 
+const pressure = (v) => {
+  // soft swipe stays soft, a hard one gains more than proportionally (main site, App.jsx)
+  const m = Math.abs(v)
+  return m < 1 ? 0 : Math.max(-CFG.mMax, Math.min(CFG.mMax, Math.sign(v) * CFG.mRef * Math.pow(m / CFG.mRef, CFG.mGamma) * CFG.mPower))
+}
 export const CFG = {
   galleryScale: 1.08, camDist: 4.4, fov: 40,
   hoverTilt: 0.21, dragSens: 0.95, dragSmooth: 0.32, dragMaxV: 0.5, dragStart: 5,
@@ -31,7 +36,10 @@ export const CFG = {
   preloadBoost: 0.8, preloadGrowBy: 0.5, preloadSpin: 1.1, preloadRise: 3, preloadDepth: 0.7, fanDuration: 1.15,
   touchGap: 2.2, touchDepth: 0.5, touchDrop: 1, touchActive: 1.5, touchInactive: 0.6, touchFlick: 0.035, touchSpan: 1.8,
   resetDuration: 1.2, renderRadius: 6,
-  wheelFloor: 0.3, wheelStep: 6, wheelGap: 170, wheelPause: 150,
+  wheelFloor: 0.3,
+  // momentum ported from the deployed site (main: src/App.jsx gallery drift): px/s hand speed ->
+  // pressure curve -> exponential coast (glideTau). wheelPx = screen px that count as one piece.
+  mPower: 0.8, mMax: 3800, mRef: 1200, mGamma: 1.5, mSample: 110, mFresh: 140, wheelPx: 420,
 }
 
 /* per-section staging: group tilt, object proportions, arrangement */
@@ -88,7 +96,7 @@ export default class Gallery {
     this.tw = { value: 0 }; this.tweening = false; this.target = -1
     this.hover = -1; this.U = 0; this.Ue = 0
     this.drag = null; this.flight = false; this.cur = -1
-    this.wheel = { acc: 0, last: 0, step: 0 }
+    this.wheel = { v: 0, t: 0 }
     this.tls = new Set()
 
     const r = this.renderer = renderer()
@@ -171,6 +179,18 @@ export default class Gallery {
   }
   step(k, source) { this.to(this.settled() + k, source) }
 
+  /* upload textures + compile shaders ahead of the intro so the first frames don't stall */
+  warm() {
+    const r = this.renderer
+    for (const p of this.plates) {
+      if (Math.abs(p.i - this.L) > 4) continue
+      p.group.traverse((o) => { const ms = o.material ? [].concat(o.material) : []; ms.forEach((m) => { if (m.map) r.initTexture(m.map) }) })
+    }
+    const vis = this.plates.map((p) => p.group.visible)
+    this.plates.forEach((p) => { p.group.visible = true })
+    r.compile(this.scene, this.cam)
+    this.plates.forEach((p, k) => { p.group.visible = vis[k] })
+  }
   /* ---------------- choreography ---------------- */
   intro(progress) {
     if (this.reduced) { this.G.active = 1; this.G.others = 1; return Promise.resolve() }
@@ -311,13 +331,17 @@ export default class Gallery {
     if (e.deltaMode === 1) d *= 16
     if (Math.abs(d) < CFG.wheelFloor) return
     const w = this.wheel, now = performance.now()
-    if (now - w.last > CFG.wheelPause || Math.sign(d) !== Math.sign(w.acc)) w.acc = 0
-    w.last = now
-    w.acc += clamp(d, -24, 24)
-    if (Math.abs(w.acc) >= CFG.wheelStep && now - w.step >= CFG.wheelGap) {
-      w.step = now; const k = Math.sign(w.acc); w.acc = 0
-      this.step(k, 'wheel')
-    }
+    const fresh = now - w.t > CFG.mFresh                 // a pause means a new gesture, don't inherit the old speed
+    // a mouse wheel notch (big, whole, isolated delta) moves exactly one piece; trackpads coast
+    if (fresh && (e.deltaMode === 1 || (Math.abs(d) >= 50 && Number.isInteger(d)))) { w.t = now; w.v = 0; this.step(Math.sign(d), 'wheel'); return }
+    const dt = fresh ? 0.016 : Math.max(0.008, Math.min(0.05, (now - w.t) / 1000))
+    w.t = now
+    const inst = d / dt                                   // the px/s this event represents
+    w.v = fresh ? inst : w.v * 0.7 + inst * 0.3           // smooth the event stream into a hand speed
+    const v = clamp(pressure(w.v) / CFG.wheelPx / 60, -CFG.glideMaxV, CFG.glideMaxV)   // pieces per 60 Hz frame
+    if (this.tweening) { gsap.killTweensOf(this.tw); this.tweening = false; this.target = -1 }
+    this.Te = 0
+    if (Math.abs(v) > Math.abs(this.Se) || Math.sign(v) !== Math.sign(this.Se)) this.Se = v
   }
   onDown(e) {
     if (e.button !== 0 || this.busy()) return
@@ -341,6 +365,9 @@ export default class Gallery {
     }
     const now = performance.now(), dx = e.clientX - d.x, dy = e.clientY - d.y, dt = Math.max(8, now - d.t)
     d.x = e.clientX; d.y = e.clientY; d.t = now
+    d.px = (d.px || 0) + (this.mode === 'luck' && !this.touch && Math.abs(dy) > Math.abs(dx) ? dy : dx)
+    ;(d.sm || (d.sm = [])).push({ t: now, p: d.px })
+    while (d.sm.length > 2 && now - d.sm[0].t > CFG.mSample) d.sm.shift()
     if (d.spin >= 0) {
       const p = this.plates[d.spin], k = CFG.dragSens * 0.0045
       gsap.killTweensOf(p)
@@ -379,7 +406,13 @@ export default class Gallery {
       else this.to(Math.round(this.L))
       return
     }
-    this.Se = clamp(this.Se, -CFG.glideMaxV, CFG.glideMaxV)
+    // release speed over the tail of the drag (main site's SAMPLE_MS), launched on the pressure curve
+    const t = performance.now(), sm = d.sm || []
+    while (sm.length > 2 && t - sm[0].t > CFG.mSample) sm.shift()
+    const a = sm[0], b = sm[sm.length - 1], span = a && b ? (b.t - a.t) / 1000 : 0
+    const hv = b && t - b.t <= CFG.mSample && span > 0.008 ? (b.p - a.p) / span : 0
+    const per = (this.mode === 'luck' ? d.h : d.w) / (6 * CFG.dragSens)     // px per piece while dragging
+    this.Se = clamp(-pressure(hv) / per / 60, -CFG.glideMaxV, CFG.glideMaxV)
     if (e && e.pointerType === 'touch') this.Se *= 0.6
   }
 
@@ -483,6 +516,7 @@ export default class Gallery {
         p.spinY = (-Math.PI / 2) * t; p.spin.rotation.z = CFG.preloadSpin * t * t
         const gk = clamp(this.q.rise / CFG.preloadGrowBy, 0, 1)
         if (G.active < 0.99) s = S * Math.max(G.active, CFG.preloadBoost * (1 - (1 - gk) ** 2))
+        p.group.visible = !p.hidden && s > 0.002 // visibility must follow the boosted scale, or the rise is never seen
       } else p.spin.rotation.z = 0
       const k = clamp(base - h * CFG.followFalloff, CFG.followMin, CFG.followTight)
       const A = instant || red || this.flight || p.fresh ? 1 : Math.min(1, dt * k)

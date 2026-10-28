@@ -20,7 +20,8 @@ const isTouch = () => window.matchMedia('(max-width: 720px), (pointer: coarse)')
 const catOf = (id) => CATS.find((c) => c.id === id) || CATS[0]
 const lastIdx = { prose: 0, publications: 0, luck: 0 }
 const lastCat = { current: 'prose' }
-const session = { introDone: false }
+// a hash deep-link (#/prose/…, #/about…) skips the name-first opening
+const session = { introDone: typeof location !== "undefined" && /^#\/./.test(location.hash) }
 const WIDE = '"Lora", Georgia, serif'
 const LABEL = '"Archivo", "Helvetica Neue", Arial, sans-serif'
 const BOOK = '"Lora", Georgia, serif'
@@ -199,7 +200,7 @@ function scribblePath(w, h, seed) {
   let s = seed * 9301 + 49297
   const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280 }
   const cx = w / 2, cy = h / 2, rx = w / 2, ry = h / 2, n = 24
-  const turns = 1.12, a0 = -Math.PI * 0.62 + rnd() * 0.3
+  const turns = 1.14, a0 = -Math.PI * 0.62 + rnd() * 0.3
   const pts = []
   for (let k = 0; k <= n; k += 1) {
     const t = k / n, a = a0 + t * Math.PI * 2 * turns, j = 1 + (rnd() - 0.5) * 0.05 + (t > 1 / turns ? 0.035 : 0)
@@ -212,8 +213,12 @@ function scribblePath(w, h, seed) {
   }
   return d
 }
-function Scribble({ w, h, on, pad = 0.14 }) {
+function Scribble({ w, h, on, pad = 0.14, redraw }) {
   const [seed, setSeed] = useState(1)
+  // every time the ring turns on, or the route/section under it changes, the pen draws the whole
+  // closed loop again from nothing (fresh key = the CSS draw animation restarts from dashoffset 1)
+  const [pass, setPass] = useState(0)
+  useEffect(() => { if (on) setPass((x) => x + 1) }, [on, redraw])
   useEffect(() => {
     if (!on || reduced()) return
     const t = setInterval(() => setSeed((x) => x + 1), 100)
@@ -223,30 +228,15 @@ function Scribble({ w, h, on, pad = 0.14 }) {
   const W = w * (1 + pad * 2), H = h * (1 + pad * 2)
   return (
     <svg className={`scr${on ? ' is-on' : ''}`} width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ left: -w * pad, top: -h * pad }} aria-hidden="true">
-      <path d={scribblePath(W, H, seed)} pathLength="1" />
+      <path key={pass} d={scribblePath(W, H, seed)} pathLength="1" />
     </svg>
   )
 }
-function Odometer({ value }) {
-  const s = String(Math.round(value)).padStart(2, '0')
-  return (
-    <span className="odo" aria-label={`${Math.round(value)}%`}>
-      {s.split('').map((d, k) => (
-        <span className="odo-c" key={s.length - k}>
-          <span className="odo-r" style={{ transform: `translateY(${-Number(d) * 10}%)` }}>
-            {'0123456789'.split('').map((x) => <span key={x}>{x}</span>)}
-          </span>
-        </span>
-      ))}
-      <span className="odo-p">%</span>
-    </span>
-  )
-}
-function CatRing({ on }) {
+function CatRing({ on, redraw }) {
   const ref = useRef(null)
   const [s, setS] = useState(null)
   useLayoutEffect(() => { const p = ref.current && ref.current.parentElement; if (p) setS({ w: p.offsetWidth, h: p.offsetHeight }) }, [])
-  return <span ref={ref} className="h-cat-ring">{s && <Scribble w={s.w} h={s.h} on={on} pad={0.16} />}</span>
+  return <span ref={ref} className="h-cat-ring">{s && <Scribble w={s.w} h={s.h} on={on} redraw={redraw} pad={0.16} />}</span>
 }
 /* One top bar everywhere: name left, the three wheel sections + the two pages right, contact quiet at the end */
 function SiteNav({ go, active, className = '', onHover }) {
@@ -256,7 +246,7 @@ function SiteNav({ go, active, className = '', onHover }) {
     <a key={id} href={`#/${id}`} className={id === active ? 'is-on' : ''} aria-current={id === active ? 'page' : undefined}
       onMouseEnter={() => h(id)} onMouseLeave={() => h(null)} onFocus={() => h(id)} onBlur={() => h(null)}
       onClick={(e) => { e.preventDefault(); if (e.detail) e.currentTarget.blur(); go(r) }}>
-      <span className="h-cat-l">{label}<CatRing on={hov === id || (hov === null && id === active)} /></span>{n != null && <sup>{n}</sup>}
+      <span className="h-cat-l">{label}<CatRing on={hov === id || (hov === null && id === active)} redraw={active} /></span>{n != null && <sup>{n}</sup>}
     </a>
   )
   return (
@@ -305,10 +295,13 @@ function Home({ cat, go }) {
   const [shown, setShown] = useState(cat)            // the section whose objects are on screen
   const [hov, setHov] = useState(-1)
   const [phase, setPhase] = useState(session.introDone || reduced() ? (returning ? 'return' : 'enter') : 'loading')
-  const [pct, setPct] = useState(0)
   const [box, setBox] = useState(null)
   const [leaving, setLeaving] = useState(false)
   const [bgOn, setBgOn] = useState(false)
+  // name-first opening: the wordmark sits alone, centred, then flies to its place in the bar
+  const [nameOn, setNameOn] = useState(() => !session.introDone && !reduced() && !returning)
+  const [fontOk, setFontOk] = useState(false)
+  const nameRef = useRef(null)
   const hovRef = useRef(-1)
   const goRef = useRef(go); goRef.current = go
   const token = useRef(0)
@@ -344,14 +337,21 @@ function Home({ cat, go }) {
       void d
     } else if (!session.introDone && !reduced()) {
       const near = g.plates.filter((p) => Math.abs(p.i - g.L) <= 3)
-      let n = 0
-      near.forEach((p) => p.ready.then(() => { n += 1; if (live) setPct((x) => Math.max(x, (n / near.length) * 100)) }))
       const ready = Promise.race([Promise.all(near.map((p) => p.ready)), wait(4000)])
       g.G.active = 0.001; g.G.others = 0
-      NAV.hold = ready.then(() => {
+      const fonts = Promise.race([document.fonts ? document.fonts.load('700 100px "Lora"') : null, wait(700)]).catch(() => {})
+      const t0 = performance.now()
+      fonts.then(() => live && setFontOk(true))
+      NAV.hold = Promise.all([ready, fonts]).then(() => {
         if (!live) return
-        setPct(100); session.introDone = true
-        return wait(420).then(() => { if (!live) return; setPhase('intro'); return g.intro() }).then(() => live && setPhase('ready'))
+        session.introDone = true
+        try { g.warm() } catch { /* best effort */ }
+        // hold: rise (0.15 + 0.9s) plus a beat, at least ~1.7s from first paint
+        return wait(Math.max(300, 1750 - (performance.now() - t0)))
+          .then(() => { if (!live) return; setPhase('fly'); return frames(1) })
+          .then(() => { if (!live) return; flipName(); return wait(380) })
+          .then(() => { if (!live) return; setPhase('intro'); wait(760).then(() => live && setNameOn(false)); return g.intro() })
+          .then(() => live && setPhase('ready'))
       })
     } else {
       g.G.active = reduced() ? 1 : 0.001; g.G.others = reduced() ? 1 : 0; g.G.inbound = true
@@ -376,6 +376,18 @@ function Home({ cat, go }) {
       return g.fan().then(() => { if (t === token.current) setPhase('ready') })
     })
   }, [cat])
+
+  // FLIP: measure the centred name and the real wordmark, then glide one onto the other
+  const flipName = () => {
+    const n = nameRef.current, m = mainRef.current && mainRef.current.querySelector('.sn .h-mark')
+    if (!n || !m) return
+    // measure the glyphs, not the boxes: the wordmark's link can be stretched by its grid cell
+    const ink = (el) => { const rg = document.createRange(); rg.selectNodeContents(el); return rg.getBoundingClientRect() }
+    const o = n.getBoundingClientRect(), oi = ink(n.querySelector('.h-iname-m > span')), r = ink(m)
+    const s = r.width / oi.width
+    n.style.transition = 'transform 1.1s cubic-bezier(.32,.72,0,1)'
+    n.style.transform = `translate(${(-o.width / 2 + (r.left - (oi.left - o.left) * s) - o.left).toFixed(2)}px, ${(-o.height / 2 + (r.top - (oi.top - o.top) * s) - o.top).toFixed(2)}px) scale(${s.toFixed(4)})`
+  }
 
   useEffect(() => {
     HOME.api = {
@@ -419,11 +431,12 @@ function Home({ cat, go }) {
   const meta = it.meta.filter(([, v]) => v).slice(0, 4)
   const show = phase === 'ready' && !leaving
   const chrome = phase !== 'loading' && !leaving
+  const foot = chrome && phase !== 'fly' && phase !== 'intro'
   return (
-    <main ref={mainRef} className={`h h-${phase} h-m-${shown}${leaving ? ' is-leaving' : ''}`} style={{ background: bgOn && !leaving ? bgFor(it) : '#fff' }}
+    <main ref={mainRef} className={`h h-${phase} h-m-${shown}${leaving ? ' is-leaving' : ''}${nameOn ? ' h-naming' : ''}`} style={{ background: (bgOn || nameOn) && !leaving ? bgFor(it) : '#fff' }}
       aria-label={`${catOf(shown).label}. ${list.length} pieces. Arrow keys to move, Enter to open, Space to turn it over.`}>
       <div className="h-gl" ref={host} />
-      <div className="h-ring" ref={ring} aria-hidden="true"><Scribble w={box && box.w} h={box && box.h} on={hov >= 0 && hov === cur && show} pad={0.09} /></div>
+      <div className="h-ring" ref={ring} aria-hidden="true"><Scribble w={box && box.w} h={box && box.h} on={hov >= 0 && hov === cur && show} redraw={cur} pad={0.09} /></div>
 
       <SiteNav go={go} active={cat} className={`h-top${chrome ? ' is-on' : ''}`} />
 
@@ -437,15 +450,19 @@ function Home({ cat, go }) {
       {it.line && <blockquote className={`h-quote${show ? ' is-on' : ''}`} key={`q-${shown}-${cur}`}>{it.line}</blockquote>}
 
 
-      <div className={`h-foot${chrome ? ' is-on' : ''}`}>
+      <div className={`h-foot${foot ? ' is-on' : ''}`}>
         <button type="button" className="h-count" aria-label="Next piece" onClick={() => { const g = gal.current; if (g && !g.busy()) g.to((g.settled() + 1) % g.N, 'click') }}>
           {pad2(cur + 1)} <i>/</i> {pad2(list.length)}
         </button>
         <Socials />
       </div>
 
-      {phase === 'loading' && <div className="h-load" aria-hidden="true"><Odometer value={pct} /></div>}
-      <p className={`h-hint${chrome ? ' is-on' : ''}`} aria-hidden="true">{isTouch() ? 'Swipe' : shown === 'luck' ? 'Scroll or drag up and down' : 'Scroll, drag, or use the arrow keys'}</p>
+      {nameOn && (
+        <div ref={nameRef} className={`h-iname${fontOk ? ' is-f' : ''}`} aria-hidden="true">
+          <span className="h-iname-m"><span>Shanmu Raja</span></span>
+        </div>
+      )}
+      <p className={`h-hint${foot ? ' is-on' : ''}`} aria-hidden="true">{isTouch() ? 'Swipe' : shown === 'luck' ? 'Scroll or drag up and down' : 'Scroll, drag, or use the arrow keys'}</p>
     </main>
   )
 }
@@ -608,6 +625,7 @@ function Paintings({ go }) {
 
 const same = (a, b) => hashOf(a) === hashOf(b)
 export default function Browser() {
+  useEffect(() => { document.documentElement.classList.remove('pre') }, [])
   const [route, setRoute] = useState(() => parse(window.location.hash))
   const routeRef = useRef(route); routeRef.current = route
   if (route.cat) lastCat.current = route.cat
