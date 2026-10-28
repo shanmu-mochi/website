@@ -126,3 +126,12 @@ seamlessly into its spot on the page; fix details, smoothness and nav.
 ## Iteration 13
 
 - Renamed the "Paintings" nav item and the page heading to "ART THAT I LOVE" (uppercase, set slightly smaller and tracked so it fits the header). The route stays `#/paintings`. The "Painting" credit label on piece pages is unchanged. On mobile the header gaps and padding are tightened so it fits at 390. Screenshots are in `/workspace/redesign-shots-v13/`.
+
+## Iteration 14 — navigation model, dedupe, Flip button [pt47u]
+- Removed pen hover ring on gallery cards (nav active ring kept). Removed '+' crop marks (.pg-x).
+- Piece pages: byline hidden when every part repeats a meta value; pg-line hidden when equal to the quote. Paper kicker shows kind only when a venue row exists.
+- Navigation: sideways (deltaX, shift+wheel, ←/→, horizontal drag, swipe) browses pieces; vertical (wheel, ↑/↓/PgUp/PgDn, vertical drag/swipe) changes section in nav order home → prose → publications → luck → ART THAT I LOVE (last; a normal scrolling page). Each gesture locks to its dominant axis; one section change per gesture, 1100 ms cooldown, momentum-tail heuristic (220 ms gesture gap, decaying tail within 2.6 s stays spent).
+- Persistent clickable "Scroll down: X ↓" caption ("Swipe up" on touch); first-visit hint "Swipe sideways to browse, scroll down for the next section"; small side arrows (hidden on mobile).
+- Luck pose is now a sideways drum so all sections browse horizontally.
+- Flip button (icon + "Flip", Lora, hairline box, aria-label) bottom right in every section, before the counter; Space still flips; visible on mobile; rect-checked for no overlap with hint/counter/caption.
+- Verified with simulated wheel/drag/key/touch events (a24-study/s14.cjs); screenshots + contact sheets in /workspace/redesign-shots-v14/.

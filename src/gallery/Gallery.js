@@ -37,6 +37,9 @@ export const CFG = {
   touchGap: 2.2, touchDepth: 0.5, touchDrop: 1, touchActive: 1.5, touchInactive: 0.6, touchFlick: 0.035, touchSpan: 1.8,
   resetDuration: 1.2, renderRadius: 6,
   wheelFloor: 0.3,
+  // iteration 14: vertical intent. A gesture ends after gestureGap ms without events; sectionPx of
+  // vertical travel inside one gesture (or one mouse-wheel notch) asks for the next section.
+  gestureGap: 220, sectionPx: 70, sectionDrag: 90,
   // momentum ported from the deployed site (main: src/App.jsx gallery drift): px/s hand speed ->
   // pressure curve -> exponential coast (glideTau). wheelPx = screen px that count as one piece.
   mPower: 0.8, mMax: 3800, mRef: 1200, mGamma: 1.5, mSample: 110, mFresh: 140, wheelPx: 420,
@@ -181,7 +184,7 @@ export default class Gallery {
   }
   step(k, source) {
     const n = this.settled() + k
-    if (n < 0 || n > this.N - 1) { this.nudge(Math.sign(k)); if (this.o.onEdge) this.o.onEdge(Math.sign(k), true); return }
+    if (n < 0 || n > this.N - 1) { this.nudge(Math.sign(k)); return }
     this.to(n, source)
   }
   // a small give at the end of the row: the line leans out a little and springs back
@@ -337,16 +340,39 @@ export default class Gallery {
   busy() { return this.flight || this.q.active || !this.N }
   onWheel(e) {
     e.preventDefault()
-    if (this.busy()) return
-    let d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
-    if (e.deltaMode === 1) d *= 16
-    if (Math.abs(d) < CFG.wheelFloor) return
     const w = this.wheel, now = performance.now()
+    // iteration 14: two axes. Sideways (deltaX, or shift + wheel) browses the pieces; up / down asks the
+    // page for the next or previous section. Each gesture locks to its dominant axis on its first
+    // events, so a diagonal trackpad swipe does one or the other, never both. A gesture lasts while
+    // events keep arriving (the momentum tail included), and fires a section change at most once.
+    const lm = e.deltaMode === 1 ? 16 : 1
+    let dx = e.deltaX * lm, dy = e.deltaY * lm
+    if (e.shiftKey && !dx) { dx = dy; dy = 0 }
+    const newG = now - (w.g || 0) > CFG.gestureGap
+    w.g = now
+    const mag = Math.max(Math.abs(dx), Math.abs(dy))
+    // a momentum tail that stalls (the page is busy loading the next section) can look like a new
+    // gesture; a real new swipe starts harder than the tail it follows, so a weaker start stays spent
+    if (newG) { const tail = w.fired && now - (w.ft || 0) < 2600 && mag <= (w.last || 0) * 1.5 + 2; w.ax = tail ? 'y' : null; w.ay = 0; w.axx = 0; w.fired = tail; w.sy = 0 }
+    w.last = mag
+    if (!w.ax) {
+      w.axx += Math.abs(dx); w.ay += Math.abs(dy)
+      if (w.axx + w.ay < 4) return
+      w.ax = w.axx > w.ay ? 'x' : 'y'; w.sy = 0
+    }
+    if (w.ax === 'y') {
+      if (w.fired || this.busy()) return
+      w.sy += dy
+      if (Math.abs(w.sy) >= CFG.sectionPx || (e.deltaMode === 1 && dy)) { w.fired = true; w.ft = now; this.o.onSection && this.o.onSection(Math.sign(w.sy)) }
+      return
+    }
+    if (this.busy()) return
+    const d = dx
+    if (Math.abs(d) < CFG.wheelFloor) return
     const fresh = now - w.t > CFG.mFresh                 // a pause means a new gesture, don't inherit the old speed
-    // iteration 12: scrolling stays inside the section. Pushing past either end meets resistance and
-    // tells the page (onEdge), which shows "Next: …" and moves on only on a second, separate push.
+    // the ends of a row resist; the next section lives below, not beyond the last piece
     const sg = Math.sign(d), edge = (sg > 0 && this.L >= this.N - 1 - 0.02) || (sg < 0 && this.L <= 0.02)
-    if (edge && Math.abs(this.Se) < 0.02) { w.t = now; w.v = 0; this.Se = 0; this.nudge(sg); this.o.onEdge && this.o.onEdge(sg, fresh); return }
+    if (edge && Math.abs(this.Se) < 0.02) { w.t = now; w.v = 0; this.Se = 0; if (fresh) this.nudge(sg); return }
     // a mouse wheel notch (big, whole, isolated delta) moves exactly one piece; trackpads coast
     if (fresh && (e.deltaMode === 1 || (Math.abs(d) >= 50 && Number.isInteger(d)))) { w.t = now; w.v = 0; this.step(Math.sign(d), 'wheel'); return }
     const dt = fresh ? 0.016 : Math.max(0.008, Math.min(0.05, (now - w.t) / 1000))
@@ -375,12 +401,20 @@ export default class Gallery {
     if (this.flight) { this.drag = null; return }
     if (!d.on) {
       if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < CFG.dragStart) return
+      d.ax = Math.abs(e.clientX - d.x0) >= Math.abs(e.clientY - d.y0) ? 'x' : 'y'
+      if (d.ax === 'y' && d.spin < 0) { d.on = true; this.setHover(-1); return }
       d.on = true; gsap.killTweensOf(this.tw); this.tweening = false; this.target = -1; this.Te = 0
       this.setHover(-1); this.el.classList.add('is-dragging')
     }
+    if (d.ax === 'y' && d.spin < 0) {
+      // a vertical drag / swipe: once it has travelled far enough, it asks for the next section, once
+      const ty = e.clientY - d.y0
+      if (!d.fired && Math.abs(ty) > Math.min(CFG.sectionDrag, d.h * 0.12)) { d.fired = true; this.o.onSection && this.o.onSection(ty < 0 ? 1 : -1) }
+      return
+    }
     const now = performance.now(), dx = e.clientX - d.x, dy = e.clientY - d.y, dt = Math.max(8, now - d.t)
     d.x = e.clientX; d.y = e.clientY; d.t = now
-    d.px = (d.px || 0) + (this.mode === 'luck' && !this.touch && Math.abs(dy) > Math.abs(dx) ? dy : dx)
+    d.px = (d.px || 0) + dx
     ;(d.sm || (d.sm = [])).push({ t: now, p: d.px })
     while (d.sm.length > 2 && now - d.sm[0].t > CFG.mSample) d.sm.shift()
     if (d.spin >= 0) {
@@ -389,8 +423,7 @@ export default class Gallery {
       p.spinY = clamp(p.spinY + dx * k, -Math.PI * 2, Math.PI * 2); p.spinX = clamp(p.spinX + dy * k, -Math.PI, Math.PI)
       return
     }
-    // the drum turns with vertical drags too
-    const along = this.mode === 'luck' && !this.touch && Math.abs(dy) > Math.abs(dx) ? dy / d.h : dx / d.w
+    const along = dx / d.w
     const span = this.touch ? CFG.touchSpan : 6 * CFG.dragSens
     const s = -along * span
     this.L = clamp(this.L + s, 0, this.N - 1)
@@ -409,6 +442,7 @@ export default class Gallery {
       else this.to(h.i, 'click')
       return
     }
+    if (d.ax === 'y' && d.spin < 0) return
     if (d.spin >= 0) {
       const p = this.plates[d.spin]
       gsap.to(p, { spinX: 0, spinY: Math.round(p.spinY / Math.PI) * Math.PI, duration: CFG.resetDuration, ease: 'elastic.out(1, 0.6)' })
@@ -418,7 +452,7 @@ export default class Gallery {
     if (this.touch) {
       const v = this.Se; this.Se = 0
       const tgt = Math.round(this.L + Math.sign(v) * 0.5)
-      if (Math.abs(v) > CFG.touchFlick && (tgt < 0 || tgt > this.N - 1) && Math.round(this.L) === clamp(tgt, 0, this.N - 1)) { this.to(Math.round(this.L)); if (this.o.onEdge) this.o.onEdge(Math.sign(v), true) }
+      if (Math.abs(v) > CFG.touchFlick && (tgt < 0 || tgt > this.N - 1)) this.to(clamp(tgt, 0, this.N - 1))
       else if (Math.abs(v) > CFG.touchFlick) this.to(tgt, 'flick')
       else this.to(Math.round(this.L))
       return
@@ -428,7 +462,7 @@ export default class Gallery {
     while (sm.length > 2 && t - sm[0].t > CFG.mSample) sm.shift()
     const a = sm[0], b = sm[sm.length - 1], span = a && b ? (b.t - a.t) / 1000 : 0
     const hv = b && t - b.t <= CFG.mSample && span > 0.008 ? (b.p - a.p) / span : 0
-    const per = (this.mode === 'luck' ? d.h : d.w) / (6 * CFG.dragSens)     // px per piece while dragging
+    const per = d.w / (6 * CFG.dragSens)     // px per piece while dragging
     this.Se = clamp(-pressure(hv) / per / 60, -CFG.glideMaxV, CFG.glideMaxV)
     if (e && e.pointerType === 'touch') this.Se *= 0.6
   }
@@ -465,16 +499,15 @@ export default class Gallery {
       return out
     }
     if (this.mode === 'luck') {
-      // a drum turning toward you from below
-      const a = m * 0.68, R = 2.3
-      out.x = m * 0.18 + (touch ? 0 : 0.2)
-      out.y = -Math.sin(a) * R * (touch ? 0.92 : 1)
+      // iteration 14: a carousel drum seen from outside, turning sideways like the other rows
+      const a = m * 0.62, R = 2.6 * (touch ? 0.8 : 1)
+      out.x = Math.sin(a) * R * 1.35
+      out.y = (g ? 0.05 : 0) - dip * 0.5
       out.z = -(1 - Math.cos(a)) * R
-      out.rx = a * 0.95 + lean * (g ? 0.8 : 1)
-      out.ry = -m * 0.06
+      out.rx = 0
+      out.ry = -a * 0.9 + lean * (g ? 0.8 : 1)
       out.rz = -lean * CFG.flowBank * 0.4
       out.S = g ? (touch ? 1.25 : 1) : Math.max(0.7, 1 - h * 0.15)
-      out.y -= dip * 0.5
       return out
     }
     if (touch) {

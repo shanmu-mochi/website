@@ -195,7 +195,7 @@ export default function PaperPage({ it, top, cover, nav, honors }) {
       <header className="wp-head">
         <div className="wp-cover">{cover}</div>
         <div className="wp-title">
-          <p className="wp-kicker">{[it.kind, it.cover].filter(Boolean).join(' · ')}</p>
+          <p className="wp-kicker">{it.venueFull || it.cover ? it.kind : [it.kind, it.cover].filter(Boolean).join(' · ')}</p>
           <h1>{it.title}</h1>
           {kind !== 'partial' && it.line && <p className="wp-deck">{it.line}</p>}
           <dl className="wp-facts">
