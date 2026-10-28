@@ -168,3 +168,18 @@ Gallery.js CFG: dragSens .95->.6, dragMaxV .5->.32, glideTau .55->.36, glideMaxV
 - Each carousel has its own WebGL renderer (`opts.own`) and band mode (`opts.band`): a vertical wheel always goes to the page; only deltaX, shift+wheel or a horizontal drag moves the carousel. A vertical touch is left to the browser (`touch-action: pan-y`, and pointercancel never opens a piece).
 - Bands pause their renderer when offscreen (IntersectionObserver). Nav glides to the band; the pen ring follows the band in view.
 - Back from a piece restores the band and the exact scroll position.
+
+### Part 3 and follow-ups (t56u–t59u)
+- Opening: the first screen is the Chekhov line the user supplied ("Medicine is my lawful wife…", Anton Chekhov), in Pinyon Script (OFL, public/fonts/pinyon-script-latin.woff2) and written in line by line with a clip reveal. Edit it in src/opening.js. The nav stays visible. Reduced motion shows it still.
+- Deep Dives: a new band and nav item holding only the two white papers. Each card opens the white-paper page.
+- Nav teleport: a nav jump fades and blurs the view out (240ms), jumps instantly, then the target band rises in (500ms) on cubic-bezier(.32,.72,0,1). Nothing scrolls past in between. Reduced motion jumps instantly. Wheel and trackpad scrolling stay native in both directions.
+- Nav: every item is Lora 600 at the same size. At phone width the counts are hidden so six items fit.
+- Piece pages: a big centred title over a hairline meta table (A24 film page). The first line is in handwriting, written in. The painting credit and the recognition each appear once.
+- Luck: each award has its own form, using repo text only:
+  - The New Yorker: a museum label beside the painting, with the story's first line.
+  - Kalanithi: a certificate on blue-grey.
+  - MUPF: a dark plaque.
+  - ACPM: a placard with the event.
+  - Carousel faces match each form.
+- Missing award details: there are no years for New Yorker, Kalanithi and MUPF; no painting for three of the awards; and no citation or jury text beyond the one-line desc.
+- The pen ring already redraws every 100ms while hovered (A24 jitter).

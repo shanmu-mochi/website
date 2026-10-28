@@ -131,8 +131,8 @@ export default class Gallery {
   /* ---------------- sections ---------------- */
   setSection(items, mode, start = 0) {
     this.clearPlates()
-    this.items = items; this.N = items.length; this.mode = mode
-    this.sec = SECTIONS[mode] || SECTIONS.prose
+    this.items = items; this.N = items.length; this.mode = mode === 'deep' ? 'publications' : mode
+    this.sec = SECTIONS[this.mode] || SECTIONS.prose
     this.root.rotation.set(rad(this.sec.tiltX), rad(this.sec.tiltY), 0)
     this.L = clamp(start, 0, this.N - 1); this.we = this.L; this.Se = 0; this.Te = 0; this.Ce = 0
     this.target = -1; this.tweening = false; this.cur = -1; this.hover = -1; this.flight = false

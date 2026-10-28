@@ -6,6 +6,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import gsap from 'gsap'
+import OPENING from './opening'
 import { CATS, META, PAINTINGS, SOCIALS, SELECTED_ITEMS, variantFor, aspectOf, placeholderOf, tintOf, creditText } from './pieces'
 import NOTES from './pieceNotes'
 import PaperPage from './PaperPage'
@@ -13,6 +14,7 @@ import Gallery, { GLIDE, imageTexture, texture, plateSize, SECTIONS } from './ga
 import './styles/globals.css'
 import './styles/a24.css'
 import './styles/flow.css'
+import './styles/pages17.css'
 
 const BIO = 'I’m a writer who works in medicine, or a medical person who writes. The order keeps changing.'
 const norm = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -22,14 +24,14 @@ const isTouch = () => window.matchMedia('(max-width: 720px), (pointer: coarse)')
 // iteration 12: home is its own row, "Selected", a hand-picked mix (src/selected.js)
 const HOME_CAT = { id: 'home', label: 'Selected', items: SELECTED_ITEMS }
 const catOf = (id) => (id === 'home' ? HOME_CAT : CATS.find((c) => c.id === id) || CATS[0])
-const lastIdx = { home: 0, prose: 0, publications: 0, luck: 0 }
+const lastIdx = { home: 0, prose: 0, publications: 0, deep: 0, luck: 0 }
 const lastCat = { current: 'home' }
 // a hash deep-link (#/prose/…, #/about…) skips the name-first opening
 const session = { introDone: typeof location !== "undefined" && /^#\/./.test(location.hash) }
 const WIDE = '"Lora", Georgia, serif'
 const LABEL = '"Archivo", "Helvetica Neue", Arial, sans-serif'
 const BOOK = '"Lora", Georgia, serif'
-const TONE = { prose: 'rgb(242,242,240)', publications: 'rgb(235,238,241)', luck: 'rgb(244,238,228)' }
+const TONE = { prose: 'rgb(242,242,240)', publications: 'rgb(235,238,241)', luck: 'rgb(244,238,228)', deep: 'rgb(238,236,231)' }
 const bgFor = (it) => it.cat === 'prose' && it.src ? tintOf(it.src, 0.06) : TONE[it.cat]
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -82,9 +84,9 @@ function drawFace(key, aspect, draw) {
 }
 const faceKey = (it, side) => `${it.cat}:${it.slug}:${side}`
 function faceCanvas(it, side) {
-  const sec = SECTIONS[it.cat], [w, h] = plateSize({ aspect: it.src ? aspectOf(it.src) : 0.74 }, sec), aspect = w / h
+  const sec = SECTIONS[it.cat === 'deep' ? 'publications' : it.cat], [w, h] = plateSize({ aspect: it.src ? aspectOf(it.src) : 0.74 }, sec), aspect = w / h
   const key = faceKey(it, side)
-  if (it.cat === 'publications' && side === 'front') return drawFace(key, aspect, (ctx, W, H) => {
+  if ((it.cat === 'publications' || it.cat === 'deep') && side === 'front') return drawFace(key, aspect, (ctx, W, H) => {
     ctx.fillStyle = '#f9f8f4'; ctx.fillRect(0, 0, W, H)
     ctx.fillStyle = 'rgba(0,0,0,.05)'; ctx.fillRect(0, 0, 14, H)            // the fold by the spine
     grain(ctx, W, H, 9)
@@ -113,16 +115,23 @@ function faceCanvas(it, side) {
     ctx.textAlign = 'right'; ctx.fillText('SHANMU RAJA', W - m, H - m - 6)
   })
   if (it.cat === 'luck' && side === 'front') return drawFace(key, aspect, (ctx, W, H) => {
-    ctx.fillStyle = '#fbf6ea'; ctx.fillRect(0, 0, W, H)
-    grain(ctx, W, H, 7)
-    ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2; ctx.strokeRect(34, 34, W - 68, H - 68); ctx.lineWidth = 1; ctx.strokeRect(46, 46, W - 92, H - 92)
-    ctx.fillStyle = '#151515'; ctx.textAlign = 'center'
+    // iteration 17: each recognition is a different object (plaque, certificate, placard, label)
+    const form = LUCK_FORM[it.slug] || 'label'
+    const bg = { plaque: '#141414', cert: '#ebeef1', placard: '#f6efe0', label: '#fbf6ea' }[form], fg = form === 'plaque' ? '#fbf6ea' : '#151515'
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H)
+    grain(ctx, W, H, form === 'plaque' ? 5 : 7)
+    ctx.strokeStyle = fg; ctx.fillStyle = fg; ctx.textAlign = 'center'
+    if (form === 'cert') { ctx.lineWidth = 2; ctx.strokeRect(34, 34, W - 68, H - 68); ctx.lineWidth = 1; ctx.strokeRect(48, 48, W - 96, H - 96) }
+    if (form === 'plaque') { ctx.globalAlpha = .55; ctx.lineWidth = 1.5; ctx.strokeRect(40, 40, W - 80, H - 80); ctx.globalAlpha = 1 }
+    if (form === 'placard') ctx.fillRect(0, 0, W, 26)
+    if (form === 'label') { ctx.lineWidth = 1; ctx.globalAlpha = .4; ctx.strokeRect(40, 40, W - 80, H - 80); ctx.globalAlpha = 1 }
     smallCaps(ctx, 20, 5); ctx.fillText(String(it.kind || '').toUpperCase(), W / 2, 110)
     ctx.fillRect(W / 2 - 40, 150, 80, 2)
     ctx.letterSpacing = '0px'
-    const { fs, lines } = fitTitle(ctx, it.title.toUpperCase(), W - 220, H * 0.5, 104, 40, 1.0)
-    const y0 = H / 2 - (lines.length * fs) / 2 + 20
+    const { fs, lines } = fitTitle(ctx, it.title.toUpperCase(), W - 220, H * 0.46, 104, 40, 1.0)
+    const y0 = H / 2 - (lines.length * fs) / 2 + 10
     lines.forEach((l, k) => ctx.fillText(l, W / 2, y0 + k * fs))
+    if (it.event) { ctx.font = `italic 400 30px ${BOOK}`; ctx.fillText(it.event, W / 2, y0 + lines.length * fs + 34) }
     smallCaps(ctx, 18, 4); ctx.fillText('SHANMU RAJA', W / 2, H - 120)
   })
   // iteration 12: the back of every object says something the front doesn't (never the title again).
@@ -170,7 +179,7 @@ function backOf(it) {
     label: metaOf(it, 'Kind') || it.kind || 'Prose', body: it.line, quoteIt: true, note: NOTES[`prose/${it.slug}`] || '',
     rows: [['Recognition', metaOf(it, 'Recognition')], ['Venue', metaOf(it, 'Venue')], ['Published', metaOf(it, 'Published')], ['Painting', metaOf(it, 'Painting')]],
   }
-  if (it.cat === 'publications') {
+  if (it.cat === 'publications' || it.cat === 'deep') {
     const body = it.finding || (it.line && it.line !== it.venueFull ? it.line : '')
     return {
       label: it.finding ? 'Main finding' : it.kind || 'Paper', body,
@@ -334,7 +343,8 @@ function fadeOutPage() {
    the three carousels, then ART THAT I LOVE. A vertical wheel or swipe always scrolls the page; only a
    sideways gesture (drag, arrows, shift + wheel, trackpad swipe) moves a carousel. Each carousel owns its
    renderer and stops drawing while it is off screen. */
-const BANDS = ['prose', 'publications', 'luck']
+const LUCK_FORM = { 'the-new-yorker': 'label', 'paul-kalanithi-writing-competition': 'cert', 'massachusetts-undergraduate-poetry-festival': 'plaque', 'american-college-of-preventive-medicine': 'placard' }
+const BANDS = ['prose', 'publications', 'deep', 'luck']
 const FLOW = { y: null, restore: false, leftFrom: null, api: null, bands: {} }
 const HEAD = () => (window.innerWidth <= 760 ? 96 : 76)
 const bandTop = (c) => {
@@ -470,7 +480,19 @@ function Flow({ cat, go }) {
 
   useEffect(() => {
     FLOW.api = {
-      scrollTo: (c) => window.scrollTo({ top: bandTop(c), behavior: reduced() ? 'auto' : 'smooth' }),
+      // iteration 17: a nav jump never races past the bands in between. The view fades out with a soft
+      // blur, the page jumps while hidden, and the target band rises in (~700ms, A24 easing).
+      scrollTo: (c) => {
+        const el = mainRef.current
+        if (reduced() || !el) { window.scrollTo({ top: bandTop(c), behavior: 'instant' }); return }
+        clearTimeout(FLOW.tp)
+        el.classList.remove('fl-tp-in'); el.classList.add('fl-tp-out')
+        FLOW.tp = setTimeout(() => {
+          window.scrollTo({ top: bandTop(c), behavior: 'instant' })
+          el.classList.remove('fl-tp-out'); void el.offsetWidth; el.classList.add('fl-tp-in')
+          FLOW.tp = setTimeout(() => el.classList.remove('fl-tp-in'), 520)
+        }, 240)
+      },
       active: () => activeRef.current,
     }
     HOME.api = {
@@ -514,22 +536,14 @@ function Flow({ cat, go }) {
     <main ref={mainRef} className={`fl${leaving ? ' is-leaving' : ''}${nameOn ? ' h-naming' : ''}${chrome ? ' is-on' : ''}`}>
       <SiteNav go={go} active={active} className={`h-top fl-sn${chrome ? ' is-on' : ''}`} />
 
-      <section id="b-home" data-band="home" className="fl-hero">
-        <p className="fl-bio">{BIO}</p>
-        <div className="fl-sel">
-          <h2 className="fl-k">Selected</h2>
-          <ol>
-            {SELECTED_ITEMS.map((it) => {
-              const i = catOf(it.cat).items.indexOf(it)
-              return (
-                <li key={`${it.cat}/${it.slug}`}>
-                  <a href={`#/${it.cat}/${it.slug}`} onClick={(e) => { e.preventDefault(); go({ view: 'piece', cat: it.cat, i, via: 'home' }) }}>
-                    <span>{it.title}</span><em>{catOf(it.cat).label}</em>
-                  </a>
-                </li>)
-            })}
-          </ol>
-        </div>
+      <section id="b-home" data-band="home" className="fl-hero" aria-label="Opening">
+        <figure className="fl-open">
+          <blockquote className="fl-hand" aria-label={OPENING.lines.join(' ')}>
+            {OPENING.lines.map((l, n) => <span key={n} className="fl-hl" style={{ '--n': n }} aria-hidden="true"><span>{l}</span></span>)}
+          </blockquote>
+          <figcaption className="fl-by">{OPENING.by}</figcaption>
+        </figure>
+        <button type="button" className="fl-more" onClick={() => FLOW.api.scrollTo && FLOW.api.scrollTo('prose')}>Scroll <b>↓</b></button>
       </section>
 
       {BANDS.map((c) => <Band key={c} cat={c} go={go} returning={returning === c} />)}
@@ -578,7 +592,7 @@ function Piece({ cat, i, go, via }) {
   const [hold, setHold] = useState(flying)
   const dir = NAV.dir
   const face = useFaceURL(it)
-  const ar = it.src ? aspectOf(it.src) : SECTIONS[cat].aspect
+  const ar = it.src ? aspectOf(it.src) : SECTIONS[cat === 'deep' ? 'publications' : cat].aspect
   const goRef = useRef(go); goRef.current = go
 
   useLayoutEffect(() => {
@@ -637,7 +651,7 @@ function Piece({ cat, i, go, via }) {
       <a href={`#/${cat}/${items[next].slug}`} onClick={(e) => { e.preventDefault(); go({ view: 'piece', cat, i: next }) }}><small>Next</small>{items[next].title}</a>
     </nav>
   )
-  if (cat === 'publications') {
+  if (cat === 'publications' || cat === 'deep') {
     return (
       <PaperPage
         it={it} honors={honors} nav={pgNav}
@@ -646,31 +660,64 @@ function Piece({ cat, i, go, via }) {
       />
     )
   }
+  const flyCls = `${flying ? ' is-flown' : ' is-direct'}${dir ? ` is-step is-step-${dir > 0 ? 'n' : 'p'}` : ''}`
+  const top = <PageTop back={() => go(home)} backLabel={catOf(home.cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(items.length)}`} />
+  const artEl = (
+    <div ref={art} className="pg-art" style={{ '--ar': ar, aspectRatio: String(ar), background: it.src ? placeholderOf(it.src) : '#f9f8f4', visibility: hold ? 'hidden' : undefined }}>
+      {face && <img src={it.src ? variantFor(it.src, 1400) : face} alt={it.src ? credit : `${it.title}, plaque`} decoding="async" />}
+    </div>
+  )
+  const related = it.related && <p className="pg-related"><small>Related</small><a href={it.related.href} onClick={(e) => { e.preventDefault(); go(parse(it.related.href)) }}>{it.related.title}</a> <em>· {it.related.kind}</em></p>
+  if (cat === 'luck') {
+    // iteration 17: each recognition gets its own ceremonial form; every line on it comes from src/pieces.js
+    const form = LUCK_FORM[it.slug] || 'label'
+    const story = it.related && CATS[0].items.find((x) => `#/prose/${x.slug}` === it.related.href)
+    return (
+      <article className={`pg pg-piece pg-c-luck lk lk-${form}${flyCls}`}>
+        {top}
+        <div className="lk-sheet">
+          <p className="lk-k">{it.title}</p>
+          <h1 className="lk-rec">{it.kind}</h1>
+          {it.event && <p className="lk-ev">{it.event}</p>}
+          <hr className="lk-rule" />
+          <div className="lk-body">
+            <figure className="lk-fig">
+              {artEl}
+              {it.src && credit && <figcaption className="lk-cap"><small>Painting</small>{credit}</figcaption>}
+            </figure>
+            <div className="lk-txt">
+              <p className="lk-line">{it.line}</p>
+              {story && story.line && <blockquote className="lk-quote"><small>The first line</small><span>{story.line}</span></blockquote>}
+              {cta && <div className="pg-cta">{cta}</div>}
+              {related}
+            </div>
+          </div>
+        </div>
+        {pgNav}
+      </article>
+    )
+  }
   return (
-    <article className={`pg pg-piece pg-c-${cat}${flying ? ' is-flown' : ' is-direct'}${dir ? ` is-step is-step-${dir > 0 ? 'n' : 'p'}` : ''}`}>
-      <PageTop back={() => go(home)} backLabel={catOf(home.cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(items.length)}`} />
+    <article className={`pg pg-piece pg-c-${cat}${flyCls}`}>
+      {top}
       <div className="pg-head">
         <h1 className="pg-title"><span>{it.title}</span></h1>
-        <hr className="pg-rule" />
         {showBy && <p className="pg-by"><span>{it.by}</span></p>}
         {honors}
+        <dl className="pg-meta pg-mt">
+          {meta.filter(([k]) => k !== 'Painting' && !(k === 'Recognition' && honors)).map(([k, v], n) => <div key={k} style={{ '--n': n }}><dt>{k}</dt><dd>{v}</dd></div>)}
+        </dl>
       </div>
+      {it.quote && <blockquote className="pg-quote pg-hand"><span>{it.quote}</span></blockquote>}
       <div className="pg-body">
         <figure className="pg-fig">
-          <div ref={art} className="pg-art" style={{ '--ar': ar, aspectRatio: String(ar), background: it.src && cat === 'prose' ? placeholderOf(it.src) : '#f9f8f4', visibility: hold ? 'hidden' : undefined }}>
-            {face && <img src={it.src && cat === 'prose' ? variantFor(it.src, 1400) : face} alt={cat === 'prose' ? credit : `${it.title}, cover`} decoding="async" />}
-          </div>
-          {cat === 'prose' && credit && <figcaption>{credit}</figcaption>}
+          {artEl}
+          {credit && <figcaption>{credit}</figcaption>}
         </figure>
         <div className="pg-side">
-          <dl className="pg-meta">
-            {meta.map(([k, v], n) => <div key={k} style={{ '--n': n }}><dt>{k}</dt><dd>{v}</dd></div>)}
-          </dl>
           {cta && <div className="pg-cta">{cta}</div>}
-          {it.related && <p className="pg-related"><small>Related</small><a href={it.related.href} onClick={(e) => { e.preventDefault(); go(parse(it.related.href)) }}>{it.related.title}</a> <em>· {it.related.kind}</em></p>}
-          {it.quote && <blockquote className="pg-quote"><span>{it.quote}</span></blockquote>}
-          {cat !== 'prose' && it.line && norm(it.line) !== norm(it.quote) && <p className="pg-line">{it.line}</p>}
-          {cat !== 'prose' && it.src && credit && <p className="pg-credit">Painting: {credit}</p>}
+          {related}
+          {it.line && norm(it.line) !== norm(it.quote) && <p className="pg-line">{it.line}</p>}
         </div>
       </div>
       {note ? <section className="pg-note"><h2>On the painting</h2><p>{note}</p></section> : null}
