@@ -51,3 +51,11 @@ Feedback: "too busy". Kept the wheel and the phone; removed almost everything el
   - The route and the piece say which page or wheel item the comment is about.
   - The css path names the element: `b-*` is the browser, `pg-*` the piece and About pages, `cv-*` the type covers, `t-*` the phone track.
   - x% and y% are positions in the viewport.
+
+
+## Iteration 6 — the real A24 motion, with the paintings
+- Home is now a three.js gallery (src/gallery/Gallery.js) using the A24 browser's geometry, follow rates, lean/bank, discGlide easing, spring snap, intro (rolling counter → rise → fan), click-through flight and inbound return. Paintings are the plates; publications are white-paper sheets. Space turns a plate over to its credit.
+- Chrome: top-left Bodoni title + hairline meta table, top-centre wordmark/Paintings/About, bottom-centre first line, bottom-left Prose/Publications/Luck with pen-scribble hover, counter + socials bottom-right.
+- Piece pages: white paper, A24 film-page layout (centred title, drawn rules, crosshair marks, meta table, double-rule CTA, painting rising in).
+- Fonts: Bodoni Moda (OFL, self-hosted) stands in for PP Eiko.
+- Study + spec: /workspace/NOTES-A24-STUDY.md. Side-by-side sheets: /workspace/redesign-shots-v6/.
