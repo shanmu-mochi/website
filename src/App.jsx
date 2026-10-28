@@ -346,7 +346,9 @@ function buildGallery(seen, opener) {
   return sizeSet(orderCohesive(pickSrcs(seen, lead), lead))
 }
 
-/* excerpt = draft opening line (placeholder voice; edit freely or I can pull the real first lines) */
+/* first = the real opening sentence of the published piece (read from the live page, 2026-10);
+   published = month/year from the page's metadata (omitted where Medium shows only a bulk-import date).
+   excerpt = draft opening line (placeholder voice; edit freely or I can pull the real first lines) */
 /* unfinished work, shown under the published list: fiction being written and
    working papers still in draft. Nothing here links anywhere yet. */
 const INPROGRESS = [
@@ -359,21 +361,21 @@ const INPROGRESS = [
 const keepWhole = (s) => s.split(/(\S+-\d\S*)/g).map((part, i) => (i % 2 ? <span className="nobr" key={i}>{part}</span> : part))
 
 const STORIES = [
-  { title: 'A Young Lady’s Photograph Album', kind: 'Short Story', venue: 'Substack', excerpt: 'The painter had lettered the board from hearing.', href: 'https://open.substack.com/pub/shanmuraja/p/a-young-ladys-photograph-album?r=1hai5c&utm_medium=web', latest: true },
-  { title: 'To Get the Face Right', kind: 'Short Story', venue: 'Substack', excerpt: 'I drew a dick on a girl’s face one time.', href: 'https://open.substack.com/pub/shanmuraja/p/to-get-the-face-right?r=1hai5c&utm_medium=web' },
-  { title: 'How to Be Thanked', kind: 'Short Story', venue: 'Substack', excerpt: 'The onions were distractingly pungent. But he kept reading.', href: 'https://open.substack.com/pub/shanmuraja/p/how-to-be-thanked?r=1hai5c&utm_medium=web' },
-  { title: 'Burnt Red Tongues', kind: 'Historical Fiction', venue: 'Medium', excerpt: 'The fire came for the temple first, and the language second.', href: 'https://shanmuraja.medium.com/burnt-red-tongues-e5647e67d243' },
+  { title: 'A Young Lady’s Photograph Album', kind: 'Short Story', venue: 'Substack', excerpt: 'The painter had lettered the board from hearing.', href: 'https://open.substack.com/pub/shanmuraja/p/a-young-ladys-photograph-album?r=1hai5c&utm_medium=web', latest: true, first: "The painter had lettered the board from hearing.", published: 'Oct 2026' },
+  { title: 'To Get the Face Right', kind: 'Short Story', venue: 'Substack', excerpt: 'I drew a dick on a girl’s face one time.', href: 'https://open.substack.com/pub/shanmuraja/p/to-get-the-face-right?r=1hai5c&utm_medium=web', first: "I drew a dick on a girl’s face one time.", published: 'Oct 2026' },
+  { title: 'How to Be Thanked', kind: 'Short Story', venue: 'Substack', excerpt: 'The onions were distractingly pungent. But he kept reading.', href: 'https://open.substack.com/pub/shanmuraja/p/how-to-be-thanked?r=1hai5c&utm_medium=web', first: "The onions were pungent.", published: 'Sep 2026' },
+  { title: 'Burnt Red Tongues', kind: 'Historical Fiction', venue: 'Medium', excerpt: 'The fire came for the temple first, and the language second.', href: 'https://shanmuraja.medium.com/burnt-red-tongues-e5647e67d243', first: "Shall we try once more tonight?" },
   { title: 'Fugue State', kind: 'Short Story', venue: 'Unpublished', excerpt: 'She woke in a city she had never agreed to live in.' },
-  { title: 'A Pound of Flesh', kind: 'Short Story', venue: 'Substack', excerpt: 'Everyone wanted their share, and the body was only so large.', href: 'https://open.substack.com/pub/shanmuraja/p/a-pound-of-flesh?r=1hai5c&utm_medium=web' },
-  { title: 'a boring call', kind: 'A Short', venue: 'Substack', excerpt: 'Nothing happened on the call, which was the whole of it.', href: 'https://open.substack.com/pub/shanmuraja/p/a-boring-call?r=1hai5c&utm_medium=web' },
-  { title: 'The Sound and the Fury', kind: 'Essay · Legacy, ethics, and the cost of progress', venue: 'Medium', excerpt: 'Progress keeps a ledger, and someone always settles it.', href: 'https://shanmuraja.medium.com/the-sound-and-the-fury-b688bde9e526' },
-  { title: 'Birds Do Not Sing in Caves', kind: 'Essay · Masculinity in medicine', venue: 'Medium', excerpt: 'They taught us to suture in silence, and to feel the same way.', href: 'https://shanmuraja.medium.com/birds-do-not-sing-in-caves-ef64cb65c790' },
-  { title: 'Young Boy Blues', kind: 'Essay · On caretaking', venue: 'Medium', excerpt: 'Caretaking is a love that arrives dressed as obligation.', href: 'https://shanmuraja.medium.com/young-boy-blues-0ce82e7971e0' },
-  { title: 'I’ve Gone to the Country Spa', kind: 'Essay · Psychiatry and heredity', venue: 'Medium', excerpt: 'Madness, in my family, was always discussed in the past tense.', href: 'https://shanmuraja.medium.com/ive-gone-to-the-country-spa-0b4313d7b8d7' },
-  { title: 'Jack of All Trades, Master of None', kind: 'Essay · Choosing a specialty', venue: 'Medium', excerpt: 'Every specialty asks you to amputate the others.', href: 'https://shanmuraja.medium.com/jack-of-all-trades-master-of-none-3e1be5a35d7b' },
-  { title: 'Sonder', kind: 'Essay · My time in India', venue: 'Medium', excerpt: 'In India, every passing stranger carried a life as vivid as my own.', href: 'https://shanmuraja.medium.com/sonder-c07feba361e0' },
-  { title: 'Do You Lift, Bro?', kind: 'Essay · My time in orthopedics', venue: 'Medium', excerpt: 'On the orthopedics ward, strength was both the question and the cure.', href: 'https://shanmuraja.medium.com/do-you-lift-bro-b2c620677895' },
-  { title: 'Got Your Toe!', kind: 'Essay · A skilled nursing facility', venue: 'Medium', excerpt: 'At the nursing home, the body keeps a longer memory than the mind.', href: 'https://shanmuraja.medium.com/got-your-toe-472b0e2a74cb' },
+  { title: 'A Pound of Flesh', kind: 'Short Story', venue: 'Substack', excerpt: 'Everyone wanted their share, and the body was only so large.', href: 'https://open.substack.com/pub/shanmuraja/p/a-pound-of-flesh?r=1hai5c&utm_medium=web', first: "I did not leave home so much as get counted out.", published: 'Oct 2025' },
+  { title: 'a boring call', kind: 'A Short', venue: 'Substack', excerpt: 'Nothing happened on the call, which was the whole of it.', href: 'https://open.substack.com/pub/shanmuraja/p/a-boring-call?r=1hai5c&utm_medium=web', first: "Arun stares blankly back at the mustache.", published: 'Feb 2026' },
+  { title: 'The Sound and the Fury', kind: 'Essay · Legacy, ethics, and the cost of progress', venue: 'Medium', excerpt: 'Progress keeps a ledger, and someone always settles it.', href: 'https://shanmuraja.medium.com/the-sound-and-the-fury-b688bde9e526', first: "Clara usually loved the beach or the collection of pebbles that formed the rough shoreline where waves flirted and fought." },
+  { title: 'Birds Do Not Sing in Caves', kind: 'Essay · Masculinity in medicine', venue: 'Medium', excerpt: 'They taught us to suture in silence, and to feel the same way.', href: 'https://shanmuraja.medium.com/birds-do-not-sing-in-caves-ef64cb65c790', first: "In the brutalist geometry of the ward, the doctor thought of the man with the green apple over his face." },
+  { title: 'Young Boy Blues', kind: 'Essay · On caretaking', venue: 'Medium', excerpt: 'Caretaking is a love that arrives dressed as obligation.', href: 'https://shanmuraja.medium.com/young-boy-blues-0ce82e7971e0', first: "We were sitting in this lush backyard filled with lavender, poppies, mint, and an apple tree in the far-right corner.", published: 'Oct 2024' },
+  { title: 'I’ve Gone to the Country Spa', kind: 'Essay · Psychiatry and heredity', venue: 'Medium', excerpt: 'Madness, in my family, was always discussed in the past tense.', href: 'https://shanmuraja.medium.com/ive-gone-to-the-country-spa-0b4313d7b8d7', first: "I never bathed in the Ganges like my granduncle.", published: 'Oct 2024' },
+  { title: 'Jack of All Trades, Master of None', kind: 'Essay · Choosing a specialty', venue: 'Medium', excerpt: 'Every specialty asks you to amputate the others.', href: 'https://shanmuraja.medium.com/jack-of-all-trades-master-of-none-3e1be5a35d7b', first: "I was watching something special without realizing it in the moment.", published: 'Feb 2024' },
+  { title: 'Sonder', kind: 'Essay · My time in India', venue: 'Medium', excerpt: 'In India, every passing stranger carried a life as vivid as my own.', href: 'https://shanmuraja.medium.com/sonder-c07feba361e0', first: "In the office, I pulled up the X-ray and the MRI of bilateral knees so the doctor could take a look.", published: 'Feb 2024' },
+  { title: 'Do You Lift, Bro?', kind: 'Essay · My time in orthopedics', venue: 'Medium', excerpt: 'On the orthopedics ward, strength was both the question and the cure.', href: 'https://shanmuraja.medium.com/do-you-lift-bro-b2c620677895', first: "My hand surprisingly wasn’t shaking as I drew the blood from the patient.", published: 'Jun 2024' },
+  { title: 'Got Your Toe!', kind: 'Essay · A skilled nursing facility', venue: 'Medium', excerpt: 'At the nursing home, the body keeps a longer memory than the mind.', href: 'https://shanmuraja.medium.com/got-your-toe-472b0e2a74cb', first: "The doctor and I walk down the long dreary-colored hallway, an indication that you’re in a hospital, a reason for the goosebumps and anxious memories many others have.", published: 'Aug 2023' },
 ]
 
 /* ===== Stories phone =====
@@ -412,44 +414,131 @@ function StoryArt({ s, w }) {
   )
 }
 
-function StoriesPhone() {
-  const [hover, setHover] = useState(0)        // row under the pointer / keyboard focus -> lock screen
-  const [sel, setSel] = useState(null)         // clicked row -> its page inside the phone
+const N_STORIES = STORIES.length
+const wrapOff = (i, at) => { let d = i - at; if (d > N_STORIES / 2) d -= N_STORIES; if (d < -N_STORIES / 2) d += N_STORIES; return d }
+/* a pencil ring: an ellipse drawn by hand, overshooting where it closes */
+const RING = 'M52 6 C80 4 98 22 97 50 C96 79 76 97 49 96 C21 95 3 77 4 49 C5 22 24 5 55 7 C70 8 82 13 89 20'
+
+function StoriesStage() {
+  const [idx, setIdx] = useState(0)            // the stage always has an active story (first by default)
+  const [moving, setMoving] = useState(false)  // text fades out while the stage moves
+  const [open, setOpen] = useState(false)      // phone panel (desktop)
+  const [exp, setExp] = useState(null)         // inline card (mobile)
   const [loaded, setLoaded] = useState(() => new Set())   // previews mounted once, then kept (hidden) so they stick
-  const shown = sel ?? hover
-  const s = STORIES[shown]
-  const choose = (i, e) => {
-    if (e) e.preventDefault()
-    if (sel === i) { setSel(null); return }
-    setSel(i); setHover(i)
-    if (STORIES[i].href && isDesk()) setLoaded((L) => (L.has(i) ? L : new Set(L).add(i)))
+  const stageRef = useRef(null)
+  const inView = useRef(false)
+  const drag = useRef(null)
+  const s = STORIES[idx]
+  const idxRef = useRef(0)
+  idxRef.current = idx
+
+  const go = (i) => {
+    const n = ((i % N_STORIES) + N_STORIES) % N_STORIES
+    setIdx((cur) => { if (cur !== n) setMoving(true); return n })
   }
-  const reading = sel !== null && s.href
+  useEffect(() => { if (!moving) return; const t = setTimeout(() => setMoving(false), 480); return () => clearTimeout(t) }, [moving, idx])
+  const openPhone = (i) => {
+    go(i)
+    if (!isDesk()) { setExp((e) => (e === i ? null : i)); return }
+    if (STORIES[i].href) setLoaded((L) => (L.has(i) ? L : new Set(L).add(i)))
+    setOpen(true)
+  }
+
+  // while the phone is open, browsing loads each linked story once (then it stays mounted)
+  useEffect(() => { if (open && s.href) setLoaded((L) => (L.has(idx) ? L : new Set(L).add(idx))) }, [open, idx, s.href])
+
+  // arrows browse while the stage is on screen (or focused); Enter opens; Escape closes the phone
+  useEffect(() => {
+    const el = stageRef.current
+    const io = new IntersectionObserver(([e]) => { inView.current = e.isIntersecting }, { threshold: 0.35 })
+    io.observe(el)
+    const onKey = (e) => {
+      if (e.key === 'Escape') { setOpen(false); return }
+      const t = e.target
+      if (t && (t.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(t.tagName))) return
+      if (!inView.current && !el.contains(t)) return
+      if (e.key === 'ArrowRight') { e.preventDefault(); setIdx((c) => { setMoving(true); return (c + 1) % N_STORIES }) }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); setIdx((c) => { setMoving(true); return (c - 1 + N_STORIES) % N_STORIES }) }
+      else if (e.key === 'Enter' && el.contains(t)) { e.preventDefault(); openPhone(idxRef.current) }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => { io.disconnect(); window.removeEventListener('keydown', onKey) }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // past the gallery, the nav/footer glass stops refracting (the displacement smeared headings under the pill)
+  useEffect(() => {
+    const gal = document.querySelector('.gallery')
+    if (!gal) return
+    const io = new IntersectionObserver(([e]) => document.documentElement.classList.toggle('past-gallery', !e.isIntersecting))
+    io.observe(gal)
+    return () => { io.disconnect(); document.documentElement.classList.remove('past-gallery') }
+  }, [])
+
+  const onDown = (e) => { drag.current = { x: e.clientX, moved: false } }
+  const onUp = (e) => {
+    const d = drag.current; drag.current = null
+    if (!d) return
+    const dx = e.clientX - d.x
+    if (Math.abs(dx) > 40) { go(idx + (dx < 0 ? 1 : -1)); stageRef.current.dataset.dragged = '1'; setTimeout(() => { if (stageRef.current) delete stageRef.current.dataset.dragged }, 0) }
+  }
+  const onItem = (i) => { if (stageRef.current.dataset.dragged) return; i === idx ? openPhone(i) : go(i) }
+
+  const m = META[STORY_PAINTING[s.title]] || {}
   return (
-    <div className="sp-wrap">
-      <div className="sp-list">
+    <>
+      <div className={`stg${moving ? ' is-moving' : ''}`} ref={stageRef} tabIndex={0} role="region" aria-roledescription="carousel"
+        aria-label="Stories. Left and right arrows browse, Enter opens." onPointerDown={onDown} onPointerUp={onUp} onPointerCancel={() => { drag.current = null }}>
+        <div className="stg-info" aria-live="polite">
+          <h3 className="stg-title">{s.title}</h3>
+          <table className="stg-table"><tbody>
+            <tr><th>Kind</th><td>{s.kind.split(' · ')[0]}</td></tr>
+            <tr><th>Venue</th><td>{s.venue}</td></tr>
+            {s.published && <tr><th>Published</th><td>{s.published}</td></tr>}
+            <tr><th>Story</th><td>{idx + 1} of {N_STORIES}</td></tr>
+          </tbody></table>
+          <p className="stg-cap"><em>{m.title}</em>{m.artist ? `, ${m.artist}` : ''}{m.year ? `, ${m.year}` : ''}</p>
+          <p className="stg-hint">{s.href ? 'Click the painting or press Enter to read' : 'Not yet published'}</p>
+        </div>
+        <div className="stg-track">
+          {STORIES.map((st, i) => {
+            const d = wrapOff(i, idx)
+            if (Math.abs(d) > 3) return null
+            const src = STORY_PAINTING[st.title]
+            return (
+              <button type="button" key={st.title} className={`stg-item${d === 0 ? ' is-active' : ''}`} style={{ '--d': d, '--ad': Math.abs(d) }}
+                tabIndex={-1} aria-hidden={d !== 0} onClick={() => onItem(i)} aria-label={d === 0 ? `Open ${st.title}` : `Show ${st.title}`}>
+                {src && <img src={variantFor(src, d === 0 ? 520 : 300)} alt="" draggable="false" style={{ background: placeholderOf(src) }} />}
+                {d === 0 && (
+                  <svg className="stg-ring" viewBox="0 0 101 101" preserveAspectRatio="none" aria-hidden="true" key={idx}>
+                    <path d={RING} pathLength="1" />
+                  </svg>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="ix" role="list">
         {STORIES.map((st, i) => {
           const Tag = st.href ? 'a' : 'div'
-          const open = sel === i
           return (
-            <div className={`sp-item${open ? ' sp-open' : ''}`} key={st.title}>
-              <Tag className={`story rv${shown === i ? ' sp-on' : ''}`} {...(st.href ? { href: st.href, target: '_blank', rel: 'noreferrer' } : { tabIndex: 0, role: 'button' })}
-                aria-expanded={open} onMouseEnter={() => setHover(i)} onFocus={() => setHover(i)}
-                onClick={(e) => choose(i, e)} onKeyDown={(e) => { if (!st.href && (e.key === 'Enter' || e.key === ' ')) choose(i, e) }}>
-                <span className="st-num">{String(i + 1).padStart(2, '0')}</span>
-                <div className="st-body">
-                  <div className="st-kicker">{st.kind}</div>
-                  <div className="st-head">
-                    <span className="st-title">{st.title}</span>
+            <div className={`ix-item${exp === i ? ' ix-open' : ''}`} role="listitem" key={st.title}>
+              <Tag className={`ix-row${idx === i ? ' ix-on' : ''}`} {...(st.href ? { href: st.href, target: '_blank', rel: 'noreferrer' } : { tabIndex: 0, role: 'button' })}
+                aria-expanded={exp === i} onMouseEnter={() => go(i)} onFocus={() => go(i)}
+                onClick={(e) => { e.preventDefault(); openPhone(i) }}
+                onKeyDown={(e) => { if (!st.href && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openPhone(i) } }}>
+                <span className="ix-num">{String(i + 1).padStart(2, '0')}</span>
+                <span className="ix-main">
+                  <span className="ix-head">
+                    <span className="ix-title">{st.title}</span>
                     {st.latest && (<span className="st-new"><i className="st-new-dot" aria-hidden="true" />Just Published</span>)}
-                    <span className="st-leader" aria-hidden="true" />
-                    <span className="st-venue">{st.venue}</span>
-                  </div>
-                  {st.excerpt && (<div className="st-excerpt-wrap"><p className="st-excerpt">{st.excerpt}</p></div>)}
-                </div>
+                  </span>
+                  <span className="ix-by">{st.kind} · {st.venue}</span>
+                  <span className="ix-first">{st.first || st.excerpt}</span>
+                </span>
               </Tag>
-              {/* mobile only: the row opens into a card, painting on top */}
-              {open && (
+              {exp === i && (
                 <div className="sp-card">
                   <StoryArt s={st} w={720} />
                   {st.href
@@ -461,26 +550,40 @@ function StoriesPhone() {
           )
         })}
       </div>
-      <aside className="sp-side" aria-label="Story preview">
-        <div className="phone">
-          <div className="phone-screen">
-            <div className="phone-island" aria-hidden="true" />
-            <div className={`phone-lock${reading ? ' is-hidden' : ''}`}>
-              <div className="phone-time">{String(shown + 1).padStart(2, '0')}</div>
-              <StoryArt s={s} w={340} />
-              <div className="phone-lock-t">{s.title}</div>
-              <div className="phone-lock-k">{s.href ? (sel === null ? 'Click to open' : '') : 'Not yet published'}</div>
-            </div>
-            {[...loaded].map((i) => (
-              <div className={`phone-page${reading && sel === i ? '' : ' is-hidden'}`} key={i} aria-hidden={!(reading && sel === i)}>
-                <img src={previewOf(STORIES[i].href)} alt={`${STORIES[i].title} on ${STORIES[i].venue}`} />
+
+      <div className={`sp-panel${open ? ' is-open' : ''}`} aria-hidden={!open}>
+        <button type="button" className="sp-scrim" tabIndex={-1} aria-label="Close preview" onClick={() => setOpen(false)} />
+        <aside className="sp-side" aria-label="Story preview">
+          <button type="button" className="sp-close" onClick={() => setOpen(false)} tabIndex={open ? 0 : -1}>Close ✕</button>
+          <div className="phone">
+            <i className="phone-btn b-action" /><i className="phone-btn b-volup" /><i className="phone-btn b-voldn" /><i className="phone-btn b-power" />
+            <div className="phone-screen">
+              <div className="phone-status" aria-hidden="true">
+                <span>9:41</span>
+                <span className="phone-island"><i className="phone-pill" /></span>
+                <span className="phone-icons">
+                  <svg viewBox="0 0 18 12" width="16" height="11"><path d="M9 11.2l2.4-2.9a3.6 3.6 0 0 0-4.8 0zM4.3 6.6a7 7 0 0 1 9.4 0l1.4-1.7a9.2 9.2 0 0 0-12.2 0zM1.3 3a11.6 11.6 0 0 1 15.4 0L18 1.4A13.6 13.6 0 0 0 0 1.4z" fill="currentColor" /></svg>
+                  <svg viewBox="0 0 27 13" width="24" height="12"><rect x=".5" y=".5" width="23" height="12" rx="3.5" fill="none" stroke="currentColor" opacity=".45" /><rect x="2" y="2" width="18" height="9" rx="2" fill="currentColor" /><path d="M25 4.5v4a2 2 0 0 0 0-4z" fill="currentColor" opacity=".5" /></svg>
+                </span>
               </div>
-            ))}
-            {reading && <a className="phone-cta" href={s.href} target="_blank" rel="noreferrer">Continue reading on {s.venue} ↗</a>}
+              <div className="phone-home" aria-hidden="true" />
+              <div className={`phone-lock${s.href && loaded.has(idx) ? ' is-hidden' : ''}`}>
+                <div className="phone-time">{String(idx + 1).padStart(2, '0')}</div>
+                <StoryArt s={s} w={340} />
+                <div className="phone-lock-t">{s.title}</div>
+                <div className="phone-lock-k">{s.href ? 'Click to open' : 'Not yet published'}</div>
+              </div>
+              {[...loaded].map((i) => (
+                <div className={`phone-page${idx === i ? '' : ' is-hidden'}`} key={i} aria-hidden={idx !== i}>
+                  <img src={previewOf(STORIES[i].href)} alt={`${STORIES[i].title} on ${STORIES[i].venue}`} />
+                </div>
+              ))}
+              {s.href && <a className="phone-cta" href={s.href} target="_blank" rel="noreferrer" tabIndex={open ? 0 : -1}>Continue reading on {s.venue} ↗</a>}
+            </div>
           </div>
-        </div>
-      </aside>
-    </div>
+        </aside>
+      </div>
+    </>
   )
 }
 
@@ -939,7 +1042,7 @@ export default function App() {
         {/* STORIES */}
         <section className="section" id="stories">
           <div className="section-head rv"><h2 className="section-title">Stories</h2><p className="section-lead">Fiction &amp; essays on medicine and humanity.</p></div>
-          <StoriesPhone />
+          <StoriesStage />
           <div className="inprog rv">
             <div className="inprog-k">In progress</div>
             <div className="index-list">

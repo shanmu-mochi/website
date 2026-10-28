@@ -27,10 +27,13 @@ const force = process.argv.includes('--force')
       const res = await page.goto(url, { waitUntil: 'networkidle2', timeout: 45000 })
       if (!res || res.status() >= 400) throw new Error('HTTP ' + (res && res.status()))
       await new Promise((r) => setTimeout(r, 1500))
-      // drop cookie banners / subscribe modals / sticky bars so the article reads cleanly
+      // walk the page so lazy images (the hero) load at their real size, then return to the top
+      await page.evaluate(async () => { for (let y = 0; y < 844 * 4; y += 400) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 250)) } window.scrollTo(0, 0) })
+      await new Promise((r) => setTimeout(r, 1200))
+      // drop cookie banners / subscribe modals / fixed bars (hidden, not made static, so they leave no gap)
       await page.evaluate(() => {
         document.querySelectorAll('[role=dialog],[aria-modal=true],.modal,.cookie-banner,[class*="Cookie"],[class*="paywall"]').forEach((e) => e.remove())
-        document.querySelectorAll('*').forEach((e) => { const p = getComputedStyle(e).position; if (p === 'fixed' || p === 'sticky') e.style.position = 'static' })
+        document.querySelectorAll('body *').forEach((e) => { const p = getComputedStyle(e).position; if (p === 'fixed') e.style.display = 'none'; else if (p === 'sticky') e.style.position = 'relative' })
         document.documentElement.style.overflow = 'auto'; document.body.style.overflow = 'auto'
         window.scrollTo(0, 0)
       })
