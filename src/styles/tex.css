@@ -1,0 +1,75 @@
+/* iteration 16: LaTeX-rendered draft papers (scoped under .tx) */
+.tx .tx-abs p, .tx .tx-body > p, .tx .tx-body .tx-thm p, .tx .tx-body li, .tx .tx-body .tablenotes p { font: 400 18px/1.68 var(--book); color: #161616; hyphens: auto; text-wrap: pretty; margin: 0 0 1.05em; }
+.tx .tx-abs strong { font: 700 13px/1 var(--ui); letter-spacing: .1em; text-transform: uppercase; margin-right: 4px; }
+.tx .tx-body h2, .tx .tx-body h3 { margin: 36px 0 12px; font: 600 18px/1.3 var(--disp); }
+.tx .tx-sn, .tx .tx-n { font: 600 .78em/1 var(--ui); color: var(--mute); margin-right: .6em; font-variant-numeric: tabular-nums; }
+.tx .tx-n { font-size: .62em; vertical-align: .18em; }
+.tx .tx-body ol, .tx .tx-body ul { padding-left: 1.4em; margin: 0 0 1.05em; }
+.tx .tx-body li > p { margin: 0 0 .4em; }
+.tx code { font: 400 .86em/1 ui-monospace, Menlo, monospace; background: #f3f1ec; padding: 1px 4px; border-radius: 2px; overflow-wrap: anywhere; }
+.tx a.tx-fn sup, .tx .citation a, .tx a[href^="#"] { color: inherit; }
+.tx .tx-body a[href^="#"] { border-bottom: 1px solid var(--hair); }
+.tx .tx-body a[href^="#"]:hover { border-color: var(--ink); }
+.tx a.tx-fn { border: 0 !important; }
+.tx a.tx-fn sup { font: 600 .62em/0 var(--ui); color: var(--mute); margin-left: 1px; }
+/* display math: scroll on narrow screens, never overflow the column */
+.tx .tx-eq { display: block; overflow-x: auto; overflow-y: hidden; margin: .4em 0 1.1em; padding: 2px 0; scrollbar-width: thin; }
+.tx .tx-eq .katex-display { margin: .3em 0; }
+.tx .tx-eq .katex-display > .katex { font-size: 1.08em; }
+.tx .tx-m .katex { font-size: 1.04em; }
+/* propositions, assumptions, proofs */
+.tx .tx-thm { margin: 26px 0; padding: 18px 22px 6px; border-left: 3px solid var(--ink); background: #f7f5f0; }
+.tx .tx-thm > p:first-child > strong:first-child { font: 700 13px/1 var(--ui); letter-spacing: .1em; text-transform: uppercase; margin-right: 6px; }
+.tx .tx-proof { background: none; border-left: 1px solid var(--hair); padding: 4px 0 2px 20px; }
+.tx .tx-proof > p:first-child > em:first-child { font: 700 12px/1 var(--ui); letter-spacing: .1em; text-transform: uppercase; font-style: normal; margin-right: 6px; }
+/* tables */
+.tx .tx-table { margin: 34px 0; }
+.tx .tx-table figcaption, .tx .tx-fig figcaption { margin: 12px 0; font: 400 15px/1.55 var(--book); color: #333; }
+.tx .tx-table figcaption b, .tx .tx-fig figcaption b { font: 700 12px/1 var(--ui); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); margin-right: 4px; }
+.tx .tx-scroll { overflow-x: auto; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); }
+.tx .tx-scroll table { border-collapse: collapse; width: 100%; font: 400 14.5px/1.45 var(--book); font-variant-numeric: tabular-nums; }
+.tx .tx-scroll th { font: 600 12px/1.3 var(--ui); letter-spacing: .04em; padding: 9px 10px; border-bottom: 1px solid var(--ink); vertical-align: bottom; }
+.tx .tx-scroll td { padding: 7px 10px; border-bottom: 1px solid #ebe8e1; vertical-align: top; }
+.tx .tx-scroll tr:last-child td { border-bottom: 0; }
+.tx .tx-scroll td:first-child, .tx .tx-scroll th:first-child { white-space: nowrap; }
+.tx .tablenotes { margin-top: 10px; }
+.tx .tx-body .tablenotes p { font-size: 14px; line-height: 1.5; color: #444; }
+/* figures */
+.tx .tx-fig { margin: 34px 0; }
+.tx .tx-fig img { display: block; width: 100%; height: auto; background: #fff; border: 1px solid var(--hair); padding: clamp(6px, 1.2vw, 14px); box-sizing: border-box; }
+.tx-thanks { margin: 22px 0 8px; padding: 18px 24px 6px; border: 1px solid var(--hair); border-left: 3px solid var(--ink); }
+.tx-thanks .wp-p { font-size: 16px; }
+.tx .tx-refs { font: 400 15px/1.55 var(--book); color: #333; overflow-wrap: anywhere; }
+.tx .tx-ref { margin: 0 0 .7em; padding-left: 1.6em; text-indent: -1.6em; }
+.tx .tx-notes code { font-size: .82em; }
+@media (max-width: 640px) {
+  .tx .tx-abs p, .tx .tx-body > p, .tx .tx-body .tx-thm p, .tx .tx-body li { font-size: 17px; }
+  .tx .tx-thm { padding: 14px 14px 4px; margin-left: -4px; margin-right: -4px; }
+  .tx .tx-scroll table { font-size: 13.5px; }
+}
+@media (prefers-reduced-motion: reduce) { .tx .tx-eq { scroll-behavior: auto; } }
+/* iteration 16: page furniture */
+.tx .tx-status{font-family:var(--ui);font-size:13px;color:#444;margin:0 0 18px;padding:8px 0;border-top:1px solid #161616;border-bottom:1px solid #e4e1da}
+.tx .tx-status span{font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:11px;margin-right:8px;color:#161616}
+.tx .tx-source{font-family:var(--ui);font-size:12px;color:#666;margin:6px 0 0}
+.tx .tx-head td.tx-num{white-space:nowrap;font-variant-numeric:tabular-nums}
+.tx .tx-pull{margin:28px 0;padding:4px 0 4px 20px;border-left:2px solid #161616}
+.tx .tx-pull p{font-family:Lora,serif;font-size:22px;line-height:1.35;margin:0}
+.tx .tx-pull cite{display:block;font-family:var(--ui);font-style:normal;font-size:12px;color:#666;margin-top:8px}
+.tx .tx-steps ol{list-style:none;padding:0;margin:8px 0 0;display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid #161616}
+.tx .tx-steps li{padding:12px 14px 12px 0;border-right:1px solid #e4e1da;margin-right:14px}
+.tx .tx-steps li:last-child{border-right:0}
+.tx .tx-step-n{display:block;font-family:var(--ui);font-size:12px;color:#666;letter-spacing:.06em}
+.tx .tx-steps b{font-family:var(--ui);font-size:14px}
+.tx .tx-steps p{font-size:14.5px;line-height:1.5;margin:6px 0 0}
+.tx .tx-limits{margin:28px 0;padding:16px 18px;border:1px solid #161616}
+.tx .tx-limits ul{margin:6px 0 0;padding-left:18px}
+.tx .tx-limits li{margin:6px 0;line-height:1.55}
+.tx .tx-chart-in{overflow-x:auto}
+.tx .tx-svg{width:100%;min-width:480px;height:auto;display:block}
+@media (max-width:720px){.tx .tx-steps ol{grid-template-columns:1fr 1fr}.tx .tx-steps li:nth-child(2){border-right:0}.tx .tx-pull p{font-size:19px}}
+.tx .tx-head table{width:100%;table-layout:fixed}
+.tx .tx-head th:nth-child(1){width:50%}.tx .tx-head th:nth-child(2){width:20%}.tx .tx-head th:nth-child(3){width:30%}
+.tx .tx-head td{white-space:normal;vertical-align:top}
+@media (max-width:720px){.tx .tx-head table{table-layout:auto;min-width:560px}}
+.tx .tx-svg-narrow{min-width:0}

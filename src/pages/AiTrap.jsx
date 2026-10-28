@@ -81,7 +81,7 @@ export default function AiTrap() {
         />
 
         <article className="pp-art">
-          <Sec id="question" title="The question" sub="Not whether AI replaces clinicians. What happens to the money while it does not.">
+          <Sec id="question" title="The question" sub="What happens to the money that funds complex care when AI takes the routine cases.">
             <P>
               In 2016 a prominent computer scientist advised that we stop training radiologists. A decade on the workforce has grown,
               vacancies number in the thousands, and pay has risen. Nearly all of AI&rsquo;s measured value in medicine so far is
@@ -105,7 +105,7 @@ export default function AiTrap() {
             </P>
           </Sec>
 
-          <Sec id="panel" title="How a panel pays for itself" sub="One flat price against a cost that climbs. Everything follows from that.">
+          <Sec id="panel" title="How a panel pays for itself" sub="A flat fee per patient against a cost that rises with complexity.">
             <Aside label="Notation" title="What the frontier θ means">
               <p>
                 Encounters are indexed from 0 to 1 by complexity. θ is the point up to which AI is safe and adequate, so it is the share of
@@ -167,7 +167,7 @@ export default function AiTrap() {
             />
           </Sec>
 
-          <Sec id="cliff" title="Where the loss lands" sub="Nothing is destroyed until something breaks. Then a lot is, at once.">
+          <Sec id="cliff" title="Where the loss lands" sub="The pool holds until the average cost passes the fee, then unravels.">
             <P>
               Up to that point every encounter is still served by the cheapest adequate provider, and total welfare is unchanged.
               Skimming is purely a transfer: entrants capture rents that used to fund complex care. After it, incumbents exit and the
@@ -224,7 +224,7 @@ export default function AiTrap() {
             </P>
           </Sec>
 
-          <Sec id="falsify" title="How you would know" sub="Four signatures that show up on the climb, none of which need a job to disappear.">
+          <Sec id="falsify" title="How you would know" sub="Four signatures the model predicts, observable before any job disappears.">
             <List
               ordered
               items={[

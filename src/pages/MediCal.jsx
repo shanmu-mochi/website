@@ -119,7 +119,7 @@ export default function MediCal() {
             </Cap>
           </Sec>
 
-          <Sec id="damage" title="What it does to people" sub="Worse on every dimension that was measured.">
+          <Sec id="damage" title="What it does to people" sub="Preventable admissions, emergency walk-outs and deaths, desert counties against the rest.">
             <P>
               Desert counties run 48.6 more preventable hospital admissions per 100,000 enrollees, a rate 37% higher (p = 0.003). Desert
               status alone explains 14% of the variation across all 58 counties.
@@ -153,7 +153,7 @@ export default function MediCal() {
             </Cap>
           </Sec>
 
-          <Sec id="depth" title="Through the door, and then not much further" sub="The most clinically revealing result in the paper.">
+          <Sec id="depth" title="Through the door, and then not much further" sub="Service use per enrollee once patients reach care.">
             <P>
               Desert patients actually have slightly more primary care visits than everyone else. What they do not get is what a visit is
               supposed to lead to.
@@ -173,7 +173,7 @@ export default function MediCal() {
             </Cap>
           </Sec>
 
-          <Sec id="cycle" title="Why it persists" sub="Not a shortage of will or of coverage. A loop that closes on itself.">
+          <Sec id="cycle" title="Why it persists" sub="Low payment, thin hospital finances and short supply, and how each feeds the next.">
             <P>
               High enrollment means low reimbursement, which means fewer doctors, which means hospitals with that payer mix lose money,
               which means no specialists, which makes the primary care that exists less effective, which pushes patients into emergency

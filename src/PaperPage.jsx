@@ -1,21 +1,23 @@
 /* A publication opened as a white paper. Three sources, all from the repo:
    1. the two hand-built papers (AI Trap, Medi-Cal) mounted in place,
    2. the four medRxiv PDFs, extracted to paperDocs.json + figure crops by a script,
-   3. everything else: a typeset partial page with what we hold and a link to the full paper. */
+   3. the three drafts (iteration 16), rendered from main.tex -> texDocs/<slug>.json (components/paper/TexBody.jsx),
+   4. everything else: a typeset partial page with what we hold and a link to the full paper. */
 import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
+import { useSpy, useReveal, sentences } from './lib/wpHooks.js'
 
 const EMBED = {
   'healthcares-ai-trap': lazy(() => import('./pages/AiTrap.jsx')),
   'mapping-medi-cal-deserts-in-california': lazy(() => import('./pages/MediCal.jsx')),
 }
 let DOCS = null
+const TexBody = lazy(() => import('./components/paper/TexBody.jsx'))
 const loadDocs = () => DOCS || (DOCS = import('./data/paperDocs.json').then((m) => m.default))
 
 const plain = (x) => x.runs.map((r) => r[1]).join('')
 function Runs({ runs }) {
   return runs.map(([k, t], n) => k === 'b' ? <strong key={n}>{t}</strong> : k === 'i' ? <em key={n}>{t}</em> : k === 'sup' ? <sup key={n}>{t}</sup> : <React.Fragment key={n}>{t}</React.Fragment>)
 }
-const sentences = (s) => s.split(/(?<!\b[A-Z]\.)(?<=[.;])\s+(?=[A-Z(])/).map((x) => x.trim()).filter(Boolean)
 
 function shape(flow) {
   const abstract = [], secs = []
@@ -35,20 +37,6 @@ function shape(flow) {
   return { parts, secs }
 }
 
-function useSpy(ids) {
-  const [on, setOn] = useState(ids[0])
-  useEffect(() => {
-    const pick = () => {
-      let a = ids[0]
-      for (const id of ids) { const el = document.getElementById(id); if (el && el.getBoundingClientRect().top < window.innerHeight * 0.3) a = id }
-      setOn(a)
-    }
-    pick()
-    window.addEventListener('scroll', pick, { passive: true })
-    return () => window.removeEventListener('scroll', pick)
-  }, [ids])
-  return on
-}
 function Progress() {
   const ref = useRef(null)
   useEffect(() => {
@@ -61,16 +49,6 @@ function Progress() {
   }, [])
   return <div className="wp-progress" aria-hidden="true"><i ref={ref} /></div>
 }
-// subtle reveal as blocks enter; nothing moves with reduced motion (CSS)
-function useReveal(root, dep) {
-  useEffect(() => {
-    const el = root.current
-    if (!el || !('IntersectionObserver' in window)) return
-    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target) } }), { rootMargin: '0px 0px -8% 0px' })
-    el.querySelectorAll('.wp-rv').forEach((n) => io.observe(n))
-    return () => io.disconnect()
-  }, [root, dep])
-}
 const jump = (e) => {
   const a = e.target.closest && e.target.closest('a[href^="#"]')
   if (!a) return
@@ -82,7 +60,7 @@ const jump = (e) => {
   t.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
 }
 
-function Toc({ secs, on }) {
+export function Toc({ secs, on }) {
   return (
     <nav className="wp-toc" aria-label="Contents">
       <p className="wp-label">Contents</p>
@@ -214,15 +192,16 @@ function Embedded({ slug }) {
 
 
 export default function PaperPage({ it, top, cover, nav, honors }) {
-  const kind = EMBED[it.slug] ? 'embed' : it.pdfDoc ? 'pdf' : 'partial'
+  const kind = EMBED[it.slug] ? 'embed' : it.tex ? 'tex' : it.pdfDoc ? 'pdf' : 'partial'
   const stat = (it.line || '').match(/(\d{1,3}(?:,\d{3})+)[- ]patient/)
   const links = [
     it.pdf && { label: 'PDF', href: it.pdf },
-    it.href && it.href.endsWith('.pdf') && { label: 'PDF', href: it.href },
+    ...(it.supp || []).map((x) => ({ label: x.label, href: x.href })),
+    it.href && it.href !== it.pdf && it.href.endsWith('.pdf') && { label: 'PDF', href: it.href },
     !it.pdf && !(it.href && it.href.endsWith('.pdf')) && it.href && { label: it.doi ? 'Full paper' : 'Read', href: it.href },
   ].filter(Boolean)
   return (
-    <article className={`pg wp wp-${kind}`} onClickCapture={kind === 'pdf' ? jump : undefined}>
+    <article className={`pg wp wp-${kind}`} onClickCapture={kind === 'pdf' || kind === 'tex' ? jump : undefined}>
       <Progress />
       {top}
       <header className="wp-head">
@@ -234,6 +213,9 @@ export default function PaperPage({ it, top, cover, nav, honors }) {
           <dl className="wp-facts">
             {it.authors && <div><dt>Authors</dt><dd>{it.authors}</dd></div>}
             {(it.venueFull || it.cover) && <div><dt>Venue</dt><dd>{(it.ab && it.ab.cite) || it.venueFull || it.cover}</dd></div>}
+            {it.affil && <div><dt>Affiliation</dt><dd>{it.affil}</dd></div>}
+            {it.date && <div><dt>Date</dt><dd>{it.date}</dd></div>}
+            {it.status && <div><dt>Status</dt><dd>{it.status}</dd></div>}
             {it.doi && <div><dt>DOI</dt><dd><a href={`https://doi.org/${it.doi}`} target="_blank" rel="noreferrer">{it.doi}</a></dd></div>}
           </dl>
           {honors}
@@ -241,7 +223,7 @@ export default function PaperPage({ it, top, cover, nav, honors }) {
           {links.length > 0 && <p className="wp-links">{links.map((l) => <a key={l.label} href={l.href} target="_blank" rel="noreferrer">{l.label} <b aria-hidden="true">↗</b></a>)}</p>}
         </div>
       </header>
-      {kind === 'embed' ? <Embedded slug={it.slug} /> : kind === 'pdf' ? <PdfBody slug={it.slug} it={it} /> : <Partial it={it} />}
+      {kind === 'embed' ? <Embedded slug={it.slug} /> : kind === 'tex' ? <Suspense fallback={<div className="wp-loading" aria-busy="true" />}><TexBody tex={it.tex} /></Suspense> : kind === 'pdf' ? <PdfBody slug={it.slug} it={it} /> : <Partial it={it} />}
       {nav}
     </article>
   )

@@ -174,9 +174,27 @@ export const STORY_PAINTING = {
 }
 
 const WHITE_PAPERS = [
-  { title: 'Healthcare’s AI Trap', sub: 'When automation skims the cream and starves the pipeline at once.', authors: 'Shanmugesh Raja, MS', href: '/papers/ai-trap', doi: '10.2139/ssrn.7119078', pdf: '/papers/healthcares-ai-trap.pdf', kindLabel: 'White paper', venue: 'Economics' },
+  { title: 'Healthcare’s AI Trap', sub: 'AI automates them first, severing both supports at once.', authors: 'Shanmugesh Raja, MS', href: '/papers/ai-trap', doi: '10.2139/ssrn.7119078', pdf: '/papers/healthcares-ai-trap.pdf', kindLabel: 'White paper', venue: 'Economics' },
   { title: 'Mapping Medi-Cal Deserts in California', sub: 'Provider shortages, preventable hospitalizations, and the limits of workforce policy in Medi-Cal: an empirical study of California’s 58 counties, with five causal identification strategies and a portfolio policy response.', authors: 'Shanmugesh Raja', href: '/papers/medi-cal-deserts', pdf: '/papers/medi-cal-deserts.pdf', kindLabel: 'White paper · Master’s Thesis', venue: 'UCSF · Health Policy & Law · April 2026' },
 ]
+
+// iteration 16: three drafts rendered from their own main.tex (scripts/build-texpapers.py -> src/data/texDocs/).
+// Every string below is quoted or condensed from that paper's abstract/title block; nothing added.
+const TEX_PAPERS = [
+  { tex: 'cwm-cardiometabolic', title: 'Third-Party Cardiometabolic Outcomes in a GLP-1 Telehealth Cohort', authors: 'Shanmu Raja, MS', affil: 'Mochi Health',
+    excerpt: 'With member consent we linked a U.S. telehealth obesity program to outside clinical records.',
+    finding: 'Across the full diagnosed groups, systolic blood pressure fell 4.85 mmHg among 16,008 members with hypertension; these are paired changes, not causal effect estimates.',
+    n: '49,896 paired of 417,307 members', date: '21 October 2026' },
+  { tex: 'scheduled-jumps-fda', title: 'Scheduled Jumps: Recovering the Option-Implied Probability of FDA Approval', authors: 'Shanmu Raja, MS',
+    excerpt: 'The options that trade into the decision carry the market’s probability that the drug is approved.',
+    finding: 'All eight pending FDA decisions with a clear signal price the chance of approval below one-half, between 0.08 and 0.36.',
+    n: '21 pending decisions; 8 with signal', date: '19 October 2026',
+    supp: [{ label: 'Worked problem (PDF)', href: '/papers/scheduled-jumps-fda/worked_problem.pdf' }, { label: 'Derivations (PDF)', href: '/papers/scheduled-jumps-fda/derivations.pdf' }] },
+  { tex: 'ai-human-care', title: 'The Doctor Will See You Now: Stakes, Verifiability, and the Supervision of Clinical AI', authors: 'Shanmu Raja, MS',
+    excerpt: 'Which rung a decision belongs on is set by two properties of the decision, not by the technology.',
+    finding: 'The task to automate first is the verifiable one, not the low-stakes one.',
+    n: 'Theory paper', date: '18 October 2026' },
+].map((p) => ({ ...p, kindLabel: 'Working paper', venue: 'Draft', status: 'Draft', sub: p.excerpt, pdf: `/papers/${p.tex}/main.pdf` }))
 
 const BADGE_LABEL = { 'Pub.': 'Peer-reviewed', PDF: 'Preprint', WIP: 'Work in progress' }
 
@@ -221,7 +239,7 @@ const prose = STORIES.map((s) => {
     meta: [['Kind', s.kind.replace(' · ', ', ')], ['Venue', s.venue], ['Published', s.published], ['Painting', creditText(src)]],
   }
 })
-const pubs = [...PAPERS.map((p) => ({ ...p, kindLabel: BADGE_LABEL[p.badge] || p.badge })), ...WHITE_PAPERS].map((p) => {
+const pubs = [...PAPERS.map((p) => ({ ...p, kindLabel: BADGE_LABEL[p.badge] || p.badge })), ...WHITE_PAPERS, ...TEX_PAPERS].map((p) => {
   const href = p.href ? p.href.replace(/^\/papers\/(ai-trap|medi-cal-deserts)$/, '/papers/$1.html') : p.doi ? `https://doi.org/${p.doi}` : null
   return {
     cat: 'publications', slug: slugify(p.title), title: p.title, src: null, kind: p.kindLabel,
@@ -232,9 +250,12 @@ const pubs = [...PAPERS.map((p) => ({ ...p, kindLabel: BADGE_LABEL[p.badge] || p
     finding: (FINDINGS[p.title] || ABSTRACTS[p.title] || {}).finding || '', n: (FINDINGS[p.title] || ABSTRACTS[p.title] || {}).n || '',
     ab: ABSTRACTS[p.title] || null, excerpt: (ABSTRACTS[p.title] || {}).excerpt || '',
     href, cta: !href ? 'In preparation' : p.href && p.href.endsWith('.pdf') ? 'Open the PDF' : p.href ? 'Read the white paper' : `Read via DOI`,
+    ...(p.tex ? { tex: p.tex, affil: p.affil, date: p.date, status: p.status, supp: p.supp, finding: p.finding, n: p.n, excerpt: p.excerpt, venueFull: null, href: p.pdf, cta: 'Read the paper' } : {}),
     meta: [['Kind', p.kindLabel], ['Authors', p.authors], ['Venue', (ABSTRACTS[p.title] || {}).journal || p.doiVia || p.venue], ['DOI', p.doi]],
   }
 })
+// wheel meta stays two rows (Kind, Authors + affiliation) so it clears the card stack; date and status are on the card back and the page
+pubs.forEach((x) => { if (x.tex) x.meta = x.meta.filter(([k]) => k === 'Kind' || k === 'Authors').map(([k, v]) => [k, k === 'Authors' && x.affil ? `${v} · ${x.affil}` : v]) })
 const luck = AWARDS.map((a) => {
   const st = a.story && prose.find((x) => x.title === a.story)
   const pp = a.paper && pubs.find((x) => x.title === a.paper)

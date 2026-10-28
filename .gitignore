@@ -25,3 +25,4 @@ dist-ssr
 _shot.cjs
 # generated WebP variants (npm run paintings / prebuild) — sources live in paintings-src/
 public/paintings/
+scripts/__pycache__/

@@ -184,7 +184,7 @@ function backOf(it) {
     const body = it.finding || (it.line && it.line !== it.venueFull ? it.line : '')
     return {
       label: it.finding ? 'Main finding' : it.kind || 'Paper', body,
-      rows: [['N', it.n], ['Venue', (it.ab && it.ab.cite) || it.venueFull || metaOf(it, 'Venue')], ['DOI', it.doi], ['PDF', fileOf(it.pdfPath)], ['PubMed', it.ab && it.ab.pmid ? `PMID ${it.ab.pmid}` : ''], ['Status', it.ab && it.ab.wip ? 'In preparation' : ''], ['Recognition', metaOf(it, 'Recognition')]],
+      rows: [['N', it.n], ['Venue', (it.ab && it.ab.cite) || it.venueFull || metaOf(it, 'Venue')], ['DOI', it.doi], ['Date', it.date], ['Status', it.status || ''], ['PDF', fileOf(it.pdfPath)], ['PubMed', it.ab && it.ab.pmid ? `PMID ${it.ab.pmid}` : ''], ['Status', it.ab && it.ab.wip ? 'In preparation' : ''], ['Recognition', metaOf(it, 'Recognition')]],
     }
   }
   return {
