@@ -446,3 +446,15 @@ a.pg-cta-a:hover b { transform: translate(3px, -3px); }
 .pg-related a { color: var(--ink); border-bottom: 1px solid var(--hair); transition: border-color .25s; }
 .pg-related a:hover, .pg-related a:focus-visible { border-color: var(--ink); }
 .pg-related em { font-style: normal; color: var(--mute); font-size: 14px; }
+
+/* iteration 13: "ART THAT I LOVE" nav item — set small and tracked so it sits like the others */
+.sn-nav a[href="#/paintings"] .h-cat-l { font-size: .82em; letter-spacing: .06em; white-space: nowrap; }
+.sn-nav a { white-space: nowrap; }
+@media (max-width: 760px) {
+  .sn { grid-template-columns: auto auto; justify-content: space-between; padding: 16px 14px 0; column-gap: 8px; }
+  .sn-nav.sn-l, .sn-nav.sn-r { gap: 10px; }
+  .sn-nav a[href="#/paintings"] .h-cat-l { font-size: .74em; letter-spacing: .03em; }
+}
+@media (max-width: 370px) { .sn-nav a { font-size: 11px; } .sn-nav.sn-l, .sn-nav.sn-r { gap: 8px; } }
+@media (max-width: 760px) { .sn-nav.sn-r { gap: 14px; } }
+@media (max-width: 370px) { .sn-nav.sn-r { gap: 10px; } }

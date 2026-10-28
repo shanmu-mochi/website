@@ -292,7 +292,7 @@ function SiteNav({ go, active, className = '', onHover }) {
         {CATS.map((c) => item(c.id, c.label, { view: 'browse', cat: c.id }, c.items.length))}
       </nav>
       <nav className="sn-nav sn-r h-nav" aria-label="Pages">
-        {item('paintings', 'Paintings', { view: 'paintings' })}
+        {item('paintings', 'ART THAT I LOVE', { view: 'paintings' })}
         {item('about', 'About', { view: 'about' })}
       </nav>
     </header>
@@ -696,7 +696,7 @@ function Paintings({ go }) {
   return (
     <article className="pg pg-paint">
       <PageTop back={() => go({ view: 'browse', cat: lastCat.current })} backLabel="Back" go={go} active="paintings" right={`${PAINTINGS.length} paintings`} />
-      <div className="pg-head"><h1 className="pg-title"><span>Paintings</span></h1><hr className="pg-rule" /></div>
+      <div className="pg-head"><h1 className="pg-title"><span>ART THAT I LOVE</span></h1><hr className="pg-rule" /></div>
       <ul className="pt-grid">
         {PAINTINGS.map((s, n) => (
           <li key={s} style={{ '--n': Math.min(n, 12) }}><div style={{ aspectRatio: String(aspectOf(s)), background: placeholderOf(s) }}><img src={variantFor(s, 480)} alt={META[s].title} loading="lazy" decoding="async" /></div><span>{creditText(s)}</span></li>

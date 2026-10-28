@@ -122,3 +122,7 @@ seamlessly into its spot on the page; fix details, smoothness and nav.
   - luck: event, related piece and painting.
 - **Hover ring:** on non-prose cards the ring is about 0.34 of the card width, follows the pointer and is clamped inside the card.
 - **QA:** screenshots and contact sheets are in `/workspace/redesign-shots-v12/`. No page errors. Lint is at 9.
+
+## Iteration 13
+
+- Renamed the "Paintings" nav item and the page heading to "ART THAT I LOVE" (uppercase, set slightly smaller and tracked so it fits the header). The route stays `#/paintings`. The "Painting" credit label on piece pages is unchanged. On mobile the header gaps and padding are tightened so it fits at 390. Screenshots are in `/workspace/redesign-shots-v13/`.
