@@ -156,4 +156,4 @@ seamlessly into its spot on the page; fix details, smoothness and nav.
 - Native SVG charts from the papers' own data files: Chart A (q̂ for the 8 decisions, from data/live_implied_q.json, values checked against Table 1) and Chart B (paired changes, from data/table_full_population.csv, drawn as percent of the before value). Every figure and table carries a Source line.
 - Slop audit of the text we wrote: AI Trap card sub-line replaced with an abstract sentence; seven section sub-lines on AiTrap/MediCal rewritten plainly. Authors' abstracts not touched.
 - The wheel meta for new papers is two rows (Kind, Authors · affiliation) so it clears the card stack. The duplicate PDF link is removed.
-- QA: /workspace/redesign-shots-v16/ (1440, 1280, 390; card front/back and pages). No page errors, no horizontal overflow. Lint is at 9.
+- QA: /workspace/redesign-shots-v16/ (1440, 1280, 390; card front/back, pages, sheet-*.png, chart crops). No page errors, no horizontal overflow. Lint is at 9. dist 96,708,924 → 100,231,138 bytes (+3.52 MB, mostly the PDFs, webp figures and texDocs JSON).
