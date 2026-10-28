@@ -182,3 +182,12 @@ Built on iteration 16 (A24 system kept: tilted plates, expanded pages, white pap
 - **QA** (Puppeteer, 1440): all of these PASS — wheel ±x/±y, trackpad bursts both ways, 6 rapid notches = +6, keys, drag both ways, nav jumps ×4, Index jumps, wheeling up from Paintings into Luck, open then Back restoring the index, About → Deep Dives, and wheeling all the way back to piece 1. No page errors. 390 scrollWidth = 390. Lint 9 (5/4).
 - **Not tested:** touch or swipe (synthetic touch doesn't work headless).
 - **Remaining differences from A24:** plates are flat rectangles, not discs; the first screen shows about 2 plates because Prose 1 has nothing to its left; the bottom slot is one line, not two review quotes; the opening is the iteration-18 name flight, re-used.
+
+## Iteration 20
+
+- Home: one section at a time with a vertical section transition; wheel/drag/keys past the end of a section move to the next one, and momentum tails are swallowed. The order is Prose → Publications → Deep Dives → Luck. At the end of Luck the scroll stops with a nudge and shows an "ART THAT I LOVE →" link instead of jumping to another kind of page.
+- ART moved to the nav (#/art). The Index block and the About BIO lead line are gone (the other bio paragraphs are kept). The first line is always shown, including on mobile.
+- Handwriting font: Caveat 500 replaces Pinyon Script (OFL, self-hosted). The pen ring and underline were redrawn as variable-width filled strokes with a mask reveal.
+- Story page (A24 film-page style): title, then the real first line written in Caveat below it. The painting opens out to the full width as you scroll; reduced motion keeps it static. Then the painting and its credit, the details (kind/venue/published), a double-ruled "Read on …" link, and previous/next.
+- The opening paragraph and pull line come from src/storyTeasers.js, which is empty on purpose, so neither section shows yet. The painting note comes from src/pieceNotes.js, which is also empty.
+- Gaps: no story has an opening paragraph or pull line in the repo. Fugue State has no first line and no link. Burnt Red Tongues, Sound and the Fury, Birds Do Not Sing in Caves and Fugue State have no publication date.

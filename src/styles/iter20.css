@@ -1,0 +1,55 @@
+/* iteration 20 */
+/* A) the title block always sits clearly below the bar */
+.h-info { top: 92px; }
+@media (max-width: 1380px) and (min-width: 761px) { .h-info { top: 92px; } }
+@media (max-width: 760px) { .h-info { top: 104px; } }
+
+/* H) the story's first line, quiet Lora under the row, never animated */
+.h-quote { font: italic 400 17px/1.4 var(--book) !important; text-transform: none !important; letter-spacing: 0 !important; transform: none !important; }
+.h-quote.is-on { transition: opacity .5s var(--glide); }
+
+/* the end of the vertical run */
+.h-end { position: absolute; right: 26px; bottom: 74px; z-index: 4; font: 500 13px/1 var(--disp); letter-spacing: .14em; color: #111; text-decoration: none;
+  border-bottom: 1px solid currentColor; padding-bottom: 4px; opacity: 0; transition: opacity .5s var(--glide); pointer-events: none; }
+.h-end.is-on { opacity: 1; pointer-events: auto; }
+@media (max-width: 760px) { .h-end { right: 16px; bottom: 64px; } }
+
+/* E) handwriting: Caveat, written in word by word with a pen-speed clip sweep */
+.ab-epi-1 { font: 500 clamp(30px, 3vw, 42px)/1.2 'Caveat', var(--book) !important; }
+
+/* F) the pen */
+.scr.pen path { stroke: none; animation: none; transition: none; stroke-dasharray: none; }
+.pen .pen-a { fill: #111; }
+.pen .pen-b { fill: #111; opacity: .35; }
+svg.scr.pen path.pen-m { fill: none; stroke: #fff; stroke-width: 14; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+svg.scr.pen.scr-line path.pen-m { stroke-width: 10; }
+.pen.is-on .pen-m { animation: penDraw .7s cubic-bezier(.45, .05, .3, 1) both; }
+@keyframes penDraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .pen.is-on .pen-m { animation: none; stroke-dashoffset: 0; } }
+.scr.pen { opacity: 0; transition: opacity .3s var(--glide); }
+.scr.pen.is-on { opacity: 1; transition: none; }
+@media (max-width: 760px) { .h-quote { display: -webkit-box !important; bottom: 118px; width: 86vw; margin-left: -43vw; font-size: 15px !important; -webkit-line-clamp: 2; } }
+
+/* story page (A24 film-page style) */
+.pg-story .pg-head { margin-bottom: 26px; }
+.st-first { margin: 18px auto 0; max-width: 760px; text-align: center; font: 500 clamp(26px, 2.6vw, 36px)/1.25 'Caveat', var(--book); color: #111; text-wrap: balance; }
+.st-bleed { position: relative; left: 50%; width: 100vw; margin-left: -50vw; display: flex; justify-content: center; }
+.st-art { margin: 0; max-width: none; }
+.st-art img { object-fit: cover; }
+.st-open { max-width: 680px; margin: 80px auto 0; padding: 0 20px; }
+.st-open p { font: 400 21px/1.7 var(--book); margin: 0; }
+.st-pull { max-width: 980px; margin: 90px auto 0; padding: 0 20px; text-align: center; }
+.st-pull p { font: italic 400 clamp(30px, 4vw, 54px)/1.18 var(--book); margin: 0; text-wrap: balance; }
+.st-paint { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 36px; align-items: end; max-width: 980px; margin: 100px auto 0; border-top: 1px solid var(--ink); padding-top: 22px; }
+.st-paint img { width: 100%; display: block; }
+.st-paint h2, .st-details h2 { font: 600 12px/1 var(--ui); letter-spacing: .08em; text-transform: uppercase; margin: 0 0 12px; }
+.st-credit { font: 400 20px/1.45 var(--book); margin: 0; }
+.st-note { font: 400 17px/1.6 var(--book); margin: 14px 0 0; }
+.st-details { max-width: 980px; margin: 80px auto 0; }
+.st-cta { max-width: 980px; margin: 60px auto 0; }
+@media (max-width: 760px) {
+  .st-paint { grid-template-columns: 1fr; gap: 18px; margin-top: 70px; }
+  .st-paint img { max-width: 260px; }
+  .st-open { margin-top: 56px; } .st-open p { font-size: 18px; }
+  .st-details, .st-cta { margin-top: 56px; }
+}

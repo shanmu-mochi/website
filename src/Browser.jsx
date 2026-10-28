@@ -10,13 +10,14 @@ import { CATS, META, PAINTINGS, SOCIALS, SELECTED_ITEMS, variantFor, aspectOf, p
 import NOTES from './pieceNotes'
 import PaperPage from './PaperPage'
 import OPENING from './opening'
+import TEASERS from './storyTeasers'
 import Gallery, { GLIDE, imageTexture, texture, plateSize, SECTIONS } from './gallery/Gallery'
 import './styles/globals.css'
 import './styles/a24.css'
 import './styles/iter18.css'
 import './styles/iter19.css'
+import './styles/iter20.css'
 
-const BIO = 'I’m a writer who works in medicine, or a medical person who writes. The order keeps changing.'
 const norm = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '')
 const pad2 = (n) => String(n).padStart(2, '0')
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -26,7 +27,7 @@ const isTouch = () => window.matchMedia('(max-width: 720px), (pointer: coarse)')
 const PAINT_ITEMS = PAINTINGS.map((src) => ({ cat: 'paintings', slug: src.replace(/\.[a-z]+$/, ''), src, title: META[src].title, kind: 'Painting', line: '',
   meta: [['Artist', META[src].artist], ['Year', META[src].year]] }))
 const PAINT_CAT = { id: 'paintings', label: 'ART THAT I LOVE', items: PAINT_ITEMS }
-const SEC_ORDER = ['prose', 'publications', 'deep', 'luck', 'paintings']
+const SEC_ORDER = ['prose', 'publications', 'deep', 'luck']   // iteration 20: ART THAT I LOVE is its own static page again
 const catOf0 = (id) => (id === 'paintings' ? PAINT_CAT : CATS.find((c) => c.id === id) || CATS[0])
 const ROW = SEC_ORDER.flatMap((c) => catOf0(c).items.map((it) => ({ ...it, rowCat: c })))
 const SEC_START = {}; SEC_ORDER.forEach((c) => { SEC_START[c] = ROW.findIndex((x) => x.rowCat === c) })
@@ -61,8 +62,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 function parse(h) {
   const p = (h || '').replace(/^#\/?/, '').split('/').filter(Boolean)
   if (p[0] === 'about') return { view: 'about' }
-  if (p[0] === 'art') return { view: 'paintings' }
-  const cat = CATS.some((c) => c.id === p[0]) || p[0] === 'paintings' ? p[0] : 'home'
+  if (p[0] === 'art' || p[0] === 'paintings') return { view: 'paintings' }
+  const cat = CATS.some((c) => c.id === p[0]) ? p[0] : 'home'
   if (p[1]) {
     const i = catOf(cat).items.findIndex((x) => x.slug === p[1])
     if (i >= 0) return { view: 'piece', cat, i }
@@ -264,69 +265,99 @@ const rectOfEl = (el) => { const b = el.getBoundingClientRect(); return { x: b.l
 const decoded = (img) => img && img.decode ? Promise.race([img.decode().catch(() => {}), wait(1200)]) : Promise.resolve()
 const frames = (n = 2) => new Promise((r) => { const f = (k) => (k ? requestAnimationFrame(() => f(k - 1)) : r()); f(n) })
 
-function scribblePath(w, h, seed) {
-  let s = seed * 9301 + 49297
-  const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280 }
-  const cx = w / 2, cy = h / 2, rx = w / 2, ry = h / 2, n = 24
-  const turns = 1.14, a0 = -Math.PI * 0.62 + rnd() * 0.3
+/* iteration 20: a real pen. The centreline is drawn in by a stroke-dash mask; what shows is a filled
+   variable-width outline (pressure swells mid-stroke, tapers at both ends), a fainter second pass a hair
+   off the first, and a rough-ink displacement filter. The shape is fixed per draw (`base`); the live
+   jitter only nudges it by a fraction of a pixel. */
+const prng = (seed) => { let s = (seed * 9301 + 49297) % 233280; return () => { s = (s * 9301 + 49297) % 233280; return s / 233280 } }
+const fmt = (v) => v.toFixed(1)
+function outline(pts, wmax, rnd) {
+  const n = pts.length, L = [], R = []
+  const ph = rnd() * 6.28
+  for (let k = 0; k < n; k += 1) {
+    const t = k / (n - 1), [x, y] = pts[k]
+    const [ax, ay] = pts[Math.max(0, k - 1)], [bx, by] = pts[Math.min(n - 1, k + 1)]
+    let nx = -(by - ay), ny = bx - ax; const m = Math.hypot(nx, ny) || 1; nx /= m; ny /= m
+    // pressure: quick press-in, long body with slow swells, quicker lift-off
+    const taper = Math.min(1, t / 0.12) ** 0.8 * Math.min(1, (1 - t) / 0.2) ** 1.1
+    const w = wmax * (0.22 + 0.78 * taper) * (0.82 + 0.18 * Math.sin(t * 9 + ph)) / 2
+    L.push([x + nx * w, y + ny * w]); R.push([x - nx * w, y - ny * w])
+  }
+  const all = L.concat(R.reverse())
+  let d = `M${fmt(all[0][0])} ${fmt(all[0][1])}`
+  for (let k = 1; k < all.length - 1; k += 1) { const [x, y] = all[k], [nx, ny] = all[k + 1]; d += ` Q${fmt(x)} ${fmt(y)} ${fmt((x + nx) / 2)} ${fmt((y + ny) / 2)}` }
+  return d + 'Z'
+}
+const centre = (pts) => { let d = `M${fmt(pts[0][0])} ${fmt(pts[0][1])}`; for (let k = 1; k < pts.length; k += 1) d += ` L${fmt(pts[k][0])} ${fmt(pts[k][1])}`; return d }
+function ringPts(W, H, base, seed) {
+  const r = prng(base), j = prng(seed + 7)
+  const cx = W / 2, cy = H / 2, rx = W / 2 * 0.94, ry = H / 2 * 0.92, n = 64
+  // an open loop: starts upper left, runs a little past a full turn, spiralling out so it never closes
+  const a0 = -Math.PI * (0.7 + r() * 0.15), turns = 1.06 + r() * 0.06, tilt = (r() - 0.5) * 0.08
+  const f1 = r() * 6.28, f2 = r() * 6.28, out = 0.045 + r() * 0.03
   const pts = []
-  for (let k = 0; k <= n; k += 1) {
-    const t = k / n, a = a0 + t * Math.PI * 2 * turns, j = 1 + (rnd() - 0.5) * 0.05 + (t > 1 / turns ? 0.035 : 0)
-    pts.push([cx + Math.cos(a) * rx * j, cy + Math.sin(a) * ry * j])
+  for (let k = 0; k < n; k += 1) {
+    const t = k / (n - 1), a = a0 + t * Math.PI * 2 * turns
+    const wob = 1 + 0.022 * Math.sin(a * 2 + f1) + 0.012 * Math.sin(a * 5 + f2) + (t - 0.5) * out + (j() - 0.5) * 0.006
+    const x = Math.cos(a) * rx * wob, y = Math.sin(a) * ry * wob
+    pts.push([cx + x * Math.cos(tilt) - y * Math.sin(tilt), cy + x * Math.sin(tilt) + y * Math.cos(tilt)])
   }
-  let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`
-  for (let k = 1; k < pts.length - 1; k += 1) {
-    const [x, y] = pts[k], [nx, ny] = pts[k + 1]
-    d += ` Q${x.toFixed(1)} ${y.toFixed(1)} ${((x + nx) / 2).toFixed(1)} ${((y + ny) / 2).toFixed(1)}`
-  }
-  return d
+  return pts
+}
+function linePts(W, H, base, seed) {
+  const r = prng(base), j = prng(seed + 3), n = 28, y0 = H * 0.55, rise = 1 + r() * 1.4, f = r() * 6.28, pts = []
+  for (let k = 0; k < n; k += 1) { const t = k / (n - 1); pts.push([2 + t * (W - 4), y0 - t * rise + Math.sin(t * 5 + f) * 0.6 + (j() - 0.5) * 0.25 + (t > 0.9 ? (t - 0.9) * 8 : 0)]) }
+  return pts
+}
+let penIds = 0
+function Pen({ W, H, pts, pts2, wmax, on, pass, className, style }) {
+  const id = useRef(null); if (id.current == null) id.current = `pen${(penIds += 1)}`
+  const r = prng(pass + 11)
+  return (
+    <svg className={`scr pen ${className || ''}${on ? ' is-on' : ''}`} width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={style} aria-hidden="true">
+      <defs>
+        <filter id={`${id.current}f`} x="-5%" y="-20%" width="110%" height="140%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed={pass % 50} result="n" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="1.3" />
+        </filter>
+        <mask id={`${id.current}m`} maskUnits="userSpaceOnUse" x="-20" y="-20" width={W + 40} height={H + 40}>
+          <path key={pass} className="pen-m" d={centre(pts)} pathLength="1" />
+        </mask>
+      </defs>
+      <g mask={`url(#${id.current}m)`} filter={`url(#${id.current}f)`}>
+        <path className="pen-a" d={outline(pts, wmax, r)} />
+        <path className="pen-b" d={outline(pts2, wmax * 0.55, r)} />
+      </g>
+    </svg>
+  )
+}
+function useJitter(on, redraw) {
+  const [seed, setSeed] = useState(1), [pass, setPass] = useState(0)
+  useEffect(() => { if (on) setPass((x) => x + 1) }, [on, redraw])
+  useEffect(() => {
+    if (!on || reduced()) return
+    const t = setInterval(() => setSeed((x) => x + 1), 110)
+    return () => clearInterval(t)
+  }, [on])
+  return [seed, pass]
 }
 function Scribble({ w, h, on, pad = 0.14, redraw }) {
-  const [seed, setSeed] = useState(1)
-  // every time the ring turns on, or the route/section under it changes, the pen draws the whole
-  // closed loop again from nothing (fresh key = the CSS draw animation restarts from dashoffset 1)
-  const [pass, setPass] = useState(0)
-  useEffect(() => { if (on) setPass((x) => x + 1) }, [on, redraw])
-  useEffect(() => {
-    if (!on || reduced()) return
-    const t = setInterval(() => setSeed((x) => x + 1), 100)
-    return () => clearInterval(t)
-  }, [on])
+  const [seed, pass] = useJitter(on, redraw)
   if (!w || !h) return null
   const W = w * (1 + pad * 2), H = h * (1 + pad * 2)
-  return (
-    <svg className={`scr${on ? ' is-on' : ''}`} width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ left: -w * pad, top: -h * pad }} aria-hidden="true">
-      <path key={pass} d={scribblePath(W, H, seed)} pathLength="1" />
-    </svg>
-  )
-}
-// iteration 18: nav items get a hand-drawn pen underline (same pen, same jitter) instead of the ring
-function underlinePath(W, H, seed) {
-  let s = seed * 9301 + 49297
-  const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280 }
-  const n = 9, y0 = H * 0.5 + (rnd() - 0.5) * 1.2, pts = []
-  for (let k = 0; k <= n; k += 1) { const t = k / n; pts.push([2 + t * (W - 4), y0 + Math.sin(t * Math.PI * (1.4 + rnd() * 0.3)) * 0.9 - t * 1.3 + (rnd() - 0.5) * 1.1]) }
-  let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`
-  for (let k = 1; k < pts.length - 1; k += 1) { const [x, y] = pts[k], [nx, ny] = pts[k + 1]; d += ` Q${x.toFixed(1)} ${y.toFixed(1)} ${((x + nx) / 2).toFixed(1)} ${((y + ny) / 2).toFixed(1)}` }
-  const [lx, ly] = pts[pts.length - 1]
-  return `${d} L${lx.toFixed(1)} ${ly.toFixed(1)}`
+  const base = 17 + pass * 13
+  const pts = ringPts(W, H, base, seed)
+  // the second pass: same hand, a touch smaller and rotated, only over part of the loop
+  const pts2 = ringPts(W * 0.985, H * 0.98, base, seed + 1).slice(8, 50).map(([x, y]) => [x + W * 0.006, y + H * 0.008])
+  return <Pen W={W} H={H} pts={pts} pts2={pts2} wmax={Math.max(2.6, Math.min(5, Math.min(W, H) / 110))} on={on} pass={pass} className="pen-ring" style={{ left: -w * pad, top: -h * pad }} />
 }
 function PenLine({ w, on, redraw }) {
-  const [seed, setSeed] = useState(1)
-  const [pass, setPass] = useState(0)
-  useEffect(() => { if (on) setPass((x) => x + 1) }, [on, redraw])
-  useEffect(() => {
-    if (!on || reduced()) return
-    const t = setInterval(() => setSeed((x) => x + 1), 100)
-    return () => clearInterval(t)
-  }, [on])
+  const [seed, pass] = useJitter(on, redraw)
   if (!w) return null
-  const W = w * 1.08, H = 10
-  return (
-    <svg className={`scr scr-line${on ? ' is-on' : ''}`} width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ left: -w * 0.04, bottom: -9 }} aria-hidden="true">
-      <path key={pass} d={underlinePath(W, H, seed)} pathLength="1" />
-    </svg>
-  )
+  const W = w * 1.1, H = 12, base = 5 + pass * 7
+  const pts = linePts(W, H, base, seed)
+  const pts2 = linePts(W, H, base, seed + 1).slice(4, 24).map(([x, y]) => [x + 1.5, y + 1.1])
+  return <Pen W={W} H={H} pts={pts} pts2={pts2} wmax={2.3} on={on} pass={pass} className="scr-line" style={{ left: -w * 0.05, bottom: -10 }} />
 }
 function CatRing({ on, redraw }) {
   const ref = useRef(null)
@@ -347,18 +378,10 @@ function Hand({ text, className = '', delay = 0, speed = 0.05 }) {
 /* One top bar everywhere: name left, the three wheel sections + the two pages right, contact quiet at the end */
 function SiteNav({ go, active, className = '', onHover, onJump }) {
   const [hov, setHov] = useState(null)
-  const [ix, setIx] = useState(false)
   const h = (id) => { setHov(id); if (onHover) onHover(id) }
-  const jump = (id) => { setIx(false); if (onJump && SEC_START[id] >= 0) { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); onJump(id) } else { if (SEC_START[id] >= 0) ROWPOS.jumpTo = id; go(id === 'about' ? { view: 'about' } : { view: 'browse', cat: id }) } }
-  useEffect(() => {
-    if (!ix) return
-    const off = (e) => { if (!e.target.closest || !e.target.closest('.sn-ix')) setIx(false) }
-    const esc = (e) => { if (e.key === 'Escape') setIx(false) }
-    window.addEventListener('pointerdown', off); window.addEventListener('keydown', esc)
-    return () => { window.removeEventListener('pointerdown', off); window.removeEventListener('keydown', esc) }
-  }, [ix])
+  const jump = (id) => { if (id === 'paintings') { go({ view: 'paintings' }); return } if (onJump && SEC_START[id] >= 0) { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); onJump(id) } else { if (SEC_START[id] >= 0) ROWPOS.jumpTo = id; go(id === 'about' ? { view: 'about' } : { view: 'browse', cat: id }) } }
   const item = (id, label) => (
-    <a key={id} href={id === 'about' ? '#/about' : `#/${id}`} className={id === active ? 'is-on' : ''} aria-current={id === active ? 'true' : undefined}
+    <a key={id} href={id === 'about' ? '#/about' : id === 'paintings' ? '#/art' : `#/${id}`} className={id === active ? 'is-on' : ''} aria-current={id === active ? 'true' : undefined}
       onMouseEnter={() => h(id)} onMouseLeave={() => h(null)} onFocus={() => h(id)} onBlur={() => h(null)}
       onClick={(e) => { e.preventDefault(); if (e.detail) e.currentTarget.blur(); jump(id) }}>
       <span className="h-cat-l">{label}<CatRing on={hov === id || (hov === null && id === active)} redraw={active} /></span>
@@ -371,14 +394,6 @@ function SiteNav({ go, active, className = '', onHover, onJump }) {
       </nav>
       <a className="h-mark" href="#/" aria-label="Shanmu Raja, home" onClick={(e) => { e.preventDefault(); if (e.detail) e.currentTarget.blur(); if (onJump) onJump('prose'); else go({ view: 'browse', cat: 'home' }) }}>Shanmu Raja</a>
       <nav className="sn-nav sn-r h-nav" aria-label="Pages">
-        <div className={`sn-ix${ix ? ' is-open' : ''}`}>
-          <button type="button" aria-expanded={ix} aria-haspopup="true" onClick={() => setIx((v) => !v)}>Index <svg viewBox="0 0 10 6" width="9" height="6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1" /></svg></button>
-          {ix && (
-            <ul className="sn-ix-l">
-              {SEC_ORDER.map((c) => (
-                <li key={c}><button type="button" className={c === active ? 'is-on' : ''} onClick={() => jump(c)}><span>{catOf(c).label}</span><i>{catOf(c).items.length}</i></button></li>))}
-            </ul>)}
-        </div>
         {item('paintings', 'ART THAT I LOVE')}
         {item('about', 'About')}
       </nav>
@@ -422,6 +437,9 @@ function Home({ cat, go }) {
     start0.current = j ? SEC_START[j] : ROWPOS.set ? lastIdx.home : cat !== 'home' && SEC_START[cat] >= 0 ? SEC_START[cat] : 0
   }
   const [cur, setCur] = useState(start0.current)
+  // iteration 20: the gallery holds one section at a time; `cur` stays a ROW index, base = section start
+  const base = useRef(SEC_START[ROW[start0.current].rowCat])
+  const secItems = (c) => itemsFor(c)
   const shown = 'home'
   const [phase, setPhase] = useState(session.introDone || reduced() ? (returning ? 'return' : 'enter') : 'loading')
   const [leaving, setLeaving] = useState(false)
@@ -441,23 +459,42 @@ function Home({ cat, go }) {
   const nameRef = useRef(null)
   const goRef = useRef(go); goRef.current = go
   const token = useRef(0)
-  // iteration 19: a jump (nav or Index) is an A24-style quick cut: the row falls back, the position is set
-  // while nothing is on screen, the row fans back in at the start of the section. Never races through.
-  const jumpRef = useRef(null)
-  jumpRef.current = (c) => {
-    const g = gal.current, n = SEC_START[c]
-    if (!g || n == null || n < 0) return
-    try { history.replaceState(null, '', `#/${c}`) } catch { /* ignore */ }
-    if (g.index() === n && !g.tweening) return
+  // iteration 20: the site is vertical. Down runs sideways through a section; past its last plate the
+  // row eases off upward and the next section's row rises in from below (and the reverse going up).
+  // A nav click is the same move, landing on the section's first plate.
+  const secRef = useRef(null)
+  secRef.current = (c, dir, local = 0) => {
+    const g = gal.current, el = host.current
+    if (!g || !el || SEC_START[c] == null) return
     const t = ++token.current
     setPhase('switch'); setHv(-1)
-    NAV.hold = Promise.all([g.exit(), wait(reduced() ? 0 : 200)]).then(() => {
+    try { history.replaceState(null, '', `#/${c}`) } catch { /* ignore */ }
+    const red = reduced(), off = 16
+    NAV.hold = Promise.all([g.exit(), red ? null : gsap.to(el, { yPercent: -dir * off, opacity: 0, duration: 0.5, ease: GLIDE })]).then(() => {
       if (t !== token.current || !gal.current) return
-      g.jumpTo(n)
-      g.G.active = reduced() ? 1 : 0.001; g.G.others = reduced() ? 1 : 0
-      setCur(n)
-      return g.fan().then(() => { if (t === token.current) setPhase('ready') })
+      base.current = SEC_START[c]
+      g.setSection(secItems(c), 'home', local)
+      g.G.active = red ? 1 : 0.001; g.G.others = red ? 1 : 0; g.G.inbound = true
+      setCur(SEC_START[c] + local); lastIdx.home = SEC_START[c] + local; ROWPOS.set = true
+      if (!red) gsap.set(el, { yPercent: dir * off, opacity: 0 })
+      return Promise.all([g.fan(), red ? null : gsap.to(el, { yPercent: 0, opacity: 1, duration: 0.8, ease: GLIDE })])
+        .then(() => { if (t === token.current) setPhase('ready') })
     })
+  }
+  const jumpRef = useRef(null)
+  jumpRef.current = (c) => {
+    const now = ROW[base.current] ? ROW[base.current].rowCat : 'prose'
+    const g = gal.current
+    if (!g || SEC_START[c] == null) return
+    if (now === c) { if (g.index() !== 0) g.to(0, 'click'); return }
+    secRef.current(c, SEC_ORDER.indexOf(c) > SEC_ORDER.indexOf(now) ? 1 : -1, 0)
+  }
+  const edgeRef = useRef(null)
+  edgeRef.current = (dir) => {
+    const now = ROW[base.current].rowCat, k = SEC_ORDER.indexOf(now) + dir
+    if (k < 0 || k >= SEC_ORDER.length) { const g = gal.current; if (g) g.nudge(dir); return }
+    const c = SEC_ORDER[k]
+    secRef.current(c, dir, dir > 0 ? 0 : catOf0(c).items.length - 1)
   }
   const [hv, setHv] = useState(-1)
   const [hr, setHr] = useState(null)
@@ -466,13 +503,14 @@ function Home({ cat, go }) {
     const el = host.current
     const g = gal.current = new Gallery(el, {
       touch: isTouch, frontTexture, backTexture,
-      onChange: (i) => { lastIdx.home = i; ROWPOS.set = true; setCur(i) },
+      onChange: (i) => { const n = base.current + i; lastIdx.home = n; ROWPOS.set = true; setCur(n) },
       onHover: (i) => setHv(isTouch() ? -1 : i),
-      onOpen: (i) => goRef.current(pieceRoute('home', i)),
+      onOpen: (i) => goRef.current(pieceRoute('home', base.current + i)),
+      onEdge: (d) => edgeRef.current(d),
     })
-    g.setSection(itemsFor('home'), 'home', start0.current)
+    g.setSection(secItems(ROW[start0.current].rowCat), 'home', start0.current - base.current)
     // one axis everywhere: a wheel over the title block, nav or footer still moves the row (A24 does too)
-    const mw = (e) => { if (!g.el.contains(e.target) && !(e.target.closest && e.target.closest('.sn-ix-l'))) g.onWheel(e) }
+    const mw = (e) => { if (!g.el.contains(e.target)) g.onWheel(e) }
     const mEl = mainRef.current
     if (mEl) mEl.addEventListener('wheel', mw, { passive: false })
     g.tone(bgFor(items[g.index()]))
@@ -517,7 +555,7 @@ function Home({ cat, go }) {
   useEffect(() => {
     const g = gal.current
     if (!g || cat === 'home' || SEC_START[cat] == null) return
-    if (ROW[g.index()] && ROW[g.index()].rowCat === cat) return
+    if (ROW[base.current] && ROW[base.current].rowCat === cat) return
     jumpRef.current(cat)
   }, [cat])
 
@@ -540,18 +578,18 @@ function Home({ cat, go }) {
         const g = gal.current
         if (!g || !g.N) return null
         const { i, back } = await g.openFace()
-        const it = catOf(g.mode).items[i]
+        const it = ROW[base.current + i]
         const n = flyNode(g.rectOf(i), it, back)
         await Promise.all([...n.querySelectorAll('img')].map(decoded))
         await frames(1)
         g.hidePlate(i)
-        const pr = pieceRoute(g.mode, i)
+        const pr = pieceRoute('home', base.current + i)
         FLY.dir = 'in'; FLY.data = { cat: pr.cat, i: pr.i, back, mode: g.mode }
         setLeaving(true)
         return i
       },
       leave: async () => { const g = gal.current; setLeaving(true); if (g) await g.exit() },
-      index: () => (gal.current ? gal.current.index() : 0),
+      index: () => base.current + (gal.current ? gal.current.index() : 0),
     }
   })
 
@@ -565,7 +603,7 @@ function Home({ cat, go }) {
       else if (e.key === 'ArrowLeft') { e.preventDefault(); g.step(-1, 'key') }
       else if (e.key === 'ArrowDown' || e.key === 'PageDown') { e.preventDefault(); g.step(1, 'key') }
       else if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); g.step(-1, 'key') }
-      else if (e.key === 'Enter' && free) { e.preventDefault(); goRef.current(pieceRoute('home', g.index())) }
+      else if (e.key === 'Enter' && free) { e.preventDefault(); goRef.current(pieceRoute('home', base.current + g.index())) }
       else if (e.key === ' ' && free) { e.preventDefault(); g.flip() }
     }
     window.addEventListener('keydown', on)
@@ -587,10 +625,6 @@ function Home({ cat, go }) {
   const list = ROW
   const it = list[Math.min(cur, list.length - 1)]
   const hIt = hv >= 0 && phase === 'ready' && !leaving ? list[hv] : null
-  // the story's real first line (prose only: `line` is the repo's `first`); nothing when unknown
-  const hFirst = hIt && hIt.cat === 'prose' ? hIt.line : ''
-  const vh = typeof window !== 'undefined' ? window.innerHeight : 900
-  const hBelow = hr && hr.y + hr.h + 120 < vh - 70
   useEffect(() => { if (gal.current && it) gal.current.tone(bgFor(it)) }, [it])
   // the nav follows the row: the section of the piece in front is the active one (and the hash)
   const sec = it.rowCat
@@ -617,25 +651,24 @@ function Home({ cat, go }) {
         </dl>
       </section>
 
-      {it.line && <blockquote className={`h-quote${show && !hFirst ? ' is-on' : ''}`} key={`q-${shown}-${cur}`}>{it.line}</blockquote>}
+      {it.line && <blockquote className={`h-quote${show ? ' is-on' : ''}`} key={`q-${shown}-${cur}`}>{it.line}</blockquote>}
 
       {/* iteration 18: the pen circles the plate under the pointer, and a story writes out its first line */}
       {hIt && hr && (
         <div className="h-hov" style={{ left: hr.x, top: hr.y, width: hr.w, height: hr.h }} aria-hidden="true">
           <Scribble w={hr.w} h={hr.h} on pad={0.07} redraw={hv} />
         </div>)}
-      {hFirst && hr && (
-        <p className="h-first" key={`f-${shown}-${hv}`} style={{ left: hr.x + hr.w / 2, top: hBelow ? hr.y + hr.h + 26 : undefined, bottom: hBelow ? undefined : 'auto', ...(hBelow ? {} : { top: Math.max(70, hr.y - 110) }) }} aria-hidden="true">
-          <Hand text={hFirst} speed={0.035} />
-        </p>)}
 
+      {/* iteration 20: the vertical run stops at the end of Luck; the art page is one clear click away */}
+      {sec === SEC_ORDER[SEC_ORDER.length - 1] && cur === ROW.length - 1 && (
+        <a className={`h-end${show ? ' is-on' : ''}`} href="#/art" onClick={(e) => { e.preventDefault(); go({ view: 'paintings' }) }}>ART THAT I LOVE <span aria-hidden="true">→</span></a>)}
       <div className={`h-foot${foot ? ' is-on' : ''}`}>
         <button type="button" className="h-flip" aria-label="Flip the card over" onClick={() => { const g = gal.current; if (g && !g.busy()) g.flip() }}>
           <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M3.5 8.5a6.5 6.5 0 0 1 11.6-3.2M16.5 11.5a6.5 6.5 0 0 1-11.6 3.2" fill="none" stroke="currentColor" strokeWidth="1.2" /><path d="M15.6 2.2v3.6H12M4.4 17.8v-3.6H8" fill="none" stroke="currentColor" strokeWidth="1.2" /></svg>
           <span>Flip</span>
         </button>
         <button type="button" className="h-count" aria-label="Next piece" onClick={() => { const g = gal.current; if (g && !g.busy()) g.to((g.settled() + 1) % g.N, 'click') }}>
-          {pad2(cur + 1)} <i>/</i> {pad2(list.length)}
+          {pad2(cur - SEC_START[sec] + 1)} <i>/</i> {pad2(catOf0(sec).items.length)}
         </button>
       </div>
       {/* iteration 10: socials live bottom-left, away from the counter and the screen corner */}
@@ -742,6 +775,7 @@ function Piece({ cat, i, go, via }) {
       />
     )
   }
+  if (cat === 'prose') return <Story {...{ it, cat, i, items, go, home, art, hold, flying, dir, face, ar, meta, honors, credit, cta, note, pgNav }} />
   return (
     <article className={`pg pg-piece pg-c-${cat}${flying ? ' is-flown' : ' is-direct'}${dir ? ` is-step is-step-${dir > 0 ? 'n' : 'p'}` : ''}`}>
       <PageTop back={() => go(home)} backLabel={catOf(home.cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(items.length)}`} />
@@ -775,6 +809,63 @@ function Piece({ cat, i, go, via }) {
   )
 }
 
+/* iteration 20: the story page reads like an A24 film page. The painting opens out to the full width
+   as you scroll, the real first line is written in by hand under the title, then the real material
+   only: opening (if supplied), a pull line (if supplied), the painting and its credit, the details,
+   one double-ruled way to read it, previous / next. Anything without real text is left out. */
+function Story({ it, cat, i, items, go, home, art, hold, flying, dir, face, ar, meta, honors, credit, cta, note, pgNav }) {
+  const t = TEASERS[it.slug] || {}
+  const frame = useRef(null)
+  useEffect(() => {
+    const f = frame.current, a = art.current
+    if (!f || !a || reduced()) return
+    let base = null, raf = 0
+    const measure = () => { a.style.width = ''; a.style.height = ''; const b = a.getBoundingClientRect(); base = { w: b.width, h: b.height } }
+    const apply = () => {
+      raf = 0
+      if (!base) measure()
+      const p = Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * 0.7)))
+      const e = p * p * (3 - 2 * p), W = document.documentElement.clientWidth
+      a.style.width = `${(base.w + (W - base.w) * e).toFixed(1)}px`
+      a.style.height = `${(base.h + (Math.max(base.h, window.innerHeight * 0.86) - base.h) * e).toFixed(1)}px`
+      f.style.setProperty('--bp', e.toFixed(3))
+    }
+    const on = () => { if (!raf) raf = requestAnimationFrame(apply) }
+    const rs = () => { base = null; on() }
+    window.addEventListener('scroll', on, { passive: true }); window.addEventListener('resize', rs)
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', on); window.removeEventListener('resize', rs) }
+  }, [art])
+  return (
+    <article className={`pg pg-piece pg-story pg-c-${cat}${flying ? ' is-flown' : ' is-direct'}${dir ? ` is-step is-step-${dir > 0 ? 'n' : 'p'}` : ''}`}>
+      <PageTop back={() => go(home)} backLabel={catOf(home.cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(items.length)}`} />
+      <div className="pg-head">
+        <h1 className="pg-title"><span>{it.title}</span></h1>
+        <hr className="pg-rule" />
+        {it.line && <p className="st-first"><Hand text={it.line} delay={0.9} speed={0.04} /></p>}
+        {honors}
+      </div>
+      <div className="st-bleed" ref={frame}>
+        <div ref={art} className="pg-art st-art" style={{ '--ar': ar, aspectRatio: String(ar), background: it.src ? placeholderOf(it.src) : '#f9f8f4', visibility: hold ? 'hidden' : undefined }}>
+          {face && <img src={it.src ? variantFor(it.src, 1400) : face} alt={credit || it.title} decoding="async" />}
+        </div>
+      </div>
+      {t.opening && <section className="st-open"><p>{t.opening}</p></section>}
+      {t.pull && <blockquote className="st-pull"><p>{t.pull}</p></blockquote>}
+      {it.src && credit && (
+        <section className="st-paint">
+          <img src={variantFor(it.src, 700)} alt="" loading="lazy" decoding="async" />
+          <div><h2>The painting</h2><p className="st-credit">{credit}</p>{note ? <p className="st-note">{note}</p> : null}</div>
+        </section>)}
+      <section className="st-details">
+        <h2>Details</h2>
+        <dl className="pg-meta">{meta.filter(([k]) => k !== 'Painting').map(([k, v], n) => <div key={k} style={{ '--n': n }}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+      </section>
+      {cta && <div className="pg-cta st-cta">{cta}</div>}
+      {pgNav}
+    </article>
+  )
+}
+
 function About({ go }) {
   useLayoutEffect(() => { window.scrollTo(0, 0) }, [])
   return (
@@ -790,7 +881,6 @@ function About({ go }) {
       <div className="ab">
         <img src="/headshot-700.webp" alt="Shanmu Raja" width="700" height="1049" />
         <div>
-          <p className="ab-lead">{BIO}</p>
           <p>I write fiction, essays, and the occasional poem.</p>
           <p>I have a master’s from UCSF in healthcare economics and health policy. My thesis looked at access deserts in Medi-Cal. My research lives in clinical medicine and surgery.</p>
           <p>My fiction has been recognized by <em>The New Yorker</em>, the Paul Kalanithi Writing Competition, and the Massachusetts Undergraduate Poetry Festival. My research has appeared in <em>The Journal of Thoracic and Cardiovascular Surgery</em> and <em>Journal of Vascular Surgery</em>.</p>

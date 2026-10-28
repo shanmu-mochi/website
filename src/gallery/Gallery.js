@@ -202,9 +202,10 @@ export default class Gallery {
     for (const p of this.plates) if (Math.abs(p.i - this.L) <= CFG.renderRadius + 2) p.load()
     this.layout(1, true)
   }
+  atEdge(s) { return !this.tweening && Math.abs(this.Se) < 0.02 && ((s > 0 && this.L >= this.N - 1 - 0.05) || (s < 0 && this.L <= 0.05)) }
   step(k, source) {
     const n = this.settled() + k
-    if (n < 0 || n > this.N - 1) { this.nudge(Math.sign(k)); return }
+    if (n < 0 || n > this.N - 1) { if (this.o.onEdge && this.oneAxis) this.o.onEdge(Math.sign(k)); else this.nudge(Math.sign(k)); return }
     this.to(n, source)
   }
   // a small give at the end of the row: the line leans out a little and springs back
@@ -371,6 +372,23 @@ export default class Gallery {
     // iteration 19: one axis. Vertical and horizontal wheel both travel along the row.
     if (this.oneAxis) { if (Math.abs(dy) > Math.abs(dx)) dx = dy; dy = 0 }
     const gapMs = now - (w.g || 0), newG = gapMs > CFG.gestureGap
+    if (this.oneAxis) {
+      // iteration 20: a gesture that begins resting on the end of a section asks for the next one, once.
+      // Its momentum tail (same sign, quick, no harder than before) stays spent and moves nothing.
+      const sgn = Math.sign(dx), mg = Math.abs(dx)
+      if (newG) {
+        const notch = e.deltaMode === 1 || (mg >= 50 && Number.isInteger(dx))
+        const tail = w.spent && sgn === w.ss && gapMs < 650 && mg <= (w.lm || 0) * 1.5 + 2 && !(notch && !this.busy())
+        if (!tail) { w.spent = false; w.ss = sgn; w.acc = 0; w.atEdge = this.atEdge(sgn) }
+      }
+      w.lm = mg; w.g = now
+      if (w.spent) return
+      if (w.atEdge && this.o.onEdge && !this.busy()) {
+        w.acc += mg
+        if (e.deltaMode === 1 || mg >= 50 || w.acc > 40) { w.spent = true; w.ss = sgn; this.Se = 0; this.o.onEdge(sgn) }
+        return
+      }
+    }
     w.g = now
     const mag = Math.max(Math.abs(dx), Math.abs(dy))
     // a momentum tail that stalls (the page is busy loading the next section) can look like a new
@@ -457,7 +475,9 @@ export default class Gallery {
     const along = dx / d.w
     const span = this.touch ? CFG.touchSpan : 6 * CFG.dragSens
     const s = -along * span
-    this.L = clamp(this.L + s, 0, this.N - 1)
+    const raw = this.L + s
+    if (raw > this.N - 1 || raw < 0) d.over = (d.over || 0) + Math.abs(raw - clamp(raw, 0, this.N - 1)) * Math.sign(raw - clamp(raw, 0, this.N - 1))
+    this.L = clamp(raw, 0, this.N - 1)
     const v = clamp((16.667 / dt) * s, -CFG.dragMaxV, CFG.dragMaxV)
     this.Se += (v - this.Se) * CFG.dragSmooth
   }
@@ -479,6 +499,8 @@ export default class Gallery {
       gsap.to(p, { spinX: 0, spinY: Math.round(p.spinY / Math.PI) * Math.PI, duration: CFG.resetDuration, ease: 'elastic.out(1, 0.6)' })
       return
     }
+    // iteration 20: a drag that keeps pushing past the end of a section carries on to the next one
+    if (this.oneAxis && this.o.onEdge && Math.abs(d.over || 0) > 0.35) { this.Se = 0; this.o.onEdge(Math.sign(d.over)); return }
     if (performance.now() - d.t > 110) this.Se = 0
     if (this.touch) {
       const v = this.Se; this.Se = 0
