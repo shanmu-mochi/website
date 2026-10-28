@@ -282,8 +282,6 @@ AWARDS.forEach((a, n) => {
 export const CATS = [
   { id: 'prose', label: 'Prose', items: prose },
   { id: 'publications', label: 'Publications', items: pubs },
-  // iteration 17: Deep Dives holds only the two white papers (same records as in Publications, own band)
-  { id: 'deep', label: 'Deep Dives', items: pubs.filter((x) => /^White paper/.test(x.kind || '')).map((x) => ({ ...x, cat: 'deep' })) },
   { id: 'luck', label: 'Luck', items: luck },
 ]
 // iteration 12: the home carousel, a hand-picked mix across sections (edit src/selected.js)

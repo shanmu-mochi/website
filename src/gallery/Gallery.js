@@ -27,24 +27,22 @@ const pressure = (v) => {
 }
 export const CFG = {
   galleryScale: 1.08, camDist: 4.4, fov: 40,
-  hoverTilt: 0.21, dragSens: 0.6, dragSmooth: 0.32, dragMaxV: 0.32, dragStart: 5,
-  glideTau: 0.36, glideMaxV: 0.125,              // release coast: the original carousel's TAU
-  snapDuration: 0.62, snapFreq: 9.5, snapDamping: 12,
+  hoverTilt: 0.21, dragSens: 0.95, dragSmooth: 0.32, dragMaxV: 0.5, dragStart: 5,
+  glideTau: 0.55, glideMaxV: 0.2,              // release coast: the original carousel's TAU
+  snapDuration: 0.46, snapFreq: 9.5, snapDamping: 12,
   flowLean: 0.055, flowLeanMax: 0.3, flowBank: 0.32, flowDip: 0.014, flowDipMax: 0.09,
   followTight: 15, followBase: 11, followFalloff: 1.15, followMin: 6.5,
   flightRecede: 2.2, flightStagger: 0.45, flightStaggerIn: 0.28, flightStaggerMax: 4, popOut: 0.35, popIn: 0.02,
   preloadBoost: 0.8, preloadGrowBy: 0.5, preloadSpin: 1.1, preloadRise: 3, preloadDepth: 0.7, fanDuration: 1.15,
-  touchGap: 2.2, touchDepth: 0.5, touchDrop: 1, touchActive: 1.5, touchInactive: 0.6, touchFlick: 0.035, touchSpan: 1.15,
+  touchGap: 2.2, touchDepth: 0.5, touchDrop: 1, touchActive: 1.5, touchInactive: 0.6, touchFlick: 0.035, touchSpan: 1.8,
   resetDuration: 1.2, renderRadius: 6,
   wheelFloor: 0.3,
   // iteration 14: vertical intent. A gesture ends after gestureGap ms without events; sectionPx of
   // vertical travel inside one gesture (or one mouse-wheel notch) asks for the next section.
   gestureGap: 220, sectionPx: 70, sectionDrag: 90,
-  // iteration 17: side scroll slowed ~35-40% (dragSens .95->.6, dragMaxV .5->.32, glideTau .55->.36,
-  // glideMaxV .2->.125, mPower .8->.5, wheelPx 420->650, touchSpan 1.8->1.15, snapDuration .46->.62)
   // momentum ported from the deployed site (main: src/App.jsx gallery drift): px/s hand speed ->
   // pressure curve -> exponential coast (glideTau). wheelPx = screen px that count as one piece.
-  mPower: 0.5, mMax: 3800, mRef: 1200, mGamma: 1.5, mSample: 110, mFresh: 140, wheelPx: 650,
+  mPower: 0.8, mMax: 3800, mRef: 1200, mGamma: 1.5, mSample: 110, mFresh: 140, wheelPx: 420,
 }
 
 /* per-section staging: group tilt, object proportions, arrangement */
@@ -62,15 +60,13 @@ const outCubic = (t) => 1 - (1 - t) ** 3
 
 /* ---- one renderer for the life of the page, so leaving and coming back never makes a new GL context ---- */
 let RENDERER = null
-function renderer(own = false) {
-  if (own || !RENDERER) {
-    const R = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' })
-    R.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
-    R.outputColorSpace = THREE.SRGBColorSpace
-    R.setClearColor(0x000000, 0)
-    R.domElement.className = 'gl'
-    if (own) return R
-    RENDERER = R
+function renderer() {
+  if (!RENDERER) {
+    RENDERER = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' })
+    RENDERER.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+    RENDERER.outputColorSpace = THREE.SRGBColorSpace
+    RENDERER.setClearColor(0x000000, 0)
+    RENDERER.domElement.className = 'gl'
   }
   return RENDERER
 }
@@ -108,9 +104,7 @@ export default class Gallery {
     this.wheel = { v: 0, t: 0 }
     this.tls = new Set()
 
-    // iteration 17: each carousel band on the flowing page owns its own renderer (opts.own)
-    const r = this.renderer = opts.own ? renderer(true) : renderer()
-    this.paused = false
+    const r = this.renderer = renderer()
     el.appendChild(r.domElement)
     this.scene = new THREE.Scene()
     this.scene.fog = new THREE.Fog(0xf2f2f2, 7, 14)
@@ -131,8 +125,8 @@ export default class Gallery {
   /* ---------------- sections ---------------- */
   setSection(items, mode, start = 0) {
     this.clearPlates()
-    this.items = items; this.N = items.length; this.mode = mode === 'deep' ? 'publications' : mode
-    this.sec = SECTIONS[this.mode] || SECTIONS.prose
+    this.items = items; this.N = items.length; this.mode = mode
+    this.sec = SECTIONS[mode] || SECTIONS.prose
     this.root.rotation.set(rad(this.sec.tiltX), rad(this.sec.tiltY), 0)
     this.L = clamp(start, 0, this.N - 1); this.we = this.L; this.Se = 0; this.Te = 0; this.Ce = 0
     this.target = -1; this.tweening = false; this.cur = -1; this.hover = -1; this.flight = false
@@ -173,9 +167,9 @@ export default class Gallery {
   to(i, source = 'snap') {
     if (!this.N) return
     const n = clamp(i, 0, this.N - 1), dist = Math.abs(n - this.L), d = CFG.snapDuration
-    const a = source === 'wheel' ? { duration: d + 0.07, kick: 1.6 }
-      : source === 'key' ? { duration: Math.min(0.82, d - 0.04 + dist * 0.07), kick: 2.5 }
-        : source === 'click' ? { duration: clamp(0.62 + dist * 0.15, d, 1.4), kick: Math.min(3.2, dist * 0.9) }
+    const a = source === 'wheel' ? { duration: d + 0.05, kick: 2.5 }
+      : source === 'key' ? { duration: Math.min(0.6, d - 0.04 + dist * 0.05), kick: 4 }
+        : source === 'click' ? { duration: clamp(0.45 + dist * 0.11, d, 1.05), kick: Math.min(5, dist * 1.4) }
           : source === 'flick' ? { duration: d + 0.1, kick: 0 } : { duration: d, kick: 0, ease: 'power3.out' }
     this.target = n; this.Se = 0; this.Te = 0
     gsap.killTweensOf(this.tw)
@@ -314,13 +308,13 @@ export default class Gallery {
     const c = this.renderer.domElement
     this.h = {
       wheel: (e) => this.onWheel(e), down: (e) => this.onDown(e), move: (e) => this.onMove(e),
-      up: (e) => this.onUp(e), cancel: (e) => { if (this.drag && !this.drag.on) { this.drag = null; return } this.onUp(e) }, leave: () => { if (!this.drag) this.setHover(-1) }, resize: () => this.resize(),
+      up: (e) => this.onUp(e), leave: () => { if (!this.drag) this.setHover(-1) }, resize: () => this.resize(),
     }
     this.el.addEventListener('wheel', this.h.wheel, { passive: false })
     c.addEventListener('pointerdown', this.h.down)
     window.addEventListener('pointermove', this.h.move)
     window.addEventListener('pointerup', this.h.up)
-    window.addEventListener('pointercancel', this.h.cancel)
+    window.addEventListener('pointercancel', this.h.up)
     c.addEventListener('pointerleave', this.h.leave)
     window.addEventListener('resize', this.h.resize)
   }
@@ -345,18 +339,6 @@ export default class Gallery {
   }
   busy() { return this.flight || this.q.active || !this.N }
   onWheel(e) {
-    if (this.o.band) {
-      // iteration 17, flowing page: a vertical wheel always belongs to the page (never trapped here);
-      // only a sideways gesture (deltaX, shift + wheel, trackpad swipe) moves the carousel
-      const lm = e.deltaMode === 1 ? 16 : 1
-      let dx = e.deltaX * lm
-      const dy = e.deltaY * lm
-      if (e.shiftKey && !dx) dx = dy
-      else if (Math.abs(dy) >= Math.abs(dx)) return
-      e.preventDefault()
-      if (!this.busy()) this.wheelX(e, dx, performance.now())
-      return
-    }
     e.preventDefault()
     const w = this.wheel, now = performance.now()
     // iteration 14: two axes. Sideways (deltaX, or shift + wheel) browses the pieces; up / down asks the
@@ -385,10 +367,7 @@ export default class Gallery {
       return
     }
     if (this.busy()) return
-    this.wheelX(e, dx, now)
-  }
-  wheelX(e, d, now) {
-    const w = this.wheel
+    const d = dx
     if (Math.abs(d) < CFG.wheelFloor) return
     const fresh = now - w.t > CFG.mFresh                 // a pause means a new gesture, don't inherit the old speed
     // the ends of a row resist; the next section lives below, not beyond the last piece
@@ -423,7 +402,6 @@ export default class Gallery {
     if (!d.on) {
       if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < CFG.dragStart) return
       d.ax = Math.abs(e.clientX - d.x0) >= Math.abs(e.clientY - d.y0) ? 'x' : 'y'
-      if (d.ax === 'y' && d.spin < 0 && this.o.band) { this.drag = null; return }   // the page scrolls
       if (d.ax === 'y' && d.spin < 0) { d.on = true; this.setHover(-1); return }
       d.on = true; gsap.killTweensOf(this.tw); this.tweening = false; this.target = -1; this.Te = 0
       this.setHover(-1); this.el.classList.add('is-dragging')
@@ -440,7 +418,7 @@ export default class Gallery {
     ;(d.sm || (d.sm = [])).push({ t: now, p: d.px })
     while (d.sm.length > 2 && now - d.sm[0].t > CFG.mSample) d.sm.shift()
     if (d.spin >= 0) {
-      const p = this.plates[d.spin], k = 0.95 * 0.0045
+      const p = this.plates[d.spin], k = CFG.dragSens * 0.0045
       gsap.killTweensOf(p)
       p.spinY = clamp(p.spinY + dx * k, -Math.PI * 2, Math.PI * 2); p.spinX = clamp(p.spinX + dy * k, -Math.PI, Math.PI)
       return
@@ -620,7 +598,7 @@ export default class Gallery {
   frame = (now) => {
     if (this.dead) return
     this.raf = requestAnimationFrame(this.frame)
-    if (document.hidden || this.paused) { this.last = now; return }
+    if (document.hidden) { this.last = now; return }
     const t = (now - this.last) / 1000, dt = Math.min(0.05, t)
     this.last = now
     if (!this.N) return
@@ -686,12 +664,11 @@ export default class Gallery {
     c.removeEventListener('pointerdown', this.h.down)
     window.removeEventListener('pointermove', this.h.move)
     window.removeEventListener('pointerup', this.h.up)
-    window.removeEventListener('pointercancel', this.h.cancel)
+    window.removeEventListener('pointercancel', this.h.up)
     c.removeEventListener('pointerleave', this.h.leave)
     window.removeEventListener('resize', this.h.resize)
     c.style.cursor = ''
     this.renderer.renderLists.dispose()
     c.remove()
-    if (this.o.own) { this.renderer.dispose(); this.renderer.forceContextLoss() }
   }
 }
