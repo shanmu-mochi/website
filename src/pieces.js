@@ -283,6 +283,10 @@ export const CATS = [
   { id: 'prose', label: 'Prose', items: prose },
   { id: 'publications', label: 'Publications', items: pubs },
   { id: 'luck', label: 'Luck', items: luck },
+  // iteration 18: Deep Dives, the economics takes. Only the two white papers qualify from the data:
+  // Healthcare's AI Trap (venue "Economics") and the Medi-Cal deserts thesis (UCSF Health Policy & Law,
+  // workforce economics). Same records as in Publications, so each opens its own white-paper page.
+  { id: 'deep', label: 'Deep Dives', items: pubs.filter((x) => /^White paper/.test(x.kind || '')).map((x) => ({ ...x, cat: 'deep' })) },
 ]
 // iteration 12: the home carousel, a hand-picked mix across sections (edit src/selected.js)
 const all = [...prose, ...pubs, ...luck]

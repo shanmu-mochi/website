@@ -39,7 +39,7 @@ export const CFG = {
   wheelFloor: 0.3,
   // iteration 14: vertical intent. A gesture ends after gestureGap ms without events; sectionPx of
   // vertical travel inside one gesture (or one mouse-wheel notch) asks for the next section.
-  gestureGap: 220, sectionPx: 70, sectionDrag: 90,
+  gestureGap: 220, sectionPx: 120, sectionDrag: 110,
   // momentum ported from the deployed site (main: src/App.jsx gallery drift): px/s hand speed ->
   // pressure curve -> exponential coast (glideTau). wheelPx = screen px that count as one piece.
   mPower: 0.8, mMax: 3800, mRef: 1200, mGamma: 1.5, mSample: 110, mFresh: 140, wheelPx: 420,
@@ -126,7 +126,9 @@ export default class Gallery {
   setSection(items, mode, start = 0) {
     this.clearPlates()
     this.items = items; this.N = items.length; this.mode = mode
-    this.sec = SECTIONS[mode] || SECTIONS.prose
+    // iteration 18: Deep Dives is a row of white papers, staged exactly like Publications
+    this.kind = mode === 'deep' ? 'publications' : mode
+    this.sec = SECTIONS[this.kind] || SECTIONS.prose
     this.root.rotation.set(rad(this.sec.tiltX), rad(this.sec.tiltY), 0)
     this.L = clamp(start, 0, this.N - 1); this.we = this.L; this.Se = 0; this.Te = 0; this.Ce = 0
     this.target = -1; this.tweening = false; this.cur = -1; this.hover = -1; this.flight = false
@@ -348,12 +350,12 @@ export default class Gallery {
     const lm = e.deltaMode === 1 ? 16 : 1
     let dx = e.deltaX * lm, dy = e.deltaY * lm
     if (e.shiftKey && !dx) { dx = dy; dy = 0 }
-    const newG = now - (w.g || 0) > CFG.gestureGap
+    const gapMs = now - (w.g || 0), newG = gapMs > CFG.gestureGap
     w.g = now
     const mag = Math.max(Math.abs(dx), Math.abs(dy))
     // a momentum tail that stalls (the page is busy loading the next section) can look like a new
     // gesture; a real new swipe starts harder than the tail it follows, so a weaker start stays spent
-    if (newG) { const tail = w.fired && now - (w.ft || 0) < 2600 && mag <= (w.last || 0) * 1.5 + 2; w.ax = tail ? 'y' : null; w.ay = 0; w.axx = 0; w.fired = tail; w.sy = 0 }
+    if (newG) { const sgn = Math.sign(dy) || 0, tail = w.fired && sgn === w.fs && gapMs < 650 && now - (w.ft || 0) < 2600 && mag <= (w.last || 0) * 1.5 + 2; w.ax = tail ? 'y' : null; w.ay = 0; w.axx = 0; w.fired = tail; w.sy = 0 }
     w.last = mag
     if (!w.ax) {
       w.axx += Math.abs(dx); w.ay += Math.abs(dy)
@@ -363,7 +365,11 @@ export default class Gallery {
     if (w.ax === 'y') {
       if (w.fired || this.busy()) return
       w.sy += dy
-      if (Math.abs(w.sy) >= CFG.sectionPx || (e.deltaMode === 1 && dy)) { w.fired = true; w.ft = now; this.o.onSection && this.o.onSection(Math.sign(w.sy)) }
+      // iteration 18: the stage follows the hand (onPull, -1..1) until the gesture commits; a gesture
+      // that stops short eases back. One gesture commits at most one section.
+      clearTimeout(w.rel)
+      if (Math.abs(w.sy) >= CFG.sectionPx || (e.deltaMode === 1 && dy)) { w.fired = true; w.ft = now; w.fs = Math.sign(w.sy); this.o.onSection && this.o.onSection(Math.sign(w.sy || dy)) }
+      else { this.o.onPull && this.o.onPull(w.sy / CFG.sectionPx); w.rel = setTimeout(() => this.o.onPull && this.o.onPull(0), CFG.gestureGap) }
       return
     }
     if (this.busy()) return
@@ -409,7 +415,9 @@ export default class Gallery {
     if (d.ax === 'y' && d.spin < 0) {
       // a vertical drag / swipe: once it has travelled far enough, it asks for the next section, once
       const ty = e.clientY - d.y0
-      if (!d.fired && Math.abs(ty) > Math.min(CFG.sectionDrag, d.h * 0.12)) { d.fired = true; this.o.onSection && this.o.onSection(ty < 0 ? 1 : -1) }
+      const lim = Math.min(CFG.sectionDrag, d.h * 0.14)
+      if (!d.fired && Math.abs(ty) > lim) { d.fired = true; this.o.onSection && this.o.onSection(ty < 0 ? 1 : -1) }
+      else if (!d.fired && this.o.onPull) this.o.onPull(-ty / lim)
       return
     }
     const now = performance.now(), dx = e.clientX - d.x, dy = e.clientY - d.y, dt = Math.max(8, now - d.t)
@@ -442,7 +450,7 @@ export default class Gallery {
       else this.to(h.i, 'click')
       return
     }
-    if (d.ax === 'y' && d.spin < 0) return
+    if (d.ax === 'y' && d.spin < 0) { if (!d.fired && this.o.onPull) this.o.onPull(0); return }
     if (d.spin >= 0) {
       const p = this.plates[d.spin]
       gsap.to(p, { spinX: 0, spinY: Math.round(p.spinY / Math.PI) * Math.PI, duration: CFG.resetDuration, ease: 'elastic.out(1, 0.6)' })
@@ -473,7 +481,7 @@ export default class Gallery {
     this.cam.aspect = w / h
     this.cam.updateProjectionMatrix()
     const vw = 2 * CFG.camDist * Math.tan(rad(CFG.fov / 2)) * this.cam.aspect
-    const big = this.mode === 'prose' ? 1.55 * CFG.touchActive : this.mode === 'publications' ? 1.3 * 1.25 : 1.4 * 1.25
+    const big = this.kind === 'prose' ? 1.55 * CFG.touchActive : this.kind === 'publications' ? 1.3 * 1.25 : 1.4 * 1.25
     this.scale = this.touch ? Math.min(CFG.galleryScale, (0.64 * vw) / big) : CFG.galleryScale
     if (!this.touch && w / h < 1.25) this.scale = CFG.galleryScale * clamp((w / h) / 1.6, 0.62, 1)
     this.root.scale.setScalar(this.scale)
@@ -486,7 +494,7 @@ export default class Gallery {
   /* ---------------- arrangements ---------------- */
   pose(m, g, lean, dip, out) {
     const h = Math.abs(m), touch = this.touch
-    if (this.mode === 'publications') {
+    if (this.kind === 'publications') {
       // a shelf: nearly straight, booklets turned a little so the spine shows as they pass
       const a = m * 0.2
       out.x = Math.sin(a) * 1.55 * 5 * (touch ? 0.62 : 1)
@@ -498,7 +506,7 @@ export default class Gallery {
       out.S = g ? (touch ? 1.25 : 1) : Math.max(0.74, 1 - h * 0.13)
       return out
     }
-    if (this.mode === 'luck') {
+    if (this.kind === 'luck') {
       // iteration 14: a carousel drum seen from outside, turning sideways like the other rows
       const a = m * 0.62, R = 2.6 * (touch ? 0.8 : 1)
       out.x = Math.sin(a) * R * 1.35

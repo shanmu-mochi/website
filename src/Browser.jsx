@@ -9,9 +9,11 @@ import gsap from 'gsap'
 import { CATS, META, PAINTINGS, SOCIALS, SELECTED_ITEMS, variantFor, aspectOf, placeholderOf, tintOf, creditText } from './pieces'
 import NOTES from './pieceNotes'
 import PaperPage from './PaperPage'
+import OPENING from './opening'
 import Gallery, { GLIDE, imageTexture, texture, plateSize, SECTIONS } from './gallery/Gallery'
 import './styles/globals.css'
 import './styles/a24.css'
+import './styles/iter18.css'
 
 const BIO = 'I’m a writer who works in medicine, or a medical person who writes. The order keeps changing.'
 const norm = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -23,10 +25,11 @@ const HOME_CAT = { id: 'home', label: 'Selected', items: SELECTED_ITEMS }
 const catOf = (id) => (id === 'home' ? HOME_CAT : CATS.find((c) => c.id === id) || CATS[0])
 // iteration 14: scrolling down walks the sections in nav order (Selected first); the last stop is the
 // ART THAT I LOVE page, which scrolls as a normal page
-const ORDER = ['home', 'prose', 'publications', 'luck', 'paintings']
+// iteration 18: Deep Dives sits between Luck and ART THAT I LOVE
+const ORDER = ['home', 'prose', 'publications', 'luck', 'deep', 'paintings']
 const labelOf = (c) => (c === 'paintings' ? 'ART THAT I LOVE' : catOf(c).label)
 const routeOf = (c) => (c === 'paintings' ? { view: 'paintings' } : { view: 'browse', cat: c })
-const lastIdx = { home: 0, prose: 0, publications: 0, luck: 0 }
+const lastIdx = { home: 0, prose: 0, publications: 0, luck: 0, deep: 0 }
 const lastCat = { current: 'home' }
 // the piece behind slot i of a row (home slots point into the real sections)
 const pieceRoute = (mode, i) => {
@@ -39,7 +42,7 @@ const session = { introDone: typeof location !== "undefined" && /^#\/./.test(loc
 const WIDE = '"Lora", Georgia, serif'
 const LABEL = '"Archivo", "Helvetica Neue", Arial, sans-serif'
 const BOOK = '"Lora", Georgia, serif'
-const TONE = { prose: 'rgb(242,242,240)', publications: 'rgb(235,238,241)', luck: 'rgb(244,238,228)' }
+const TONE = { prose: 'rgb(242,242,240)', publications: 'rgb(235,238,241)', luck: 'rgb(244,238,228)', deep: 'rgb(236,236,232)' }
 const bgFor = (it) => it.cat === 'prose' && it.src ? tintOf(it.src, 0.06) : TONE[it.cat]
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -92,9 +95,9 @@ function drawFace(key, aspect, draw) {
 }
 const faceKey = (it, side) => `${it.cat}:${it.slug}:${side}`
 function faceCanvas(it, side) {
-  const sec = SECTIONS[it.cat], [w, h] = plateSize({ aspect: it.src ? aspectOf(it.src) : 0.74 }, sec), aspect = w / h
+  const sec = SECTIONS[it.cat === 'deep' ? 'publications' : it.cat], [w, h] = plateSize({ aspect: it.src ? aspectOf(it.src) : 0.74 }, sec), aspect = w / h
   const key = faceKey(it, side)
-  if (it.cat === 'publications' && side === 'front') return drawFace(key, aspect, (ctx, W, H) => {
+  if ((it.cat === 'publications' || it.cat === 'deep') && side === 'front') return drawFace(key, aspect, (ctx, W, H) => {
     ctx.fillStyle = '#f9f8f4'; ctx.fillRect(0, 0, W, H)
     ctx.fillStyle = 'rgba(0,0,0,.05)'; ctx.fillRect(0, 0, 14, H)            // the fold by the spine
     grain(ctx, W, H, 9)
@@ -180,7 +183,7 @@ function backOf(it) {
     label: metaOf(it, 'Kind') || it.kind || 'Prose', body: it.line, quoteIt: true, note: NOTES[`prose/${it.slug}`] || '',
     rows: [['Recognition', metaOf(it, 'Recognition')], ['Venue', metaOf(it, 'Venue')], ['Published', metaOf(it, 'Published')], ['Painting', metaOf(it, 'Painting')]],
   }
-  if (it.cat === 'publications') {
+  if (it.cat === 'publications' || it.cat === 'deep') {
     const body = it.finding || (it.line && it.line !== it.venueFull ? it.line : '')
     return {
       label: it.finding ? 'Main finding' : it.kind || 'Paper', body,
@@ -284,11 +287,49 @@ function Scribble({ w, h, on, pad = 0.14, redraw }) {
     </svg>
   )
 }
+// iteration 18: nav items get a hand-drawn pen underline (same pen, same jitter) instead of the ring
+function underlinePath(W, H, seed) {
+  let s = seed * 9301 + 49297
+  const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280 }
+  const n = 9, y0 = H * 0.5 + (rnd() - 0.5) * 1.2, pts = []
+  for (let k = 0; k <= n; k += 1) { const t = k / n; pts.push([2 + t * (W - 4), y0 + Math.sin(t * Math.PI * (1.4 + rnd() * 0.3)) * 0.9 - t * 1.3 + (rnd() - 0.5) * 1.1]) }
+  let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`
+  for (let k = 1; k < pts.length - 1; k += 1) { const [x, y] = pts[k], [nx, ny] = pts[k + 1]; d += ` Q${x.toFixed(1)} ${y.toFixed(1)} ${((x + nx) / 2).toFixed(1)} ${((y + ny) / 2).toFixed(1)}` }
+  const [lx, ly] = pts[pts.length - 1]
+  return `${d} L${lx.toFixed(1)} ${ly.toFixed(1)}`
+}
+function PenLine({ w, on, redraw }) {
+  const [seed, setSeed] = useState(1)
+  const [pass, setPass] = useState(0)
+  useEffect(() => { if (on) setPass((x) => x + 1) }, [on, redraw])
+  useEffect(() => {
+    if (!on || reduced()) return
+    const t = setInterval(() => setSeed((x) => x + 1), 100)
+    return () => clearInterval(t)
+  }, [on])
+  if (!w) return null
+  const W = w * 1.08, H = 10
+  return (
+    <svg className={`scr scr-line${on ? ' is-on' : ''}`} width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ left: -w * 0.04, bottom: -9 }} aria-hidden="true">
+      <path key={pass} d={underlinePath(W, H, seed)} pathLength="1" />
+    </svg>
+  )
+}
 function CatRing({ on, redraw }) {
   const ref = useRef(null)
   const [s, setS] = useState(null)
   useLayoutEffect(() => { const p = ref.current && ref.current.parentElement; if (p) setS({ w: p.offsetWidth, h: p.offsetHeight }) }, [])
-  return <span ref={ref} className="h-cat-ring">{s && <Scribble w={s.w} h={s.h} on={on} redraw={redraw} pad={0.16} />}</span>
+  return <span ref={ref} className="h-cat-ring">{s && <PenLine w={s.w} on={on} redraw={redraw} />}</span>
+}
+/* iteration 18: handwriting. Words are written in one after another, left to right, at pen speed */
+function Hand({ text, className = '', delay = 0, speed = 0.05 }) {
+  let c = 0
+  const words = String(text || '').split(/\s+/).filter(Boolean)
+  return (
+    <span className={`hand ${className}`} aria-label={text}>
+      {words.map((w, k) => { const d = delay + c * speed; c += w.length + 1; return <React.Fragment key={k}>{k ? ' ' : ''}<span className="hw" aria-hidden="true" style={{ '--d': `${d.toFixed(2)}s`, '--t': `${Math.max(0.16, w.length * speed).toFixed(2)}s` }}>{w}</span></React.Fragment> })}
+    </span>
+  )
 }
 /* One top bar everywhere: name left, the three wheel sections + the two pages right, contact quiet at the end */
 function SiteNav({ go, active, className = '', onHover }) {
@@ -368,23 +409,48 @@ function Home({ cat, go }) {
   const nextOf = (c, sg) => ORDER[ORDER.indexOf(c) + sg] || null
   const secAt = useRef(0)
   const secRef = useRef(null)
+  // iteration 18: the stage follows a vertical gesture (--pull, -1..1) before it commits, and eases back
+  // if the gesture stops short. Where there is no section to go to, it only gives a little (rubber band).
+  const pullRef = useRef(null)
+  pullRef.current = (v) => {
+    const el = mainRef.current, g = gal.current
+    if (!el || !g || reduced()) return
+    if (el.dataset.sw) return
+    const x = nextOf(g.mode, Math.sign(v)) ? v : v * 0.22
+    el.style.setProperty('--pull', Math.max(-1, Math.min(1, x)).toFixed(3))
+    el.classList.toggle('is-pulling', v !== 0)
+  }
+  const secQ = useRef({ t: 0, at: 0 })
   secRef.current = (sg) => {
     const g = gal.current
-    if (!g || NAV.busy || g.busy()) return
     const now = performance.now()
-    if (now - secAt.current < 1100) return
+    // a committed gesture that lands while the previous switch is still settling waits briefly
+    // for it (up to 1.6s) instead of being dropped; the newest gesture wins.
+    if (!g || NAV.busy || g.busy() || now - secAt.current < (sg === NAV.secDir ? 1100 : 600)) {
+      pullRef.current(0)
+      clearTimeout(secQ.current.t)
+      if (!secQ.current.t || now - secQ.current.at > 1600) secQ.current.at = now
+      if (now - secQ.current.at < 1600) secQ.current.t = setTimeout(() => { secQ.current.t = 0; secRef.current(sg) }, 120)
+      else secQ.current.t = 0
+      return
+    }
+    secQ.current.t = 0
     const to = nextOf(g.mode, sg)
-    if (!to) return
+    if (!to) { pullRef.current(0); return }
     secAt.current = now
+    NAV.secDir = sg
     goRef.current(routeOf(to))
   }
+  const [hv, setHv] = useState(-1)
+  const [hr, setHr] = useState(null)
 
   useLayoutEffect(() => {
     const el = host.current
     const g = gal.current = new Gallery(el, {
       touch: isTouch, frontTexture, backTexture,
       onChange: (i) => { lastIdx[g.mode] = i; setCur(i) },
-      onHover: () => {},
+      onHover: (i) => setHv(isTouch() ? -1 : i),
+      onPull: (v) => pullRef.current(v),
       onOpen: (i) => goRef.current(pieceRoute(g.mode, i)),
       onSection: (sg) => secRef.current(sg),
     })
@@ -432,13 +498,20 @@ function Home({ cat, go }) {
     const g = gal.current
     if (!g || g.mode === cat) return
     const t = ++token.current
-    setPhase('switch')
-    NAV.hold = g.exit().then(() => {
+    setPhase('switch'); setHv(-1)
+    // iteration 18: a scroll step carries on in the direction of the hand (out up, in from below, or the
+    // reverse); a nav click or Back teleports: blur out, swap while hidden, rise in. Never via the sections between.
+    const el = mainRef.current, d = NAV.secDir || 0
+    NAV.secDir = 0
+    const dir = d > 0 ? 'n' : d < 0 ? 'p' : 't'
+    if (el && !reduced()) { el.classList.remove('is-pulling'); el.dataset.sw = `out-${dir}` }
+    NAV.hold = Promise.all([g.exit(), wait(reduced() ? 0 : 420)]).then(() => {
       if (t !== token.current || !gal.current) return
       g.setSection(itemsFor(cat), cat, lastIdx[cat] || 0)
       g.G.active = reduced() ? 1 : 0.001; g.G.others = reduced() ? 1 : 0
       g.tone(bgFor(catOf(cat).items[g.index()]))
       setShown(cat); setCur(g.index())
+      if (el && !reduced()) { el.dataset.sw = `in-${dir}`; el.style.setProperty('--pull', '0'); void el.offsetWidth; requestAnimationFrame(() => { if (t === token.current) delete el.dataset.sw }) }
       return g.fan().then(() => { if (t === token.current) setPhase('ready') })
     })
   }, [cat])
@@ -494,8 +567,25 @@ function Home({ cat, go }) {
     return () => window.removeEventListener('keydown', on)
   }, [])
 
+  useEffect(() => {
+    if (hv < 0) { setHr(null); return }
+    let raf = 0, last = ''
+    const tick = () => {
+      const g = gal.current, b = mainRef.current && mainRef.current.getBoundingClientRect()
+      const r = g && b && g.rectOf(hv)
+      if (r) { const k = `${r.x | 0},${r.y | 0},${r.w | 0},${r.h | 0}`; if (k !== last) { last = k; setHr({ x: r.x - b.left, y: r.y - b.top, w: r.w, h: r.h }) } }
+      raf = requestAnimationFrame(tick)
+    }
+    tick()
+    return () => cancelAnimationFrame(raf)
+  }, [hv])
   const list = catOf(shown).items
   const it = list[Math.min(cur, list.length - 1)]
+  const hIt = hv >= 0 && phase === 'ready' && !leaving ? list[hv] : null
+  // the story's real first line (prose only: `line` is the repo's `first`); nothing when unknown
+  const hFirst = hIt && hIt.cat === 'prose' ? hIt.line : ''
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 900
+  const hBelow = hr && hr.y + hr.h + 120 < vh - 70
   useEffect(() => { if (gal.current && it) gal.current.tone(bgFor(it)) }, [it])
   const meta = it.meta.filter(([, v]) => v).slice(0, 4)
   const show = phase === 'ready' && !leaving
@@ -515,7 +605,33 @@ function Home({ cat, go }) {
         </dl>
       </section>
 
-      {it.line && <blockquote className={`h-quote${show ? ' is-on' : ''}`} key={`q-${shown}-${cur}`}>{it.line}</blockquote>}
+      {it.line && <blockquote className={`h-quote${show && !hFirst ? ' is-on' : ''}`} key={`q-${shown}-${cur}`}>{it.line}</blockquote>}
+
+      {/* iteration 18: the Chekhov epigraph on the home stage, above the plates, like an epigraph above a first chapter */}
+      {shown === 'home' && (
+        <div className={`h-epi${foot && !leaving ? ' is-on' : ''}`} key={`epi-${phase === 'ready'}`}>
+          <p className="h-epi-1"><Hand text={OPENING.lines[0]} delay={0.3} speed={0.045} /></p>
+          <p className="h-epi-2">{OPENING.lines[1]}</p>
+          <p className="h-epi-by">{OPENING.by}</p>
+        </div>)}
+
+      {/* iteration 18: the pen circles the plate under the pointer, and a story writes out its first line */}
+      {hIt && hr && (
+        <div className="h-hov" style={{ left: hr.x, top: hr.y, width: hr.w, height: hr.h }} aria-hidden="true">
+          <Scribble w={hr.w} h={hr.h} on pad={0.07} redraw={hv} />
+        </div>)}
+      {hFirst && hr && (
+        <p className="h-first" key={`f-${shown}-${hv}`} style={{ left: hr.x + hr.w / 2, top: hBelow ? hr.y + hr.h + 26 : undefined, bottom: hBelow ? undefined : 'auto', ...(hBelow ? {} : { top: Math.max(70, hr.y - 110) }) }} aria-hidden="true">
+          <Hand text={hFirst} speed={0.035} />
+        </p>)}
+
+      {/* iteration 18: where you are in the vertical order; each mark is also a way there */}
+      <nav className={`h-sec${foot ? ' is-on' : ''}`} aria-label="Sections in order">
+        {ORDER.map((c) => (
+          <button key={c} type="button" className={c === shown ? 'is-on' : ''} aria-current={c === shown ? 'true' : undefined} onClick={() => go(routeOf(c))}>
+            <span>{c === 'home' ? 'Opening' : labelOf(c)}</span><i aria-hidden="true" />
+          </button>))}
+      </nav>
 
 
       <div className={`h-foot${foot ? ' is-on' : ''}`}>
@@ -573,7 +689,7 @@ function Piece({ cat, i, go, via }) {
   const [hold, setHold] = useState(flying)
   const dir = NAV.dir
   const face = useFaceURL(it)
-  const ar = it.src ? aspectOf(it.src) : SECTIONS[cat].aspect
+  const ar = it.src ? aspectOf(it.src) : SECTIONS[cat === 'deep' ? 'publications' : cat].aspect
   const goRef = useRef(go); goRef.current = go
 
   useLayoutEffect(() => {
@@ -632,7 +748,7 @@ function Piece({ cat, i, go, via }) {
       <a href={`#/${cat}/${items[next].slug}`} onClick={(e) => { e.preventDefault(); go({ view: 'piece', cat, i: next }) }}><small>Next</small>{items[next].title}</a>
     </nav>
   )
-  if (cat === 'publications') {
+  if (cat === 'publications' || cat === 'deep') {
     return (
       <PaperPage
         it={it} honors={honors} nav={pgNav}
@@ -697,9 +813,29 @@ function About({ go }) {
 }
 function Paintings({ go }) {
   useLayoutEffect(() => { window.scrollTo(0, 0) }, [])
+  // iteration 18: ART THAT I LOVE is the last stop and scrolls as a page; scrolling up past its top
+  // (one deliberate gesture, wheel, keys or a pull-down swipe) goes back up to Deep Dives
+  useEffect(() => {
+    let sy = 0, g = 0, fired = false, ty = null
+    const back = () => { if (fired) return; fired = true; NAV.secDir = -1; go({ view: 'browse', cat: 'deep' }) }
+    const wheel = (e) => {
+      const now = performance.now()
+      if (now - g > 220) sy = 0
+      g = now
+      if (window.scrollY > 0 || e.deltaY >= 0) { sy = 0; return }
+      sy += e.deltaY * (e.deltaMode === 1 ? 16 : 1)
+      if (sy < -140 || e.deltaMode === 1) back()
+    }
+    const key = (e) => { if ((e.key === 'ArrowUp' || e.key === 'PageUp') && window.scrollY <= 0 && !e.repeat) back() }
+    const ts = (e) => { ty = window.scrollY <= 0 ? e.touches[0].clientY : null }
+    const tm = (e) => { if (ty != null && e.touches[0].clientY - ty > 110) back() }
+    const t0 = setTimeout(() => { window.addEventListener('wheel', wheel, { passive: true }); window.addEventListener('keydown', key); window.addEventListener('touchstart', ts, { passive: true }); window.addEventListener('touchmove', tm, { passive: true }) }, 700)
+    return () => { clearTimeout(t0); window.removeEventListener('wheel', wheel); window.removeEventListener('keydown', key); window.removeEventListener('touchstart', ts); window.removeEventListener('touchmove', tm) }
+  }, [go])
   return (
     <article className="pg pg-paint">
       <PageTop back={() => go({ view: 'browse', cat: lastCat.current })} backLabel="Back" go={go} active="paintings" right={`${PAINTINGS.length} paintings`} />
+      <button type="button" className="pt-up" onClick={() => { NAV.secDir = -1; go({ view: 'browse', cat: 'deep' }) }}><b aria-hidden="true">↑</b> <span>Scroll up: Deep Dives</span></button>
       <div className="pg-head"><h1 className="pg-title"><span>ART THAT I LOVE</span></h1><hr className="pg-rule" /></div>
       <ul className="pt-grid">
         {PAINTINGS.map((s, n) => (

@@ -157,3 +157,14 @@ seamlessly into its spot on the page; fix details, smoothness and nav.
 - Slop audit of the text we wrote: AI Trap card sub-line replaced with an abstract sentence; seven section sub-lines on AiTrap/MediCal rewritten plainly. Authors' abstracts not touched.
 - The wheel meta for new papers is two rows (Kind, Authors · affiliation) so it clears the card stack. The duplicate PDF link is removed.
 - QA: /workspace/redesign-shots-v16/ (1440, 1280, 390; card front/back, pages, sheet-*.png, chart crops). No page errors, no horizontal overflow. Lint is at 9. dist 96,708,924 → 100,231,138 bytes (+3.52 MB, mostly the PDFs, webp figures and texDocs JSON).
+
+## Iteration 18
+
+Built on iteration 16 (A24 system kept: tilted plates, expanded pages, white papers, pen circle, intro, Flip, header).
+
+- Scroll: the stage follows the wheel or drag (`--pull`), then commits with a directional carry (out up/down, in from the other side) into the existing exit/fan. A short gesture eases back, and the edges rubber-band. Nav clicks and Back teleport (blur out, rise in) straight to the target. A right-edge section indicator plus the "Scroll down: next" cue. ART THAT I LOVE scrolls back up to Deep Dives (wheel or keys at the top, pull down on touch, or the "↑ Scroll up" button).
+- Scroll-up root cause: Gallery's momentum-tail check treated any new gesture within 2.6s of a section change as the tail of the old one. It ignored direction, and it ignored the pause before the gesture. So an up swipe right after a down swipe, or a second notch of the same strength, was swallowed. Paintings also had no way back up. Fix: a tail now has to keep the same sign and follow a pause under 650ms. A switch that is still settling holds the gesture for up to 1.6s instead of dropping it. Reversing direction has a shorter cooldown (600ms).
+- Home: Chekhov epigraph below the centred name. The first line is written in Pinyon Script, and the second line and attribution fade in.
+- Deep Dives (`#/deep`): the White paper entries from the publications data, Healthcare's AI Trap and Mapping Medi-Cal Deserts.
+- Hover: a story's real first line is written out by hand under its plate. The jittery pen circle redraws continuously. Nav items get a jittery pen underline.
+- QA: /tmp/q.cjs (Puppeteer); screenshots in /workspace/redesign-shots-v18.
