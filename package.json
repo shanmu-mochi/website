@@ -13,7 +13,8 @@
     "og": "node scripts/build-og.cjs",
     "prerender": "node scripts/prerender.cjs",
     "previews": "node scripts/build-previews.cjs",
-    "build:preview": "VITE_FEEDBACK=1 vite build && cp scripts/serve.py dist/serve.py"
+    "build:preview": "VITE_FEEDBACK=1 vite build && cp scripts/serve.py dist/serve.py",
+    "live": "npm run build:preview && cd dist && python3 serve.py"
   },
   "dependencies": {
     "@react-three/drei": "^9.88.13",
