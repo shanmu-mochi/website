@@ -213,3 +213,10 @@ Built on iteration 16 (A24 system kept: tilted plates, expanded pages, white pap
   - letter-spacing .015em, line-height 1.12–1.15, one weight (400) only.
 - **Pen reveal:** the mask opens taller (−55%) and a little wider so the loops and tails aren't clipped, with a slightly more even ease. Reduced motion still shows the text at once.
 - Shots of home, story top and About at 1440/1280/390 are in /workspace/redesign-shots-v22/.
+
+## Iteration 23 — handwriting only in Prose; A24 section transition
+- Handwriting (Reenie Beanie) now only on Prose: prose home plates, prose story pages, About Chekhov quote. Publications / Luck / Deep Dives use plain Lora (verified: 0 Reenie elements on those rows). Hover pen marks kept.
+- SEC_ORDER now matches the nav: prose → publications → luck → deep.
+- New section transition (src/styles/iter23.css, secRef/preRef in Browser.jsx): overflow past a row's end (0–0.3 plate) scrubs the row along the −30° diagonal and fades in a title card (section name in Lora, pen underline, "NN pieces", "0k / 04"), fully reversible. Past the handoff the row tilts/slides away, the card holds, and the new row springs in with cubic-bezier(0.32,0.72,0,1). Jump-nav uses a shorter version. Reduced motion: no tweens, no card.
+- Caveat: once committed, reversal is applied after arrival via Gallery pend (not scrubbed mid-flight). Real Mac trackpad / phone untested.
+- Shots: /workspace/redesign-shots-v23.

@@ -19,6 +19,7 @@ import './styles/iter19.css'
 import './styles/iter20.css'
 import './styles/iter21.css'
 import './styles/iter22.css'
+import './styles/iter23.css'
 
 const norm = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '')
 const pad2 = (n) => String(n).padStart(2, '0')
@@ -29,7 +30,7 @@ const isTouch = () => window.matchMedia('(max-width: 720px), (pointer: coarse)')
 const PAINT_ITEMS = PAINTINGS.map((src) => ({ cat: 'paintings', slug: src.replace(/\.[a-z]+$/, ''), src, title: META[src].title, kind: 'Painting', line: '',
   meta: [['Artist', META[src].artist], ['Year', META[src].year]] }))
 const PAINT_CAT = { id: 'paintings', label: 'ART THAT I LOVE', items: PAINT_ITEMS }
-const SEC_ORDER = ['prose', 'publications', 'deep', 'luck']   // iteration 20: ART THAT I LOVE is its own static page again
+const SEC_ORDER = ['prose', 'publications', 'luck', 'deep']   // iteration 20: ART THAT I LOVE is its own static page again
 const catOf0 = (id) => (id === 'paintings' ? PAINT_CAT : CATS.find((c) => c.id === id) || CATS[0])
 const ROW = SEC_ORDER.flatMap((c) => catOf0(c).items.map((it) => ({ ...it, rowCat: c })))
 const SEC_START = {}; SEC_ORDER.forEach((c) => { SEC_START[c] = ROW.findIndex((x) => x.rowCat === c) })
@@ -465,23 +466,64 @@ function Home({ cat, go }) {
   // iteration 20: the site is vertical. Down runs sideways through a section; past its last plate the
   // row eases off upward and the next section's row rises in from below (and the reverse going up).
   // A nav click is the same move, landing on the section's first plate.
+  /* iteration 23: the section change, A24-calm. Past the end of a row (the last 0.3 plate before the hand-off)
+     the row starts to lean off along its diagonal and the next section's title card starts to show, scrubbed
+     by the scroll position, so pulling back undoes it. At the hand-off the row slides away along the -30deg
+     diagonal, the card holds the section's name with a pen line drawing in and its count, and the new row
+     comes in from the other end of the diagonal and fans out. Input during the change is kept (Gallery pend)
+     and applied the moment the new row is ready, so a reversal mid-change turns straight back. */
+  const cardRef = useRef(null)
+  const phaseRef = useRef(phase); phaseRef.current = phase
+  const setCard = (c) => {
+    const el = cardRef.current; if (!el || !c) return
+    if (el.dataset.c === c) return
+    el.dataset.c = c
+    el.querySelector('.h-card-n').textContent = catOf0(c).label
+    el.querySelector('.h-card-k').textContent = `${pad2(catOf0(c).items.length)} pieces`
+    el.querySelector('.h-card-i').textContent = `${pad2(SEC_ORDER.indexOf(c) + 1)} / ${pad2(SEC_ORDER.length)}`
+  }
+  const preRef = useRef(() => {})
+  preRef.current = () => {
+    const g = gal.current, el = host.current, cd = cardRef.current
+    if (!g || !el || !cd || phaseRef.current === 'switch' || reduced()) return
+    const hi = g.N - 1, ov = g.L > hi ? g.L - hi : g.L < 0 ? g.L : 0
+    const now = ROW[base.current] ? ROW[base.current].rowCat : 'prose', k = SEC_ORDER.indexOf(now) + Math.sign(ov)
+    const p = ov && k >= 0 && k < SEC_ORDER.length ? Math.min(1, Math.abs(ov) / 0.3) : 0
+    if (p > 0) setCard(SEC_ORDER[k])
+    const d = Math.sign(ov) || 1, e = p * p
+    el.style.transform = p ? `translate(${(-d * 3.4 * e).toFixed(3)}vw, ${(-d * 2 * e).toFixed(3)}vw)` : ''
+    cd.style.opacity = (p * 0.55).toFixed(3); cd.style.setProperty('--cp', (p * 0.35).toFixed(3))
+  }
   const secRef = useRef(null)
-  secRef.current = (c, dir, local = 0) => {
-    const g = gal.current, el = host.current
+  secRef.current = (c, dir, local = 0, jump = false) => {
+    const g = gal.current, el = host.current, cd = cardRef.current
     if (!g || !el || SEC_START[c] == null) return
     const t = ++token.current
     setPhase('switch'); setHv(-1)
     try { history.replaceState(null, '', `#/${c}`) } catch { /* ignore */ }
-    const red = reduced(), off = 16
-    NAV.hold = Promise.all([g.exit(), red ? null : gsap.to(el, { yPercent: -dir * off, opacity: 0, duration: 0.5, ease: GLIDE })]).then(() => {
+    const red = reduced(), E = 'cubic-bezier(0.32,0.72,0,1)', X = 'power2.inOut'
+    setCard(c)
+    gsap.killTweensOf([el, cd])
+    // along the row's diagonal (up-left going on, down-right going back): cos30, sin30
+    const dx = 26, dy = 15
+    const out = red ? null : gsap.to(el, { x: `${-dir * dx}vw`, y: `${-dir * dy}vw`, rotate: -dir * 1.5, opacity: 0, duration: jump ? 0.38 : 0.55, ease: X })
+    if (cd) {
+      cd.classList.remove('is-draw'); void cd.offsetWidth; cd.classList.add('is-draw')
+      if (red) gsap.set(cd, { opacity: 0 })
+      else gsap.to(cd, { opacity: 1, '--cp': 1, duration: 0.45, ease: 'power1.out' })
+    }
+    el.style.transform = ''
+    NAV.hold = Promise.all([g.exit(), out]).then(() => {
       if (t !== token.current || !gal.current) return
       base.current = SEC_START[c]
       g.setSection(secItems(c), 'home', local)
       g.G.active = red ? 1 : 0.001; g.G.others = red ? 1 : 0; g.G.inbound = true
       setCur(SEC_START[c] + local); lastIdx.home = SEC_START[c] + local; ROWPOS.set = true
-      if (!red) gsap.set(el, { yPercent: dir * off, opacity: 0 })
-      return Promise.all([g.fan(), red ? null : gsap.to(el, { yPercent: 0, opacity: 1, duration: 0.8, ease: GLIDE })])
-        .then(() => { if (t === token.current) setPhase('ready') })
+      if (!red) gsap.set(el, { x: `${dir * dx * 0.6}vw`, y: `${dir * dy * 0.6}vw`, rotate: dir * 1, opacity: 0 })
+      const hold = red || jump ? 0 : 0.18
+      if (cd && !red) gsap.to(cd, { opacity: 0, duration: 0.5, delay: hold + 0.25, ease: 'power1.in' })
+      return Promise.all([g.fan(), red ? null : gsap.to(el, { x: 0, y: 0, rotate: 0, opacity: 1, duration: 0.9, delay: hold, ease: E })])
+        .then(() => { if (t === token.current) { gsap.set(el, { clearProps: 'transform,opacity' }); setPhase('ready') } })
     })
   }
   const jumpRef = useRef(null)
@@ -490,7 +532,7 @@ function Home({ cat, go }) {
     const g = gal.current
     if (!g || SEC_START[c] == null) return
     if (now === c) { if (g.index() !== 0) g.to(0, 'click'); return }
-    secRef.current(c, SEC_ORDER.indexOf(c) > SEC_ORDER.indexOf(now) ? 1 : -1, 0)
+    secRef.current(c, SEC_ORDER.indexOf(c) > SEC_ORDER.indexOf(now) ? 1 : -1, 0, true)
   }
   const edgeRef = useRef(null)
   edgeRef.current = (dir) => {
@@ -546,7 +588,7 @@ function Home({ cat, go }) {
       onHover: (i) => setHv(isTouch() ? -1 : i),
       onOpen: (i) => goRef.current(pieceRoute('home', base.current + i)),
       onEdge: (d) => edgeRef.current(d),
-      onFrame: () => { placeRef.current(); dbgRef.current() },
+      onFrame: () => { placeRef.current(); preRef.current(); dbgRef.current() },
     })
     g.setSection(secItems(ROW[start0.current].rowCat), 'home', start0.current - base.current)
     // one axis everywhere: a wheel over the title block, nav or footer still moves the row (A24 does too)
@@ -687,7 +729,7 @@ function Home({ cat, go }) {
       {/* iteration 21 (t81): under the front painting, in reading order: its title, then its first line written in by hand, then the details */}
       <div ref={qRef} className={`h-under${show ? ' is-on' : ''}`} key={`u-${shown}-${cur}`} aria-live="polite">
         <h1 className="h-title"><a href={`#/${it.cat}/${it.slug}`} onClick={(e) => { e.preventDefault(); go(pieceRoute('home', cur)) }}>{it.title}</a></h1>
-        {it.line && <blockquote className="h-quote h-quote-hw is-on">{show ? <Hand text={it.line} delay={0.35} speed={Math.min(0.045, 0.75 / Math.max(1, it.line.length))} /> : <span style={{ visibility: 'hidden' }}>{it.line}</span>}</blockquote>}
+        {it.line && it.cat === 'prose' && <blockquote className="h-quote h-quote-hw is-on">{show ? <Hand text={it.line} delay={0.35} speed={Math.min(0.045, 0.75 / Math.max(1, it.line.length))} /> : <span style={{ visibility: 'hidden' }}>{it.line}</span>}</blockquote>}
         <p className="h-umeta">{meta.map(([, v]) => v).filter(Boolean).join(' \u00b7 ')}</p>
       </div>
 
@@ -710,6 +752,12 @@ function Home({ cat, go }) {
         </button>
       </div>
       {/* iteration 10: socials live bottom-left, away from the counter and the screen corner */}
+      <div ref={cardRef} className="h-card" aria-hidden="true">
+        <small className="h-card-i" />
+        <span className="h-card-t"><span className="h-card-n" />
+          <svg className="h-card-u" viewBox="0 0 300 18" preserveAspectRatio="none"><path d="M4 11 C 60 5, 120 15, 180 9 S 270 6, 296 10" pathLength="1" /></svg></span>
+        <small className="h-card-k" />
+      </div>
       <pre ref={dbgEl} className="h-dbg" hidden aria-hidden="true" />
       <div className={`h-sfoot${foot ? ' is-on' : ''}`}><Socials /></div>
 
