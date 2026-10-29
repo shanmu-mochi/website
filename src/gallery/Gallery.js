@@ -105,6 +105,8 @@ export default class Gallery {
     this.hover = -1; this.U = 0; this.Ue = 0
     this.drag = null; this.flight = false; this.cur = -1
     this.wheel = { v: 0, t: 0 }
+    // iteration 21: one-axis controller state. T is where the row is heading (in plates); L chases it
+    this.T = 0; this.pend = 0; this.lastIn = 0; this.dbg = { d: 0, mode: 0, kind: '', edge: '' }
     this.tls = new Set()
 
     const r = this.renderer = renderer()
@@ -136,7 +138,7 @@ export default class Gallery {
     this.root.rotation.set(rad(this.sec.tiltX), rad(this.sec.tiltY), 0)
     this.L = clamp(start, 0, this.N - 1); this.we = this.L; this.Se = 0; this.Te = 0; this.Ce = 0
     this.target = -1; this.tweening = false; this.cur = -1; this.hover = -1; this.flight = false
-    this.L = clamp(start, 0, items.length - 1)
+    this.L = clamp(start, 0, items.length - 1); this.T = this.L
     this.plates = items.map((it, i) => this.makePlate(it, i))
     this.resize()
     this.layout(1, true)
@@ -175,12 +177,13 @@ export default class Gallery {
 
   /* ---------------- state ---------------- */
   index() { return Math.round(clamp(this.L, 0, this.N - 1)) }
-  settled() { return this.target >= 0 ? this.target : this.index() }
+  settled() { return this.oneAxis ? Math.round(clamp(this.T, 0, this.N - 1)) : this.target >= 0 ? this.target : this.index() }
   flipped(i = this.index()) { const p = this.plates[i]; return !!p && Math.cos(p.spinY) < 0 }
 
   to(i, source = 'snap') {
     if (!this.N) return
     const n = clamp(i, 0, this.N - 1), dist = Math.abs(n - this.L), d = CFG.snapDuration
+    if (this.oneAxis) { gsap.killTweensOf(this.tw); this.tweening = false; this.target = -1; this.Se = 0; this.Te = 0; this.T = n; this.lastIn = 0; if (this.reduced) this.L = n; return }
     const a = source === 'wheel' ? { duration: d + 0.05, kick: 2.5 }
       : source === 'key' ? { duration: Math.min(0.6, d - 0.04 + dist * 0.05), kick: 4 }
         : source === 'click' ? { duration: clamp(0.45 + dist * 0.11, d, 1.05), kick: Math.min(5, dist * 1.4) }
@@ -198,7 +201,7 @@ export default class Gallery {
   }
   jumpTo(n) {
     this.cancel()
-    this.L = clamp(n, 0, this.N - 1); this.we = this.L; this.Ce = 0
+    this.L = clamp(n, 0, this.N - 1); this.we = this.L; this.Ce = 0; this.T = this.L
     for (const p of this.plates) if (Math.abs(p.i - this.L) <= CFG.renderRadius + 2) p.load()
     this.layout(1, true)
   }
@@ -361,6 +364,7 @@ export default class Gallery {
   busy() { return this.flight || this.q.active || !this.N }
   onWheel(e) {
     e.preventDefault()
+    if (this.oneAxis) { this.wheelOne(e); return }
     const w = this.wheel, now = performance.now()
     // iteration 14: two axes. Sideways (deltaX, or shift + wheel) browses the pieces; up / down asks the
     // page for the next or previous section. Each gesture locks to its dominant axis on its first
@@ -428,6 +432,41 @@ export default class Gallery {
     this.Te = 0
     if (Math.abs(v) > Math.abs(this.Se) || Math.sign(v) !== Math.sign(this.Se)) this.Se = v
   }
+  /* iteration 21: the one-axis wheel. Every event moves the target T in proportion to its delta, in
+     both directions, nothing is gated, swallowed or timed out. A mouse notch is one plate. Pushing on
+     past the last plate (or before the first) hands over to the next section at once; whatever the hand
+     keeps sending while the sections change is kept in pend and applied when the new row is ready. */
+  wheelOne(e) {
+    if (e.ctrlKey) return                                  // pinch zoom
+    const now = performance.now()
+    const k = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1
+    let dx = e.deltaX * k, dy = e.deltaY * k
+    if (e.shiftKey && !dx) { dx = dy; dy = 0 }
+    const d = Math.abs(dy) >= Math.abs(dx) ? dy : dx
+    if (!d) return
+    const gap = now - this.lastIn
+    // a mouse wheel notch: line mode, or a big whole delta after a pause (trackpads send small, fractional, continuous deltas)
+    const notch = e.deltaMode === 1 || e.deltaMode === 2 || (Math.abs(d) >= 50 && Number.isInteger(d) && gap > 90)
+    const inc = notch ? Math.sign(d) : d / CFG.wheelPx
+    this.lastIn = now
+    this.dbg.d = d; this.dbg.mode = e.deltaMode; this.dbg.kind = notch ? 'notch' : 'smooth'
+    if (this.busy()) { this.pend = clamp(this.pend + inc, -2, 2); return }
+    this.push(inc, notch)
+  }
+  push(inc, notch) {
+    if (notch) { const b = Math.round(this.T); this.T = (Math.sign(inc) === Math.sign(this.T - b) ? this.T : b) + inc } else this.T += inc
+    this.T = Math.round(this.T * 1e4) / 1e4
+    const hi = this.N - 1, over = this.T > hi ? this.T - hi : this.T < 0 ? this.T : 0
+    if (over && (Math.abs(over) >= 0.3 || notch)) {
+      // the turn: past the end, the row goes on into the next section, carrying what is left of the push
+      this.dbg.edge = over > 0 ? 'handoff ↓' : 'handoff ↑'
+      this.T = clamp(this.T, 0, hi)
+      this.pend = notch ? 0 : clamp((Math.abs(over) - 0.3) * Math.sign(over), -1, 1)
+      if (this.o.onEdge) this.o.onEdge(Math.sign(over)); else this.nudge(Math.sign(over))
+      return
+    }
+    this.dbg.edge = over ? 'past end' : ''
+  }
   onDown(e) {
     if (e.button !== 0 || this.busy()) return
     const h = this.pick(e.clientX, e.clientY)
@@ -477,7 +516,7 @@ export default class Gallery {
     const s = -along * span
     const raw = this.L + s
     if (raw > this.N - 1 || raw < 0) d.over = (d.over || 0) + Math.abs(raw - clamp(raw, 0, this.N - 1)) * Math.sign(raw - clamp(raw, 0, this.N - 1))
-    this.L = clamp(raw, 0, this.N - 1)
+    this.L = clamp(raw, 0, this.N - 1); this.T = this.L
     const v = clamp((16.667 / dt) * s, -CFG.dragMaxV, CFG.dragMaxV)
     this.Se += (v - this.Se) * CFG.dragSmooth
   }
@@ -502,6 +541,7 @@ export default class Gallery {
     // iteration 20: a drag that keeps pushing past the end of a section carries on to the next one
     if (this.oneAxis && this.o.onEdge && Math.abs(d.over || 0) > 0.35) { this.Se = 0; this.o.onEdge(Math.sign(d.over)); return }
     if (performance.now() - d.t > 110) this.Se = 0
+    if (this.oneAxis) { const v = this.Se; this.Se = 0; this.lastIn = 0; this.T = clamp(Math.round(this.L + clamp(v * (this.touch ? 10 : 14), -3, 3) + Math.sign(v) * (Math.abs(v) > 0.02 ? 0.35 : 0)), 0, this.N - 1); return }
     if (this.touch) {
       const v = this.Se; this.Se = 0
       const tgt = Math.round(this.L + Math.sign(v) * 0.5)
@@ -658,7 +698,14 @@ export default class Gallery {
     if (!this.N) return
     const r = Math.min(3, dt * 60)
     const dragging = this.drag && this.drag.on && this.drag.spin < 0
-    if (!dragging && !this.flight) {
+    if (this.oneAxis && !dragging && !this.flight && !this.q.active) {
+      if (this.pend) { const p = this.pend; this.pend = 0; this.push(p, false) }
+      // the hand has stopped: settle on the nearest plate (the same chase acts as the spring)
+      if (performance.now() - this.lastIn > 140) { const sn = Math.round(clamp(this.T, 0, this.N - 1)); if (sn !== this.T) { this.T = sn; this.dbg.edge = '' } }
+      if (this.reduced) this.L = Math.round(clamp(this.T, 0, this.N - 1))
+      else { this.L += (this.T - this.L) * (1 - Math.exp(-dt * 9)); if (Math.abs(this.T - this.L) < 5e-4) this.L = this.T }
+      this.Se = 0; this.Te = 0
+    } else if (!dragging && !this.flight) {
       if (Math.abs(this.Se) > 1e-5) {
         this.L += this.Se * r
         this.Se *= this.reduced ? 0 : Math.exp(-dt / CFG.glideTau)

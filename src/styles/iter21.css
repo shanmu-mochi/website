@@ -1,0 +1,68 @@
+/* iteration 21: first line under the front plate, handwritten */
+.h-quote.h-quote-hw { position: absolute; bottom: auto !important; margin: 0 !important; transform: translateX(-50%) !important; display: block !important; -webkit-line-clamp: unset; overflow: visible;
+  font: 500 clamp(19px, 1.55vw, 24px)/1.2 'La Belle Aurore', var(--book) !important; font-style: normal !important; text-align: center; text-wrap: balance; color: inherit; max-height: 2.5em; }
+.h-quote.h-quote-hw::before, .h-quote.h-quote-hw::after { content: none; }
+.h-quote.h-quote-hw.is-on { opacity: 1; transition: opacity .2s linear; }
+@media (max-width: 760px) { .h-quote.h-quote-hw { font-size: 18px !important; } }
+html, body { overscroll-behavior: none; }
+.h { overflow: hidden; overscroll-behavior: none; }
+.h-dbg { position: fixed; left: 12px; top: 70px; z-index: 50; margin: 0; padding: 8px 10px; background: rgba(0,0,0,.78); color: #9f9; font: 11px/1.45 ui-monospace, Menlo, monospace; white-space: pre; pointer-events: none; }
+
+/* t79: the pen mark is for hover / press only; the current section gets a small dot that eases in */
+.h-cat-l { position: relative; }
+a[aria-current] .h-cat-l::after { content: ''; position: absolute; left: 50%; bottom: -9px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: currentColor; animation: navDot .6s cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes navDot { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { a[aria-current] .h-cat-l::after { animation: none; } }
+
+/* t77/78/80: story page */
+.pg-story { background: #fff; }
+.st-top { min-height: calc(100svh - 96px); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px 20px 40px; position: relative; }
+.st-top .pg-title { margin: 0; }
+.st-top .pg-rule { width: 64px; margin: 22px auto 0; border: 0; border-top: 1px solid #111; }
+.st-first { margin: 22px auto 0; max-width: 720px; font: 400 clamp(26px, 2.8vw, 38px)/1.35 'La Belle Aurore', var(--book); color: #111; text-wrap: balance; }
+.st-meta { margin: 30px auto 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 34px; }
+.st-meta dt { font: 500 10px/1 var(--sans, sans-serif); letter-spacing: .2em; text-transform: uppercase; color: #777; margin-bottom: 6px; }
+.st-meta dd { margin: 0; font: 15px/1.3 'Lora', serif; }
+.st-cta { margin: 34px auto 0; display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+.st-cta a { display: inline-block; padding: 13px 26px; font: 500 12px/1 var(--sans, sans-serif); letter-spacing: .24em; text-transform: uppercase; color: #111; text-decoration: none; transition: background .3s, color .3s; }
+.st-cta a:hover { background: #111; color: #fff; }
+.st-fly { position: absolute; left: 50%; bottom: 0; width: 90px; height: 120px; margin-left: -45px; visibility: hidden; pointer-events: none; }
+.st-reveal { --bw: 62vw; margin: 0; position: relative; left: 50%; width: var(--bw); transform: translateX(-50%); clip-path: polygon(0 104%, 100% 104%, 100% 100%, 0 100%); will-change: clip-path; }
+.st-reveal img { display: block; width: 100%; height: auto; max-height: 92vh; object-fit: cover; }
+.st-reveal figcaption { text-align: center; font: 500 10px/1.5 var(--sans, sans-serif); letter-spacing: .16em; text-transform: uppercase; color: #777; padding: 12px 20px 0; }
+.st-open { max-width: 680px; margin: 96px auto 0; padding: 0 22px; }
+.st-open p { font: 400 clamp(21px, 1.8vw, 25px)/1.6 'Lora', serif; color: #111; margin: 0 0 1em; }
+.st-open p:first-child::first-letter { font-size: 3.1em; float: left; line-height: .86; margin: 6px 8px 0 0; }
+.st-pull { max-width: 760px; margin: 56px auto 0; padding: 30px 22px; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; text-align: center; }
+.st-pull p { margin: 0; font: italic 400 clamp(24px, 2.4vw, 32px)/1.4 'Lora', serif; text-wrap: balance; }
+.st-more { margin: 110px 0 0; }
+.st-more h2 { text-align: center; font: 500 11px/1 var(--sans, sans-serif); letter-spacing: .24em; text-transform: uppercase; color: #555; margin: 0 0 28px; }
+.st-row { display: flex; gap: 34px; overflow-x: auto; padding: 30px max(24px, calc(50vw - 520px)) 36px; scrollbar-width: none; perspective: 1400px; overscroll-behavior-x: contain; cursor: grab; }
+.st-row::-webkit-scrollbar { display: none; }
+.st-plate { flex: 0 0 auto; width: 170px; color: #111; text-decoration: none; text-align: center; }
+.st-plate-f { display: grid; place-items: center; height: 220px; overflow: hidden; transform: rotateY(-14deg) rotateZ(-1.2deg); transition: transform .6s cubic-bezier(.16, 1, .3, 1); box-shadow: 0 10px 30px rgba(0,0,0,.12); }
+.st-plate:nth-child(even) .st-plate-f { transform: rotateY(14deg) rotateZ(1.2deg); }
+.st-plate:hover .st-plate-f { transform: none; }
+.st-plate-f img { width: 100%; height: 100%; object-fit: cover; }
+.st-plate-f em { padding: 16px; font: italic 16px/1.3 'Lora', serif; }
+.st-plate small { display: block; margin-top: 16px; font: 500 9px/1 var(--sans, sans-serif); letter-spacing: .2em; text-transform: uppercase; color: #888; }
+.st-plate b { display: block; margin-top: 6px; font: 400 14px/1.3 'Lora', serif; }
+.st-nav { max-width: 760px; margin: 40px auto 0; font-size: 13px; opacity: .8; }
+.st-next { --pull: 0; display: block; text-align: center; padding: 90px 20px 120px; margin-top: 60px; border-top: 1px solid #eee; color: #111; text-decoration: none; }
+.st-next small { font: 500 10px/1 var(--sans, sans-serif); letter-spacing: .2em; text-transform: uppercase; color: #888; }
+.st-next .pg-title { display: block; margin-top: 20px; transform: translateY(calc((1 - var(--pull)) * 18px)); opacity: calc(.45 + var(--pull) * .55); }
+.st-next .pg-rule { width: calc(64px + var(--pull) * 120px); margin: 22px auto 0; border: 0; border-top: 1px solid #111; }
+@media (max-width: 700px) { .st-reveal { --bw: 100vw !important; } .st-plate { width: 132px; } .st-plate-f { height: 172px; } .st-open { margin-top: 64px; } }
+@media (prefers-reduced-motion: reduce) { .st-reveal { clip-path: none !important; --bw: 100vw; } }
+
+/* t81: title, first line, details stacked under the front painting; socials under the name */
+.h-under { position: absolute; z-index: 3; transform: translateX(-50%); text-align: center; pointer-events: none; opacity: 0; transition: opacity .35s linear; }
+.h-under.is-on { opacity: 1; }
+.h-under a { pointer-events: auto; }
+.h-under .h-title { position: static !important; margin: 0 !important; font-size: clamp(15px, 1.25vw, 19px) !important; line-height: 1.2; text-align: center; transform: none !important; opacity: 1 !important; }
+.h-under .h-quote.h-quote-hw { position: static !important; transform: none !important; margin: 6px auto 0 !important; width: auto !important; }
+.h-umeta { margin: 8px 0 0; font: 500 9px/1.4 var(--sans, sans-serif); letter-spacing: .2em; text-transform: uppercase; opacity: .6; }
+.h-sfoot { left: 50% !important; bottom: auto !important; transform: translateX(-50%); }
+.h-sfoot .h-social { display: flex; gap: 14px; justify-content: center; }
+.h-sfoot .h-social svg { width: 24px !important; height: 24px !important; }
+@media (max-width: 760px) { .h-under .h-title { font-size: 15px !important; } .h-umeta { display: none; } }

@@ -17,6 +17,7 @@ import './styles/a24.css'
 import './styles/iter18.css'
 import './styles/iter19.css'
 import './styles/iter20.css'
+import './styles/iter21.css'
 
 const norm = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '')
 const pad2 = (n) => String(n).padStart(2, '0')
@@ -384,16 +385,17 @@ function SiteNav({ go, active, className = '', onHover, onJump }) {
     <a key={id} href={id === 'about' ? '#/about' : id === 'paintings' ? '#/art' : `#/${id}`} className={id === active ? 'is-on' : ''} aria-current={id === active ? 'true' : undefined}
       onMouseEnter={() => h(id)} onMouseLeave={() => h(null)} onFocus={() => h(id)} onBlur={() => h(null)}
       onClick={(e) => { e.preventDefault(); if (e.detail) e.currentTarget.blur(); jump(id) }}>
-      <span className="h-cat-l">{label}<CatRing on={hov === id || (hov === null && id === active)} redraw={active} /></span>
+      <span className="h-cat-l">{label}<CatRing on={hov === id} redraw={active} /></span>
     </a>
   )
   return (
     <header className={`sn ${className}`}>
       <nav className="sn-nav sn-l h-nav" aria-label="Sections">
-        {['prose', 'publications', 'deep', 'luck'].map((c) => item(c, catOf(c).label))}
+        {['prose', 'publications', 'luck'].map((c) => item(c, catOf(c).label))}
       </nav>
       <a className="h-mark" href="#/" aria-label="Shanmu Raja, home" onClick={(e) => { e.preventDefault(); if (e.detail) e.currentTarget.blur(); if (onJump) onJump('prose'); else go({ view: 'browse', cat: 'home' }) }}>Shanmu Raja</a>
       <nav className="sn-nav sn-r h-nav" aria-label="Pages">
+        {item('deep', catOf('deep').label)}
         {item('paintings', 'ART THAT I LOVE')}
         {item('about', 'About')}
       </nav>
@@ -498,6 +500,42 @@ function Home({ cat, go }) {
   }
   const [hv, setHv] = useState(-1)
   const [hr, setHr] = useState(null)
+  const qRef = useRef(null)
+  /* iteration 21: press D for a live readout of the scroll controller (to diagnose a real machine) */
+  const dbgEl = useRef(null)
+  const dbgRef = useRef(() => {})
+  dbgRef.current = () => {
+    const el = dbgEl.current, g = gal.current
+    if (!el || !g || el.hidden) return
+    const sec = ROW[base.current] ? ROW[base.current].rowCat : '?', P = base.current + g.L
+    const vel = (g.L - (g._pl == null ? g.L : g._pl)) * 60; g._pl = g.L
+    el.textContent = `P ${P.toFixed(3)}  (global plate ${Math.round(P) + 1}/${ROW.length})\nsection ${SEC_ORDER.indexOf(sec)} ${sec}  local ${g.L.toFixed(3)} → T ${g.T.toFixed(3)} of ${g.N - 1}\nvel ${vel.toFixed(2)} pl/s  pend ${g.pend.toFixed(2)}  busy ${g.busy() ? 'yes' : 'no'}\nlast delta ${(+g.dbg.d).toFixed(1)} mode ${g.dbg.mode} ${g.dbg.kind}\nboundary ${g.atEdge(1) ? 'at last plate' : g.atEdge(-1) ? 'at first plate' : '—'} ${g.dbg.edge || ''}`
+  }
+  useEffect(() => {
+    const k = (e) => { if ((e.key === 'd' || e.key === 'D') && !e.metaKey && !e.ctrlKey && !e.altKey && !/input|textarea/i.test(e.target.tagName)) { const el = dbgEl.current; if (el) el.hidden = !el.hidden } }
+    window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k)
+  }, [])
+  /* keep the line under the front plate's bottom edge, centred on it, plate-wide, never over the foot */
+  const placeQ = () => {
+    const q = qRef.current, g = gal.current, m = mainRef.current
+    if (!q || !g || !m) return
+    const r = g.rectOf(g.index()); if (!r) return
+    const mb = m.getBoundingClientRect(), W = mb.width, H = mb.height
+    const mob = W <= 760, w = Math.max(mob ? 240 : 260, Math.min(r.w * (mob ? 1.05 : 1), 560, W - 24))
+    const cx = Math.min(W - w / 2 - 12, Math.max(w / 2 + 12, r.x - mb.left + r.w / 2))
+    let floor = H - 8
+    m.querySelectorAll('.h-flip, .h-count, .h-end').forEach((e) => {
+      const b = e.getBoundingClientRect(); if (!b.width) return
+      const l = b.left - mb.left, rr = b.right - mb.left
+      if (rr > cx - w / 2 - 8 && l < cx + w / 2 + 8) floor = Math.min(floor, b.top - mb.top - 8)
+    })
+    const top = Math.max(0, Math.min(r.y - mb.top + r.h + (mob ? 10 : 14), floor - q.offsetHeight))
+    q.style.left = `${cx.toFixed(1)}px`; q.style.top = `${top.toFixed(1)}px`; q.style.width = `${w.toFixed(0)}px`
+    // the socials sit centred right under the name (on a phone, under the stacked nav so they never touch it)
+    const sf = m.querySelector('.h-sfoot'), mk = m.querySelector('.h-mark'), hd = m.querySelector('.sn')
+    if (sf && mk) { const mr = mk.getBoundingClientRect(), y = mob && hd ? hd.getBoundingClientRect().bottom : mr.bottom; sf.style.top = `${(y - mb.top + (mob ? 6 : 4)).toFixed(1)}px` }
+  }
+  const placeRef = useRef(placeQ); placeRef.current = placeQ
 
   useLayoutEffect(() => {
     const el = host.current
@@ -507,6 +545,7 @@ function Home({ cat, go }) {
       onHover: (i) => setHv(isTouch() ? -1 : i),
       onOpen: (i) => goRef.current(pieceRoute('home', base.current + i)),
       onEdge: (d) => edgeRef.current(d),
+      onFrame: () => { placeRef.current(); dbgRef.current() },
     })
     g.setSection(secItems(ROW[start0.current].rowCat), 'home', start0.current - base.current)
     // one axis everywhere: a wheel over the title block, nav or footer still moves the row (A24 does too)
@@ -644,14 +683,12 @@ function Home({ cat, go }) {
 
       <SiteNav go={go} active={sec} onJump={(c) => jumpRef.current(c)} className={`h-top${chrome ? ' is-on' : ''}`} />
 
-      <section className={`h-info${show ? ' is-on' : ''}`} key={`${shown}-${cur}`} aria-live="polite">
+      {/* iteration 21 (t81): under the front painting, in reading order: its title, then its first line written in by hand, then the details */}
+      <div ref={qRef} className={`h-under${show ? ' is-on' : ''}`} key={`u-${shown}-${cur}`} aria-live="polite">
         <h1 className="h-title"><a href={`#/${it.cat}/${it.slug}`} onClick={(e) => { e.preventDefault(); go(pieceRoute('home', cur)) }}>{it.title}</a></h1>
-        <dl className="h-meta">
-          {meta.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
-        </dl>
-      </section>
-
-      {it.line && <blockquote className={`h-quote${show ? ' is-on' : ''}`} key={`q-${shown}-${cur}`}>{it.line}</blockquote>}
+        {it.line && <blockquote className="h-quote h-quote-hw is-on">{show ? <Hand text={it.line} delay={0.35} speed={Math.min(0.045, 0.75 / Math.max(1, it.line.length))} /> : <span style={{ visibility: 'hidden' }}>{it.line}</span>}</blockquote>}
+        <p className="h-umeta">{meta.map(([, v]) => v).filter(Boolean).join(' \u00b7 ')}</p>
+      </div>
 
       {/* iteration 18: the pen circles the plate under the pointer, and a story writes out its first line */}
       {hIt && hr && (
@@ -672,6 +709,7 @@ function Home({ cat, go }) {
         </button>
       </div>
       {/* iteration 10: socials live bottom-left, away from the counter and the screen corner */}
+      <pre ref={dbgEl} className="h-dbg" hidden aria-hidden="true" />
       <div className={`h-sfoot${foot ? ' is-on' : ''}`}><Socials /></div>
 
       {nameOn && (
@@ -775,7 +813,7 @@ function Piece({ cat, i, go, via }) {
       />
     )
   }
-  if (cat === 'prose') return <Story {...{ it, cat, i, items, go, home, art, hold, flying, dir, face, ar, meta, honors, credit, cta, note, pgNav }} />
+  if (cat === 'prose') return <Story key={it.slug} {...{ it, cat, i, items, go, art, meta, honors, credit, cta }} />
   return (
     <article className={`pg pg-piece pg-c-${cat}${flying ? ' is-flown' : ' is-direct'}${dir ? ` is-step is-step-${dir > 0 ? 'n' : 'p'}` : ''}`}>
       <PageTop back={() => go(home)} backLabel={catOf(home.cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(items.length)}`} />
@@ -809,59 +847,105 @@ function Piece({ cat, i, go, via }) {
   )
 }
 
-/* iteration 20: the story page reads like an A24 film page. The painting opens out to the full width
-   as you scroll, the real first line is written in by hand under the title, then the real material
-   only: opening (if supplied), a pull line (if supplied), the painting and its credit, the details,
-   one double-ruled way to read it, previous / next. Anything without real text is left out. */
-function Story({ it, cat, i, items, go, home, art, hold, flying, dir, face, ar, meta, honors, credit, cta, note, pgNav }) {
+/* iteration 21: the story page. Paris Review calm (white, Lora, centred caps title, hairline rules, tracked
+   caps labels) holding an A24 film-page order: title, the first line written in by hand, the details and the
+   one main way to read it, all above the fold; the painting is not shown until you scroll, then it rises in
+   from below with a torn, organic edge and opens out to the full width, once. Then the real opening and one
+   real line from the story (verbatim, src/storyTeasers.js), the way to read it again, and the page keeps
+   going: a row of more pieces, and past the end the next story takes over (scrolling up past the top goes back). */
+function Story({ it, cat, i, items, go, art, meta, honors, credit, cta }) {
   const t = TEASERS[it.slug] || {}
-  const frame = useRef(null)
+  const rv = useRef(null), more = useRef(null), endRef = useRef(null)
+  const N = items.length, next = (i + 1) % N, prev = (i - 1 + N) % N
+  const goPiece = (c, k) => go({ view: 'piece', cat: c, i: k })
+  // the reveal: a wavy edge rises through the frame as it comes up the screen, and the frame widens to the edges
   useEffect(() => {
-    const f = frame.current, a = art.current
-    if (!f || !a || reduced()) return
-    let base = null, raf = 0
-    const measure = () => { a.style.width = ''; a.style.height = ''; const b = a.getBoundingClientRect(); base = { w: b.width, h: b.height } }
-    const apply = () => {
+    const el = rv.current; if (!el) return
+    const red = reduced(); let raf = 0
+    const draw = () => {
       raf = 0
-      if (!base) measure()
-      const p = Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * 0.7)))
-      const e = p * p * (3 - 2 * p), W = document.documentElement.clientWidth
-      a.style.width = `${(base.w + (W - base.w) * e).toFixed(1)}px`
-      a.style.height = `${(base.h + (Math.max(base.h, window.innerHeight * 0.86) - base.h) * e).toFixed(1)}px`
-      f.style.setProperty('--bp', e.toFixed(3))
+      const r = el.getBoundingClientRect(), H = window.innerHeight
+      const p = red ? 1 : Math.min(1, Math.max(0, (H - r.top) / (H * 0.6)))
+      const e = p * p * (3 - 2 * p), pts = []
+      for (let k = 0; k <= 24; k += 1) {
+        const x = (k / 24) * 100, w = Math.sin(k * 1.7) * 2.6 + Math.sin(k * 0.6 + 1) * 3.4
+        pts.push(`${x.toFixed(1)}% ${Math.max(0, (1 - e) * 104 + w * (1 - e) * 1.6 - 2).toFixed(2)}%`)
+      }
+      el.style.clipPath = e >= 0.999 ? 'none' : `polygon(${pts.join(',')}, 100% 100%, 0% 100%)`
+      el.style.setProperty('--bw', `${(62 + 38 * e).toFixed(2)}vw`)
     }
-    const on = () => { if (!raf) raf = requestAnimationFrame(apply) }
-    const rs = () => { base = null; on() }
-    window.addEventListener('scroll', on, { passive: true }); window.addEventListener('resize', rs)
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', on); window.removeEventListener('resize', rs) }
-  }, [art])
+    const on = () => { if (!raf) raf = requestAnimationFrame(draw) }
+    draw(); window.addEventListener('scroll', on, { passive: true }); window.addEventListener('resize', on)
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', on); window.removeEventListener('resize', on) }
+  }, [it.slug])
+  // never a dead end: past the bottom the next story takes over; pulling up past the top goes back
+  useEffect(() => {
+    let acc = 0, done = false, tm = 0
+    const atBottom = () => window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2
+    const wh = (e) => {
+      if (done || e.ctrlKey) return
+      const d = e.deltaY * (e.deltaMode === 1 ? 16 : 1)
+      if ((d > 0 && atBottom()) || (d < 0 && window.scrollY <= 0)) {
+        acc = Math.sign(acc) === Math.sign(d) ? acc + d : d
+        clearTimeout(tm); tm = setTimeout(() => { acc = 0 }, 400)
+        if (endRef.current) endRef.current.style.setProperty('--pull', Math.min(1, Math.max(0, acc / 260)).toFixed(3))
+        if (Math.abs(acc) > 260) { done = true; goPiece(cat, d > 0 ? next : prev) }
+      } else acc = 0
+    }
+    let ty = null
+    const ts = (e) => { ty = e.touches[0].clientY }
+    const tmv = (e) => { if (ty == null || done) return; const dy = ty - e.touches[0].clientY; if (dy > 140 && atBottom()) { done = true; goPiece(cat, next) } }
+    window.addEventListener('wheel', wh, { passive: true }); window.addEventListener('touchstart', ts, { passive: true }); window.addEventListener('touchmove', tmv, { passive: true })
+    return () => { clearTimeout(tm); window.removeEventListener('wheel', wh); window.removeEventListener('touchstart', ts); window.removeEventListener('touchmove', tmv) }
+  }, [it.slug]) // eslint-disable-line react-hooks/exhaustive-deps
+  // the row of more pieces: a vertical wheel over it moves it sideways until it reaches an end
+  useEffect(() => {
+    const el = more.current; if (!el) return
+    const wh = (e) => { if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; const m = el.scrollWidth - el.clientWidth, d = e.deltaY; if ((d > 0 && el.scrollLeft < m - 1) || (d < 0 && el.scrollLeft > 1)) { e.preventDefault(); el.scrollLeft += d } }
+    el.addEventListener('wheel', wh, { passive: false }); return () => el.removeEventListener('wheel', wh)
+  }, [])
+  const others = [...items.slice(i + 1), ...items.slice(0, i)].map((x) => ({ x, c: cat, k: items.indexOf(x) }))
+  const pubs = (catOf0('publications').items || []).map((x, k) => ({ x, c: 'publications', k }))
+  const op = t.opening || []
   return (
-    <article className={`pg pg-piece pg-story pg-c-${cat}${flying ? ' is-flown' : ' is-direct'}${dir ? ` is-step is-step-${dir > 0 ? 'n' : 'p'}` : ''}`}>
-      <PageTop back={() => go(home)} backLabel={catOf(home.cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(items.length)}`} />
-      <div className="pg-head">
+    <article className={`pg pg-piece pg-story pg-c-${cat} is-direct`}>
+      <PageTop back={() => go({ view: 'browse', cat })} backLabel={catOf(cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(N)}`} />
+      <header className="st-top">
         <h1 className="pg-title"><span>{it.title}</span></h1>
         <hr className="pg-rule" />
-        {it.line && <p className="st-first"><Hand text={it.line} delay={0.9} speed={0.04} /></p>}
+        {it.line && <p className="st-first" key={it.slug}><Hand text={it.line} delay={0.5} speed={Math.min(0.05, 1.1 / Math.max(1, it.line.length))} /></p>}
         {honors}
-      </div>
-      <div className="st-bleed" ref={frame}>
-        <div ref={art} className="pg-art st-art" style={{ '--ar': ar, aspectRatio: String(ar), background: it.src ? placeholderOf(it.src) : '#f9f8f4', visibility: hold ? 'hidden' : undefined }}>
-          {face && <img src={it.src ? variantFor(it.src, 1400) : face} alt={credit || it.title} decoding="async" />}
-        </div>
-      </div>
-      {t.opening && <section className="st-open"><p>{t.opening}</p></section>}
+        <dl className="pg-meta st-meta">{meta.filter(([k]) => k !== 'Painting').map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+        {cta && <div className="pg-cta st-cta st-cta-top">{cta}</div>}
+        <div ref={art} className="st-fly" aria-hidden="true" />
+      </header>
+      {it.src && (
+        <figure className="st-reveal" ref={rv}>
+          <img src={variantFor(it.src, 2000)} alt={credit || it.title} loading="lazy" decoding="async" />
+          {credit && <figcaption>{credit}</figcaption>}
+        </figure>)}
+      {op.length > 0 && <section className="st-open">{op.map((p, k) => <p key={k}>{p}</p>)}</section>}
       {t.pull && <blockquote className="st-pull"><p>{t.pull}</p></blockquote>}
-      {it.src && credit && (
-        <section className="st-paint">
-          <img src={variantFor(it.src, 700)} alt="" loading="lazy" decoding="async" />
-          <div><h2>The painting</h2><p className="st-credit">{credit}</p>{note ? <p className="st-note">{note}</p> : null}</div>
-        </section>)}
-      <section className="st-details">
-        <h2>Details</h2>
-        <dl className="pg-meta">{meta.filter(([k]) => k !== 'Painting').map(([k, v], n) => <div key={k} style={{ '--n': n }}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+      {cta && op.length > 0 && <div className="pg-cta st-cta">{cta}</div>}
+      <section className="st-more">
+        <h2>More to read</h2>
+        <div className="st-row" ref={more}>
+          {[...others, ...pubs].map(({ x, c, k }) => (
+            <a key={`${c}-${x.slug}`} className="st-plate" href={`#/${c}/${x.slug}`} onClick={(e) => { e.preventDefault(); goPiece(c, k) }}>
+              <span className="st-plate-f" style={{ background: x.src ? placeholderOf(x.src) : '#f4f2ec' }}>{x.src ? <img src={variantFor(x.src, 400)} alt="" loading="lazy" decoding="async" /> : <em>{x.title}</em>}</span>
+              <small>{catOf(c).label}</small><b>{x.title}</b>
+            </a>))}
+        </div>
       </section>
-      {cta && <div className="pg-cta st-cta">{cta}</div>}
-      {pgNav}
+      <nav className="pg-nav st-nav">
+        <a href={`#/${cat}/${items[prev].slug}`} onClick={(e) => { e.preventDefault(); goPiece(cat, prev) }}><small>Previous</small>{items[prev].title}</a>
+        <a href={`#/${cat}/${items[next].slug}`} onClick={(e) => { e.preventDefault(); goPiece(cat, next) }}><small>Next</small>{items[next].title}</a>
+      </nav>
+      <a className="st-next" ref={endRef} href={`#/${cat}/${items[next].slug}`} onClick={(e) => { e.preventDefault(); goPiece(cat, next) }}>
+        <small>Keep scrolling for the next story</small>
+        <span className="pg-title">{items[next].title}</span>
+        <hr className="pg-rule" />
+      </a>
     </article>
   )
 }
