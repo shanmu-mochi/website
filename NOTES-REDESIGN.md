@@ -202,3 +202,14 @@ Built on iteration 16 (A24 system kept: tilted plates, expanded pages, white pap
 - **Home (t81):** under the front painting: its title, then its first line written in by hand (redrawn each time the front plate changes; respects reduced motion; wraps within the plate width), then one details line. The socials are 24px and centred under the name (on a phone, under the stacked nav). Checked with no overlaps at 1440/1280/390.
 - **Story page:** Paris Review calm. Above the fold: title, rule, handwritten first line, details, and the READ ON … button. Scrolling brings the painting up from below with a torn edge and widens it to the full width; it appears once. Then the verbatim opening and one pull line (src/storyTeasers.js, each with its source URL), the button again, a tilted "More to read" row (other stories + publications; drag or wheel sideways), a small Previous/Next, and a "next story" block. Scrolling past the bottom moves to the next story and updates the URL; scrolling up past the top goes back to the previous one.
 - **Teasers:** 14 published stories have them (5 Substack, 9 Medium). Fugue State is unpublished and has none, so its sections are hidden.
+
+## Iteration 22
+
+- **Handwriting font: Reenie Beanie** (your pick from the specimen sheet), self-hosted from public/fonts/reenie-beanie-latin-400-normal.woff2 under the SIL OFL 1.1 (licence: ReenieBeanie-OFL.txt). It replaces La Belle Aurore everywhere: the home row first line, the story-page first line, the Chekhov quote on About and the older epigraph rules. The La Belle Aurore files are removed; no other handwriting fonts are left.
+- **Retuned for its smaller, narrower letters (src/styles/iter22.css):**
+  - home line 25–31px (23px on a phone);
+  - story first line 34–50px;
+  - About quote 36–54px;
+  - letter-spacing .015em, line-height 1.12–1.15, one weight (400) only.
+- **Pen reveal:** the mask opens taller (−55%) and a little wider so the loops and tails aren't clipped, with a slightly more even ease. Reduced motion still shows the text at once.
+- Shots of home, story top and About at 1440/1280/390 are in /workspace/redesign-shots-v22/.

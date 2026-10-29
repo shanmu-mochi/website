@@ -56,7 +56,7 @@
 
 /* About: the Chekhov line */
 .ab-epi { margin: 8px auto 34px; max-width: 760px; text-align: center; }
-.ab-epi-1 { margin: 0; font: 400 clamp(24px, 2.4vw, 34px)/1.25 "La Belle Aurore", var(--disp); }
+.ab-epi-1 { margin: 0; font: 400 clamp(24px, 2.4vw, 34px)/1.25 'Reenie Beanie', var(--disp); }
 .ab-epi-2 { margin: 8px 0 0; font: italic 400 16px/1.4 var(--book); opacity: 0; animation: ab-fade .8s ease 2.9s forwards; }
 .ab-epi footer { margin-top: 6px; font: 400 10px/1 var(--disp); letter-spacing: .16em; text-transform: uppercase; opacity: 0; animation: ab-fade .8s ease 3.3s forwards; }
 @keyframes ab-fade { to { opacity: 1; } }

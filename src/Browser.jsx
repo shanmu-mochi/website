@@ -18,6 +18,7 @@ import './styles/iter18.css'
 import './styles/iter19.css'
 import './styles/iter20.css'
 import './styles/iter21.css'
+import './styles/iter22.css'
 
 const norm = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '')
 const pad2 = (n) => String(n).padStart(2, '0')
