@@ -240,3 +240,9 @@ Built on iteration 16 (A24 system kept: tilted plates, expanded pages, white pap
 ## Iteration 26
 - Home plate caption under the first line now reads only kind · date (e.g. "SHORT STORY · OCT 2026"), from the real Kind and Published/Date fields; venue, painting credit and other tags removed from it (data untouched; credit still on story page and flip side). Paintings keep artist · year.
 - Caption is one line (nowrap) and now shown at 390 too; screenshots in /workspace/redesign-shots-v27.
+
+## Iteration 27
+- Story page top rebuilt to the A24 film-page order (Backrooms): huge Lora caps title, small-caps credit line (Written by Shanmu Raja · Painting: artist), full-width hairline rows label-left/value-right (Kind, Published, Published on, Painting — real fields only; "Unpublished" venue is not shown as "Published on"), handwritten first line in the open space (pen reveal 20% faster), two thick-ruled buttons (Read on Substack/Medium, Next story). Painting still rises once from below with the torn edge.
+- The end-of-story "next" block is now a ruled transition card (A24 Tony): warm grey, evenly spaced full-width hairlines, next title between two lines, next painting rising from the bottom as a disc. Existing wheel/touch pull-through to the next story and pull-up-to-previous are kept.
+- Home section title cards (.h-card) restyled to the same ruled-lines look (not visually verified).
+- Optional full-bleed hero (screenshot a) skipped: the calm white story top is kept.

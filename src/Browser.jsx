@@ -22,6 +22,7 @@ import './styles/iter22.css'
 import './styles/iter23.css'
 import './styles/iter24.css'
 import './styles/iter25.css'
+import './styles/iter27.css'
 
 const norm = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '')
 const pad2 = (n) => String(n).padStart(2, '0')
@@ -925,7 +926,7 @@ function Piece({ cat, i, go, via }) {
    going: a row of more pieces, and past the end the next story takes over (scrolling up past the top goes back). */
 function Story({ it, cat, i, items, go, art, meta, honors, credit, cta }) {
   const t = TEASERS[it.slug] || {}
-  const rv = useRef(null), more = useRef(null), endRef = useRef(null)
+  const rv = useRef(null), more = useRef(null), endRef = useRef(null), discRef = useRef(null)
   const N = items.length, next = (i + 1) % N, prev = (i - 1 + N) % N
   const goPiece = (c, k) => go({ view: 'piece', cat: c, i: k })
   // the reveal: a wavy edge rises through the frame as it comes up the screen, and the frame widens to the edges
@@ -943,6 +944,8 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, cta }) {
       }
       el.style.clipPath = e >= 0.999 ? 'none' : `polygon(${pts.join(',')}, 100% 100%, 0% 100%)`
       el.style.setProperty('--bw', `${(62 + 38 * e).toFixed(2)}vw`)
+      const d = discRef.current
+      if (d) { const q = red ? 1 : Math.min(1, Math.max(0, (H - d.parentNode.getBoundingClientRect().top) / H)); d.style.setProperty('--rise', q.toFixed(3)) }
     }
     const on = () => { if (!raf) raf = requestAnimationFrame(draw) }
     draw(); window.addEventListener('scroll', on, { passive: true }); window.addEventListener('resize', on)
@@ -977,21 +980,30 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, cta }) {
   const others = [...items.slice(i + 1), ...items.slice(0, i)].map((x) => ({ x, c: cat, k: items.indexOf(x) }))
   const pubs = (catOf0('publications').items || []).map((x, k) => ({ x, c: 'publications', k }))
   const op = t.opening || []
+  const pm = it.src ? META[it.src] : null
+  const rows27 = [['Kind', meta.find(([k]) => k === 'Kind')?.[1]], ['Published', meta.find(([k]) => k === 'Published')?.[1]], ['Published on', (meta.find(([k]) => k === 'Venue') || [])[1] === 'Unpublished' ? '' : (meta.find(([k]) => k === 'Venue') || [])[1]], ['Painting', credit]].filter(([, v]) => v)
+  const nx = items[next]
   return (
     <article className={`pg pg-piece pg-story pg-c-${cat} is-direct`}>
       <PageTop back={() => go({ view: 'browse', cat })} backLabel={catOf(cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(N)}`} />
-      <header className="st-top">
-        <h1 className="pg-title"><span>{it.title}</span></h1>
-        <hr className="pg-rule" />
-        {it.line && <p className="st-first" key={it.slug}><Hand text={it.line} delay={0.5} speed={Math.min(0.05, 1.1 / Math.max(1, it.line.length))} /></p>}
+      {/* iteration 27: the A24 film-page order (Backrooms): huge thin title, small-caps credits, full-width ruled rows,
+          the first line in the open space, two ruled buttons, and the painting rising from the bottom once */}
+      <header className="st-top st27">
+        <h1 className="pg-title st27-t"><span>{it.title}</span></h1>
+        <p className="st27-cr"><span><small>Written by</small> Shanmu Raja</span>{pm && <span><small>Painting</small> {pm.artist}</span>}</p>
+        <dl className="st27-rows">
+          {rows27.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
+        </dl>
         {honors}
-        {/* iteration 24: one quiet centred byline (Paris Review style) instead of three boxed columns */}
-        <p className="st-byline">{meta.filter(([k]) => k !== 'Painting').map(([k, v], n) => <span key={k} title={k}>{n > 0 && <i aria-hidden="true">·</i>}<span className="sr">{k}: </span>{v}</span>)}</p>
-        {cta && <div className="pg-cta st-cta st-cta-top">{cta}</div>}
+        {it.line && <p className="st-first st27-first" key={it.slug}><Hand text={it.line} delay={0.4} speed={0.8 * Math.min(0.05, 1.1 / Math.max(1, it.line.length))} /></p>}
+        <div className="st27-btns">
+          {it.href ? <a className="st27-b" href={it.href} target="_blank" rel="noreferrer">{`Read on ${meta.find(([k]) => k === 'Venue')?.[1] || ''}`.trim()}</a> : <span className="st27-b is-muted">Not yet published</span>}
+          <a className="st27-b" href={`#/${cat}/${items[next].slug}`} onClick={(e) => { e.preventDefault(); goPiece(cat, next) }}>Next story</a>
+        </div>
         <div ref={art} className="st-fly" aria-hidden="true" />
       </header>
       {it.src && (
-        <figure className="st-reveal" ref={rv}>
+        <figure className="st-reveal st27-reveal" ref={rv}>
           <img src={variantFor(it.src, 2000)} alt={credit || it.title} loading="lazy" decoding="async" />
           {credit && <figcaption>{credit}</figcaption>}
         </figure>)}
@@ -1012,10 +1024,11 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, cta }) {
         <a href={`#/${cat}/${items[prev].slug}`} onClick={(e) => { e.preventDefault(); goPiece(cat, prev) }}><small>Previous</small>{items[prev].title}</a>
         <a href={`#/${cat}/${items[next].slug}`} onClick={(e) => { e.preventDefault(); goPiece(cat, next) }}><small>Next</small>{items[next].title}</a>
       </nav>
-      <a className="st-next" ref={endRef} href={`#/${cat}/${items[next].slug}`} onClick={(e) => { e.preventDefault(); goPiece(cat, next) }}>
-        <small>Keep scrolling for the next story</small>
-        <span className="pg-title">{items[next].title}</span>
-        <hr className="pg-rule" />
+      {/* iteration 27: the transition card (A24 "TONY"): ruled lines, the next title between two of them, its painting rising */}
+      <a className="st-next tc27" ref={endRef} href={`#/${cat}/${nx.slug}`} onClick={(e) => { e.preventDefault(); goPiece(cat, next) }} aria-label={`Next story: ${nx.title}`}>
+        <span className="tc27-t">{nx.title}</span>
+        <small className="tc27-k">Keep scrolling</small>
+        {nx.src && <span className="tc27-disc" ref={discRef} style={{ background: placeholderOf(nx.src) }}><img src={variantFor(nx.src, 1400)} alt="" loading="lazy" decoding="async" /></span>}
       </a>
     </article>
   )

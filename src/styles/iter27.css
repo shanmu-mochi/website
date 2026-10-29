@@ -1,0 +1,33 @@
+/* iteration 27: A24 film-page story top (Backrooms) and ruled transition cards (Tony) */
+.st27 { min-height: 100svh; justify-content: flex-start; padding: clamp(70px, 11vh, 120px) 0 0; box-sizing: border-box; }
+.st27-t { font: 400 clamp(44px, 7vw, 112px)/1 'Lora', serif !important; letter-spacing: -.01em; text-transform: uppercase; padding: 0 16px; }
+.st27-cr { margin: 14px 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; padding: 10px 16px 0; width: 100%; border-top: 1px solid #222; box-sizing: border-box; font: 400 14px/1.4 var(--ui, sans-serif); color: #111; }
+.st27-cr small { font: 500 8.5px/1 var(--ui, sans-serif); letter-spacing: .2em; text-transform: uppercase; margin-right: 4px; color: #333; }
+.st27-rows { width: 100%; margin: 10px 0 0; }
+.st27-rows div { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; border-top: 1px solid #222; padding: 5px 14px 4px; }
+.st27-rows div:last-child { border-bottom: 1px solid #222; }
+.st27-rows dt { font: 500 8.5px/1.6 var(--ui, sans-serif); letter-spacing: .2em; text-transform: uppercase; }
+.st27-rows dd { margin: 0; font: 400 13px/1.4 var(--ui, sans-serif); text-align: right; }
+.st27-first { margin: clamp(60px, 14vh, 150px) auto 0 !important; padding: 0 20px; }
+.st27-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: clamp(48px, 10vh, 110px) 0 clamp(40px, 8vh, 80px); padding: 0 16px; }
+.st27-b { display: inline-block; padding: 6px 2px 5px; border-top: 4px solid #111; border-bottom: 4px solid #111; font: 400 clamp(17px, 1.7vw, 24px)/1.1 'Lora', serif; text-transform: uppercase; letter-spacing: -.01em; color: #111; text-decoration: none; min-width: 170px; text-align: center; }
+.st27-b:hover { background: #111; color: #f4f4f2; }
+.st27-b.is-muted { opacity: .45; }
+.st27 .pg-honor { margin-top: 14px; }
+/* the transition card */
+.tc27 { --pull: 0; position: relative; display: block; height: 100svh; margin: 80px 0 0; padding: 0 !important; overflow: hidden; color: #111; text-decoration: none; border: 0 !important;
+  background: #d9d5d1 repeating-linear-gradient(to bottom, transparent 0, transparent calc(25svh - 1px), rgba(0,0,0,.55) calc(25svh - 1px), rgba(0,0,0,.55) 25svh); background-position: 0 9svh; }
+.tc27-t { position: absolute; left: 0; right: 0; top: 18svh; text-align: center; padding: 0 16px; font: 400 clamp(36px, 4.6vw, 66px)/1 'Lora', serif; text-transform: uppercase; letter-spacing: -.01em; transform: translateY(calc((1 - var(--pull)) * 6px)); }
+.tc27-k { position: absolute; left: 0; right: 0; top: calc(34svh + 12px); text-align: center; font: 500 9px/1 var(--ui, sans-serif); letter-spacing: .24em; text-transform: uppercase; color: #555; }
+.tc27-disc { --rise: 0; position: absolute; left: 50%; bottom: 0; width: min(62vw, 620px); aspect-ratio: 1; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 3px rgba(255,255,255,.55), 0 0 0 4px rgba(0,0,0,.15);
+  transform: translate(-50%, calc(100% - var(--rise) * 34svh)); }
+.tc27-disc img { width: 100%; height: 100%; object-fit: cover; display: block; }
+@media (max-width: 760px) { .st27-rows dd { font-size: 12px; } .st27-b { min-width: 0; flex: 1 1 140px; } .tc27-disc { width: 86vw; } }
+/* section title cards on home: same ruled-lines language */
+.h-card { background: #d9d5d1 repeating-linear-gradient(to bottom, transparent 0, transparent calc(25% - 1px), rgba(0,0,0,.5) calc(25% - 1px), rgba(0,0,0,.5) 25%) !important; background-position: 0 9% !important; }
+.h-card-t { font-weight: 400 !important; text-transform: uppercase; }
+.h-card-u { display: none; }
+@media (prefers-reduced-motion: reduce) { .tc27-disc { transform: translate(-50%, calc(100% - 34svh)); } }
+.tc27 { width: 100vw; margin-left: calc(50% - 50vw) !important; margin-right: 0 !important; }
+.pg-story { padding-bottom: 0 !important; margin-bottom: 0 !important; }
+.st27-rows, .st27-cr { width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); }
