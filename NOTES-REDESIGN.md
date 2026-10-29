@@ -236,3 +236,7 @@ Built on iteration 16 (A24 system kept: tilted plates, expanded pages, white pap
 - Chekhov line on About: Mynerve (Carolina Short, OFL-1.1, Fontsource latin subset; GSUB calt/liga kept).
 - Nothing You Could Do removed (font + licence). Licences: public/fonts/TyrowoInked-OFL.txt, Mynerve-OFL.txt.
 - Retuned sizes/line-heights; pen-reveal mask widened (-60% top/bottom, -8% left) so ascenders, descenders and the lean are never clipped; reduced motion now shows the words outright (fixes a mask that could hide them). Reveal timings unchanged (0.8x). Pen marks #1a1a1a, 1.4 stroke.
+
+## Iteration 26
+- Home plate caption under the first line now reads only kind · date (e.g. "SHORT STORY · OCT 2026"), from the real Kind and Published/Date fields; venue, painting credit and other tags removed from it (data untouched; credit still on story page and flip side). Paintings keep artist · year.
+- Caption is one line (nowrap) and now shown at 390 too; screenshots in /workspace/redesign-shots-v27.

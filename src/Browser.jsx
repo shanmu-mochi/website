@@ -751,7 +751,7 @@ function Home({ cat, go }) {
       <div ref={qRef} className={`h-under${show ? ' is-on' : ''}`} key={`u-${shown}-${cur}`} aria-live="polite">
         <h1 className="h-title"><a href={`#/${it.cat}/${it.slug}`} onClick={(e) => { e.preventDefault(); go(pieceRoute('home', cur)) }}>{it.title}</a></h1>
         {it.line && it.cat === 'prose' && <blockquote className="h-quote h-quote-hw is-on">{show ? <Hand text={it.line} delay={0.35} speed={Math.min(0.045, 0.75 / Math.max(1, it.line.length))} /> : <span style={{ visibility: 'hidden' }}>{it.line}</span>}</blockquote>}
-        <p className="h-umeta">{meta.map(([, v]) => v).filter(Boolean).join(' \u00b7 ')}</p>
+        <p className="h-umeta">{(it.cat === 'paintings' ? meta.map(([, v]) => v) : [it.kind || (it.meta.find(([k]) => k === 'Kind' || k === 'Recognition') || [])[1], (it.meta.find(([k]) => k === 'Published' || k === 'Date') || [])[1] || it.date]).filter(Boolean).join(' \u00b7 ')}</p>
       </div>
 
       {/* iteration 18: the pen circles the plate under the pointer, and a story writes out its first line */}
