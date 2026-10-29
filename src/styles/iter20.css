@@ -15,7 +15,7 @@
 @media (max-width: 760px) { .h-end { right: 16px; bottom: 64px; } }
 
 /* E) handwriting: Caveat, written in word by word with a pen-speed clip sweep */
-.ab-epi-1 { font: 500 clamp(30px, 3vw, 42px)/1.2 'Nothing You Could Do', var(--book) !important; }
+.ab-epi-1 { font: 500 clamp(30px, 3vw, 42px)/1.2 'Tyrowo Inked', var(--book) !important; }
 
 /* F) the pen */
 .scr.pen path { stroke: none; animation: none; transition: none; stroke-dasharray: none; }
@@ -32,7 +32,7 @@ svg.scr.pen.scr-line path.pen-m { stroke-width: 10; }
 
 /* story page (A24 film-page style) */
 .pg-story .pg-head { margin-bottom: 26px; }
-.st-first { margin: 18px auto 0; max-width: 760px; text-align: center; font: 500 clamp(26px, 2.6vw, 36px)/1.25 'Nothing You Could Do', var(--book); color: #111; text-wrap: balance; }
+.st-first { margin: 18px auto 0; max-width: 760px; text-align: center; font: 500 clamp(26px, 2.6vw, 36px)/1.25 'Tyrowo Inked', var(--book); color: #111; text-wrap: balance; }
 .st-bleed { position: relative; left: 50%; width: 100vw; margin-left: -50vw; display: flex; justify-content: center; }
 .st-art { margin: 0; max-width: none; }
 .st-art img { object-fit: cover; }

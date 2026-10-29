@@ -230,3 +230,9 @@ Built on iteration 16 (A24 system kept: tilted plates, expanded pages, white pap
 6. Handwriting: Nothing You Could Do (Kimberly Geswein, OFL, self-hosted) replaces Reenie Beanie (removed). Sizes retuned. Specimen: redesign-shots-v24/handwriting-specimen-v24.png.
 7. Pen marks: ink #1a1a1a at .9 opacity, 1.2–1.35 stroke, round caps to match the font's stroke.
 8. All written reveals ×0.8 (Hand delay/speed, pen draw .56s, ring draw .5s, card underline, About fade-ins).
+
+## Iteration 25 — two real hands
+- Prose first lines (home plates + story pages): Tyrowo Inked (Tyler Crews, OFL-1.1, github.com/tylercrews/TyrowoInked), the author's own woff2 copied unmodified so its GSUB/calt variants are intact; 'calt' 1 + font-variant-ligatures: contextual on every handwritten element.
+- Chekhov line on About: Mynerve (Carolina Short, OFL-1.1, Fontsource latin subset; GSUB calt/liga kept).
+- Nothing You Could Do removed (font + licence). Licences: public/fonts/TyrowoInked-OFL.txt, Mynerve-OFL.txt.
+- Retuned sizes/line-heights; pen-reveal mask widened (-60% top/bottom, -8% left) so ascenders, descenders and the lean are never clipped; reduced motion now shows the words outright (fixes a mask that could hide them). Reveal timings unchanged (0.8x). Pen marks #1a1a1a, 1.4 stroke.

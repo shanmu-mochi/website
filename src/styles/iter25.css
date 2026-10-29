@@ -1,0 +1,18 @@
+/* Iteration 25: Tyrowo Inked (Tyler Crews, OFL) — a real person's hand with contextual variants */
+.hand, .hw, .h-quote-hw, .st-first, .ab-epi-1, .h-epi-1, .h-first { font-feature-settings: 'calt' 1, 'kern' 1; font-variant-ligatures: contextual; }
+.h-quote.h-quote-hw { font-size: clamp(21px, 1.65vw, 25px) !important; line-height: 1.32 !important; letter-spacing: .005em; max-height: 2.8em; }
+@media (max-width: 760px) { .h-quote.h-quote-hw { font-size: 19px !important; } }
+.st-first { font-size: clamp(28px, 2.7vw, 38px) !important; line-height: 1.38 !important; letter-spacing: .005em; }
+.ab-epi-1 { font-size: clamp(29px, 2.9vw, 41px) !important; line-height: 1.36 !important; letter-spacing: .005em; }
+.h-epi-1 { font-size: clamp(26px, 2.4vw, 34px); line-height: 1.38; }
+.h-first { font-size: 22px; line-height: 1.4; }
+/* the reveal mask: room for tall ascenders, the g/y descenders and the leftward lean */
+.hw { clip-path: inset(-60% 100% -60% -8%); animation-name: hw25; }
+@keyframes hw25 { to { clip-path: inset(-60% -10% -60% -8%); } }
+@media (prefers-reduced-motion: reduce) { .hw { animation: none !important; clip-path: none !important; } }
+.scr path, .h-card-u path { stroke: #1a1a1a; stroke-width: 1.4; }
+/* the Chekhov line on About is in Mynerve (Carolina Short, OFL) */
+@font-face { font-family: 'Mynerve'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/mynerve-latin-400-normal.woff2') format('woff2'); }
+.ab-epi-1, .ab-epi-1 .hw { font-family: 'Mynerve', var(--book) !important; }
+.ab-epi-1 { font-size: clamp(27px, 2.6vw, 37px) !important; line-height: 1.38 !important; letter-spacing: 0; }
+.ab-epi-1 { text-wrap: balance; max-width: 820px; margin-left: auto; margin-right: auto; }
