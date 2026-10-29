@@ -220,3 +220,13 @@ Built on iteration 16 (A24 system kept: tilted plates, expanded pages, white pap
 - New section transition (src/styles/iter23.css, secRef/preRef in Browser.jsx): overflow past a row's end (0–0.3 plate) scrubs the row along the −30° diagonal and fades in a title card (section name in Lora, pen underline, "NN pieces", "0k / 04"), fully reversible. Past the handoff the row tilts/slides away, the card holds, and the new row springs in with cubic-bezier(0.32,0.72,0,1). Jump-nav uses a shorter version. Reduced motion: no tweens, no card.
 - Caveat: once committed, reversal is applied after arrival via Gallery pend (not scrubbed mid-flight). Real Mac trackpad / phone untested.
 - Shots: /workspace/redesign-shots-v23.
+
+## Iteration 24 — section openings, story byline + CTA, header spacing, history, new hand
+1. Section openings: every section has its own opening space. Scrolling past a row's end scrubs into the next section's title card; scrolling back past a row's start scrubs into *that* section's card (Publications → Prose shows "Publications" as you back out of it). Back past Prose's first plate replays the Prose opening and lands on plate 1. First load at a section start flashes that section's card as the row fans in. The card now holds ~0.38s on the plain ground and fades before the new row lands. Scrubbed part (0–0.3 plate overflow) is continuous and reversible; reduced motion: no card.
+2. Story info: three boxed KIND/VENUE/PUBLISHED columns replaced by one centred tracked small-caps byline (Kind · Venue · Date, real data only); the double-rule CTA is now one solid black pill "Read on Substack/Medium ↗".
+3. Header: social hover label sits under the icons; 761–1180px (and 125–150% zoom) puts the name on its own row with the sections centred beneath; socials always placed below the whole header with a 10px gap. No overlaps measured at 1440/1280/1024/768/390 and 125/150% zoom.
+4. Nav label "art that I love" (also the in-gallery link); the page heading is unchanged.
+5. History: openings already pushState and Back restores the exact plate; added seeding so a page loaded straight from a link (piece, paper, About, art) has the section beneath it in history.
+6. Handwriting: Nothing You Could Do (Kimberly Geswein, OFL, self-hosted) replaces Reenie Beanie (removed). Sizes retuned. Specimen: redesign-shots-v24/handwriting-specimen-v24.png.
+7. Pen marks: ink #1a1a1a at .9 opacity, 1.2–1.35 stroke, round caps to match the font's stroke.
+8. All written reveals ×0.8 (Hand delay/speed, pen draw .56s, ring draw .5s, card underline, About fade-ins).

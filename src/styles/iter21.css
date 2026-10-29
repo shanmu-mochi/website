@@ -1,6 +1,6 @@
 /* iteration 21: first line under the front plate, handwritten */
 .h-quote.h-quote-hw { position: absolute; bottom: auto !important; margin: 0 !important; transform: translateX(-50%) !important; display: block !important; -webkit-line-clamp: unset; overflow: visible;
-  font: 500 clamp(19px, 1.55vw, 24px)/1.2 'Reenie Beanie', var(--book) !important; font-style: normal !important; text-align: center; text-wrap: balance; color: inherit; max-height: 2.5em; }
+  font: 500 clamp(19px, 1.55vw, 24px)/1.2 'Nothing You Could Do', var(--book) !important; font-style: normal !important; text-align: center; text-wrap: balance; color: inherit; max-height: 2.5em; }
 .h-quote.h-quote-hw::before, .h-quote.h-quote-hw::after { content: none; }
 .h-quote.h-quote-hw.is-on { opacity: 1; transition: opacity .2s linear; }
 @media (max-width: 760px) { .h-quote.h-quote-hw { font-size: 18px !important; } }
@@ -19,7 +19,7 @@ a[aria-current] .h-cat-l::after { content: ''; position: absolute; left: 50%; bo
 .st-top { min-height: calc(100svh - 96px); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px 20px 40px; position: relative; }
 .st-top .pg-title { margin: 0; }
 .st-top .pg-rule { width: 64px; margin: 22px auto 0; border: 0; border-top: 1px solid #111; }
-.st-first { margin: 22px auto 0; max-width: 720px; font: 400 clamp(26px, 2.8vw, 38px)/1.35 'Reenie Beanie', var(--book); color: #111; text-wrap: balance; }
+.st-first { margin: 22px auto 0; max-width: 720px; font: 400 clamp(26px, 2.8vw, 38px)/1.35 'Nothing You Could Do', var(--book); color: #111; text-wrap: balance; }
 .st-meta { margin: 30px auto 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 34px; }
 .st-meta dt { font: 500 10px/1 var(--sans, sans-serif); letter-spacing: .2em; text-transform: uppercase; color: #777; margin-bottom: 6px; }
 .st-meta dd { margin: 0; font: 15px/1.3 'Lora', serif; }

@@ -20,6 +20,7 @@ import './styles/iter20.css'
 import './styles/iter21.css'
 import './styles/iter22.css'
 import './styles/iter23.css'
+import './styles/iter24.css'
 
 const norm = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '')
 const pad2 = (n) => String(n).padStart(2, '0')
@@ -370,11 +371,13 @@ function CatRing({ on, redraw }) {
 }
 /* iteration 18: handwriting. Words are written in one after another, left to right, at pen speed */
 function Hand({ text, className = '', delay = 0, speed = 0.05 }) {
+  // iteration 24: every handwritten reveal runs 20% faster
+  delay *= 0.8; speed *= 0.8
   let c = 0
   const words = String(text || '').split(/\s+/).filter(Boolean)
   return (
     <span className={`hand ${className}`} aria-label={text}>
-      {words.map((w, k) => { const d = delay + c * speed; c += w.length + 1; return <React.Fragment key={k}>{k ? ' ' : ''}<span className="hw" aria-hidden="true" style={{ '--d': `${d.toFixed(2)}s`, '--t': `${Math.max(0.16, w.length * speed).toFixed(2)}s` }}>{w}</span></React.Fragment> })}
+      {words.map((w, k) => { const d = delay + c * speed; c += w.length + 1; return <React.Fragment key={k}>{k ? ' ' : ''}<span className="hw" aria-hidden="true" style={{ '--d': `${d.toFixed(2)}s`, '--t': `${Math.max(0.13, w.length * speed).toFixed(2)}s` }}>{w}</span></React.Fragment> })}
     </span>
   )
 }
@@ -398,7 +401,7 @@ function SiteNav({ go, active, className = '', onHover, onJump }) {
       <a className="h-mark" href="#/" aria-label="Shanmu Raja, home" onClick={(e) => { e.preventDefault(); if (e.detail) e.currentTarget.blur(); if (onJump) onJump('prose'); else go({ view: 'browse', cat: 'home' }) }}>Shanmu Raja</a>
       <nav className="sn-nav sn-r h-nav" aria-label="Pages">
         {item('deep', catOf('deep').label)}
-        {item('paintings', 'ART THAT I LOVE')}
+        {item('paintings', 'art that I love')}
         {item('about', 'About')}
       </nav>
     </header>
@@ -482,14 +485,25 @@ function Home({ cat, go }) {
     el.querySelector('.h-card-k').textContent = `${pad2(catOf0(c).items.length)} pieces`
     el.querySelector('.h-card-i').textContent = `${pad2(SEC_ORDER.indexOf(c) + 1)} / ${pad2(SEC_ORDER.length)}`
   }
+  // iteration 24: a section's opening card, played on its own (first load at a section start)
+  const flashCard = (c) => {
+    const cd = cardRef.current; if (!cd || reduced()) return
+    setCard(c); gsap.killTweensOf(cd); cd.classList.remove('is-draw'); void cd.offsetWidth; cd.classList.add('is-draw')
+    gsap.fromTo(cd, { opacity: 0, '--cp': 0.4 }, { opacity: 1, '--cp': 1, duration: 0.4, ease: 'power1.out' })
+    cd.dataset.fl = '1'
+    gsap.to(cd, { opacity: 0, duration: 0.5, delay: 1.05, ease: 'power1.in', onComplete: () => { delete cd.dataset.fl } })
+  }
   const preRef = useRef(() => {})
   preRef.current = () => {
     const g = gal.current, el = host.current, cd = cardRef.current
     if (!g || !el || !cd || phaseRef.current === 'switch' || reduced()) return
     const hi = g.N - 1, ov = g.L > hi ? g.L - hi : g.L < 0 ? g.L : 0
-    const now = ROW[base.current] ? ROW[base.current].rowCat : 'prose', k = SEC_ORDER.indexOf(now) + Math.sign(ov)
-    const p = ov && k >= 0 && k < SEC_ORDER.length ? Math.min(1, Math.abs(ov) / 0.3) : 0
-    if (p > 0) setCard(SEC_ORDER[k])
+    const now = ROW[base.current] ? ROW[base.current].rowCat : 'prose', k = SEC_ORDER.indexOf(now) + 1
+    // iteration 24: every section has its own opening space before its first plate. Past the end you scrub
+    // into the next section's opening; back past the start you scrub into this section's own opening
+    const p = (ov > 0 && k < SEC_ORDER.length) || ov < 0 ? Math.min(1, Math.abs(ov) / 0.3) : 0
+    if (!p && cd.dataset.fl) return
+    if (p > 0) { if (cd.dataset.fl) { gsap.killTweensOf(cd); delete cd.dataset.fl } setCard(ov > 0 ? SEC_ORDER[k] : now) }
     const d = Math.sign(ov) || 1, e = p * p
     el.style.transform = p ? `translate(${(-d * 3.4 * e).toFixed(3)}vw, ${(-d * 2 * e).toFixed(3)}vw)` : ''
     cd.style.opacity = (p * 0.55).toFixed(3); cd.style.setProperty('--cp', (p * 0.35).toFixed(3))
@@ -498,12 +512,14 @@ function Home({ cat, go }) {
   secRef.current = (c, dir, local = 0, jump = false) => {
     const g = gal.current, el = host.current, cd = cardRef.current
     if (!g || !el || SEC_START[c] == null) return
+    const from = ROW[base.current] ? ROW[base.current].rowCat : c
     const t = ++token.current
     setPhase('switch'); setHv(-1)
     try { history.replaceState(null, '', `#/${c}`) } catch { /* ignore */ }
     const red = reduced(), E = 'cubic-bezier(0.32,0.72,0,1)', X = 'power2.inOut'
-    setCard(c)
-    gsap.killTweensOf([el, cd])
+    // going on you pass through the next section's opening; going back, back out through this one's
+    setCard(jump || dir > 0 ? c : from)
+    gsap.killTweensOf([el, cd]); if (cd) delete cd.dataset.fl
     // along the row's diagonal (up-left going on, down-right going back): cos30, sin30
     const dx = 26, dy = 15
     const out = red ? null : gsap.to(el, { x: `${-dir * dx}vw`, y: `${-dir * dy}vw`, rotate: -dir * 1.5, opacity: 0, duration: jump ? 0.38 : 0.55, ease: X })
@@ -520,8 +536,9 @@ function Home({ cat, go }) {
       g.G.active = red ? 1 : 0.001; g.G.others = red ? 1 : 0; g.G.inbound = true
       setCur(SEC_START[c] + local); lastIdx.home = SEC_START[c] + local; ROWPOS.set = true
       if (!red) gsap.set(el, { x: `${dir * dx * 0.6}vw`, y: `${dir * dy * 0.6}vw`, rotate: dir * 1, opacity: 0 })
-      const hold = red || jump ? 0 : 0.18
-      if (cd && !red) gsap.to(cd, { opacity: 0, duration: 0.5, delay: hold + 0.25, ease: 'power1.in' })
+      // iteration 24: the card holds on the plain ground a beat longer and is gone before the new row lands
+      const hold = red || jump ? 0 : 0.38
+      if (cd && !red) gsap.to(cd, { opacity: 0, duration: 0.38, delay: Math.max(0, hold - 0.12), ease: 'power1.in' })
       return Promise.all([g.fan(), red ? null : gsap.to(el, { x: 0, y: 0, rotate: 0, opacity: 1, duration: 0.9, delay: hold, ease: E })])
         .then(() => { if (t === token.current) { gsap.set(el, { clearProps: 'transform,opacity' }); setPhase('ready') } })
     })
@@ -537,7 +554,9 @@ function Home({ cat, go }) {
   const edgeRef = useRef(null)
   edgeRef.current = (dir) => {
     const now = ROW[base.current].rowCat, k = SEC_ORDER.indexOf(now) + dir
-    if (k < 0 || k >= SEC_ORDER.length) { const g = gal.current; if (g) g.nudge(dir); return }
+    // iteration 24: back past the very first plate replays Prose's own opening and lands on its first plate
+    if (k < 0) { secRef.current(now, -1, 0); return }
+    if (k >= SEC_ORDER.length) { const g = gal.current; if (g) g.nudge(dir); return }
     const c = SEC_ORDER[k]
     secRef.current(c, dir, dir > 0 ? 0 : catOf0(c).items.length - 1)
   }
@@ -576,7 +595,7 @@ function Home({ cat, go }) {
     q.style.left = `${cx.toFixed(1)}px`; q.style.top = `${top.toFixed(1)}px`; q.style.width = `${w.toFixed(0)}px`
     // the socials sit centred right under the name (on a phone, under the stacked nav so they never touch it)
     const sf = m.querySelector('.h-sfoot'), mk = m.querySelector('.h-mark'), hd = m.querySelector('.sn')
-    if (sf && mk) { const mr = mk.getBoundingClientRect(), y = mob && hd ? hd.getBoundingClientRect().bottom : mr.bottom; sf.style.top = `${(y - mb.top + (mob ? 6 : 4)).toFixed(1)}px` }
+    if (sf && mk) { const mr = mk.getBoundingClientRect(), y = hd ? Math.max(mr.bottom, hd.getBoundingClientRect().bottom) : mr.bottom; sf.style.top = `${(y - mb.top + (mob ? 8 : 10)).toFixed(1)}px` }
   }
   const placeRef = useRef(placeQ); placeRef.current = placeQ
 
@@ -622,11 +641,12 @@ function Home({ cat, go }) {
         return wait(Math.max(300, 1750 - (performance.now() - t0)))
           .then(() => { if (!live) return; setPhase('fly'); return frames(1) })
           .then(() => { if (!live) return; flipName(); return wait(380) })
-          .then(() => { if (!live) return; setPhase('intro'); wait(760).then(() => live && setNameOn(false)); return g.intro() })
+          .then(() => { if (!live) return; setPhase('intro'); if (start0.current === base.current) flashCard(ROW[base.current].rowCat); wait(760).then(() => live && setNameOn(false)); return g.intro() })
           .then(() => live && setPhase('ready'))
       })
     } else {
       g.G.active = reduced() ? 1 : 0.001; g.G.others = reduced() ? 1 : 0; g.G.inbound = true
+      if (start0.current === base.current) flashCard(ROW[base.current].rowCat)
       NAV.hold = g.fan().then(() => live && setPhase('ready'))
     }
     return () => { live = false; HOME.api = null; if (mEl) mEl.removeEventListener('wheel', mw); g.destroy(); gal.current = null }
@@ -741,7 +761,7 @@ function Home({ cat, go }) {
 
       {/* iteration 20: the vertical run stops at the end of Luck; the art page is one clear click away */}
       {sec === SEC_ORDER[SEC_ORDER.length - 1] && cur === ROW.length - 1 && (
-        <a className={`h-end${show ? ' is-on' : ''}`} href="#/art" onClick={(e) => { e.preventDefault(); go({ view: 'paintings' }) }}>ART THAT I LOVE <span aria-hidden="true">→</span></a>)}
+        <a className={`h-end${show ? ' is-on' : ''}`} href="#/art" onClick={(e) => { e.preventDefault(); go({ view: 'paintings' }) }}>art that I love <span aria-hidden="true">→</span></a>)}
       <div className={`h-foot${foot ? ' is-on' : ''}`}>
         <button type="button" className="h-flip" aria-label="Flip the card over" onClick={() => { const g = gal.current; if (g && !g.busy()) g.flip() }}>
           <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M3.5 8.5a6.5 6.5 0 0 1 11.6-3.2M16.5 11.5a6.5 6.5 0 0 1-11.6 3.2" fill="none" stroke="currentColor" strokeWidth="1.2" /><path d="M15.6 2.2v3.6H12M4.4 17.8v-3.6H8" fill="none" stroke="currentColor" strokeWidth="1.2" /></svg>
@@ -964,7 +984,8 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, cta }) {
         <hr className="pg-rule" />
         {it.line && <p className="st-first" key={it.slug}><Hand text={it.line} delay={0.5} speed={Math.min(0.05, 1.1 / Math.max(1, it.line.length))} /></p>}
         {honors}
-        <dl className="pg-meta st-meta">{meta.filter(([k]) => k !== 'Painting').map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+        {/* iteration 24: one quiet centred byline (Paris Review style) instead of three boxed columns */}
+        <p className="st-byline">{meta.filter(([k]) => k !== 'Painting').map(([k, v], n) => <span key={k} title={k}>{n > 0 && <i aria-hidden="true">·</i>}<span className="sr">{k}: </span>{v}</span>)}</p>
         {cta && <div className="pg-cta st-cta st-cta-top">{cta}</div>}
         <div ref={art} className="st-fly" aria-hidden="true" />
       </header>
@@ -1043,6 +1064,16 @@ function Paintings({ go }) {
 const same = (a, b) => hashOf(a) === hashOf(b)
 export default function Browser() {
   useEffect(() => { document.documentElement.classList.remove('pre') }, [])
+  // iteration 24: a page opened straight from a link still has somewhere to go Back to: seed the section
+  // underneath it (at that very plate) so the mouse back button / swipe / Alt+Left land in the gallery
+  useEffect(() => {
+    const r = parse(window.location.hash)
+    if (r.view === 'browse' || (history.state && history.state.seeded)) return
+    const h = window.location.hash
+    const c = r.view === 'piece' && SEC_START[r.cat] >= 0 ? r.cat : 'prose'
+    if (r.view === 'piece') { const k = ROW.findIndex((x) => x.cat === r.cat && x.slug === catOf(r.cat).items[r.i]?.slug); if (k >= 0) { lastIdx.home = k; ROWPOS.set = true } }
+    try { history.replaceState({ seeded: 1 }, '', `#/${c}`); history.pushState({ seeded: 1 }, '', h) } catch { /* ignore */ }
+  }, [])
   const [route, setRoute] = useState(() => parse(window.location.hash))
   const routeRef = useRef(route); routeRef.current = route
   if (route.view === 'browse') lastCat.current = route.cat

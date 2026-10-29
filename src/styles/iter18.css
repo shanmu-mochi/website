@@ -1,5 +1,5 @@
 /* iteration 18: smooth vertical steps, the section indicator, the Chekhov epigraph, pen underline / circle, handwriting */
-@font-face { font-family: 'Reenie Beanie'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/reenie-beanie-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Nothing You Could Do'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/nothing-you-could-do-latin-400-normal.woff2') format('woff2'); }
 
 /* the stage follows the hand, then carries on (n = down to the next, p = up to the previous, t = teleport) */
 .h { --pull: 0; }
@@ -29,7 +29,7 @@
 /* the Chekhov epigraph: centred under the name, above the plates */
 .h-epi { position: absolute; left: 50%; top: 64px; width: min(760px, 62vw); margin-left: calc(min(760px, 62vw) / -2); text-align: center; z-index: 3; pointer-events: none; }
 .h-epi p { margin: 0; }
-.h-epi-1 { font: 400 clamp(24px, 2.3vw, 33px)/1.25 'Reenie Beanie', var(--book); color: var(--ink, #111); }
+.h-epi-1 { font: 400 clamp(24px, 2.3vw, 33px)/1.25 'Nothing You Could Do', var(--book); color: var(--ink, #111); }
 .h-epi-2 { margin-top: 4px !important; font: italic 400 clamp(14px, 1.15vw, 16px)/1.4 var(--book); color: #3c3c3c; opacity: 0; transition: opacity .8s var(--glide) 2.9s; }
 .h-epi-by { margin-top: 6px !important; font: 600 10px/1 var(--ui, "Archivo", sans-serif); letter-spacing: .18em; text-transform: uppercase; color: var(--mute); opacity: 0; transition: opacity .8s var(--glide) 3.3s; }
 .h-epi-by::before { content: "— "; }
@@ -46,7 +46,7 @@
 .h-hov { position: absolute; z-index: 4; pointer-events: none; }
 .h-hov .scr path { stroke-width: 1.5; }
 .h-first { position: absolute; z-index: 4; width: min(460px, 40vw); margin: 0 0 0 calc(min(460px, 40vw) / -2); text-align: center; pointer-events: none;
-  font: 400 26px/1.3 'Reenie Beanie', var(--book); color: var(--ink, #111); text-wrap: balance; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  font: 400 26px/1.3 'Nothing You Could Do', var(--book); color: var(--ink, #111); text-wrap: balance; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
 /* nav: pen underline instead of the ring */
 .sn-nav .h-cat-ring { inset: 0; }
