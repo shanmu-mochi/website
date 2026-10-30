@@ -26,6 +26,8 @@ import './styles/iter27.css'
 import './styles/iter28.css'
 import './styles/iter32.css'
 import './styles/iter33.css'
+import './styles/iter34.css'
+import { makeInk } from './lib/inkBloom.js'
 
 const norm = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '')
 const pad2 = (n) => String(n).padStart(2, '0')
@@ -967,7 +969,7 @@ const metaRows = (x) => (x.meta || []).filter(([, v]) => v)
    past a story's top lands on the previous story's card at the same spot, so it reverses the same way. */
 function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
   const t = TEASERS[it.slug] || {}
-  const rv = useRef(null), more = useRef(null), zone = useRef(null), card = useRef(null), discRef = useRef(null), linesRef = useRef(null), preRef = useRef(null)
+  const rv = useRef(null), more = useRef(null), zone = useRef(null), card = useRef(null), discRef = useRef(null), inkRef = useRef(null), fbRef = useRef(null), pillRef = useRef(null), linesRef = useRef(null), preRef = useRef(null)
   const N = items.length, next = (i + 1) % N, prev = (i - 1 + N) % N
   const nx = items[next], pv = items[prev]
   const goPiece = (c, k) => go({ view: 'piece', cat: c, i: k })
@@ -980,6 +982,14 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
     const y = dir < 0 && preRef.current ? preRef.current.getBoundingClientRect().top + window.scrollY - off : off
     window.scrollTo({ top: Math.max(0, y), behavior: 'instant' })
   }, [it.slug])
+  // iteration 34: WebGL ink renderer for the next painting (falls back to a plain fade without WebGL)
+  useEffect(() => {
+    const cv = discRef.current; if (!cv) return
+    let r = null
+    try { r = makeInk(cv, variantFor(nx.src, 2000)) } catch (e) { r = null }
+    if (r) { inkRef.current = r; if (fbRef.current) fbRef.current.style.display = 'none' } else cv.style.display = 'none'
+    return () => { inkRef.current = null; if (r) r.dispose() }
+  }, [it.slug]) // eslint-disable-line react-hooks/exhaustive-deps
   // one rAF loop, everything eased toward where the scroll says it should be (no stepping)
   useEffect(() => {
     const red = reduced(); let raf = 0, live = true, rp = red ? 1 : 0, lastY = window.scrollY, vel = 0, off = 0, armed = false, crossed = false
@@ -989,20 +999,15 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
       const H = window.innerHeight, y = window.scrollY
       const dy = y - lastY; lastY = y
       vel = vel * 0.85 + dy * 0.15
-      const el = rv.current
-      if (el) {
-        const r = el.getBoundingClientRect()
-        const tp = red ? 1 : Math.min(1, Math.max(0, (H - r.top) / (H * 0.75)))
-        rp += (tp - rp) * 0.14
-        if (Math.abs(tp - rp) < 0.0005) rp = tp
-        const e = rp * rp * (3 - 2 * rp), pts = []
-        for (let k = 0; k <= 32; k += 1) {
-          const x = (k / 32) * 100, w = Math.sin(k * 1.3) * 2.2 + Math.sin(k * 0.45 + 1) * 3.1
-          pts.push(`${x.toFixed(1)}% ${Math.max(0, (1 - e) * 104 + w * (1 - e) * 1.6 - 2).toFixed(2)}%`)
-        }
-        el.style.clipPath = e >= 0.999 ? 'none' : `polygon(${pts.join(',')}, 100% 100%, 0% 100%)`
-        el.style.setProperty('--bw', `${(62 + 38 * e).toFixed(2)}vw`)
-        el.style.setProperty('--bl', `${((1 - e) * 14).toFixed(2)}vh`)
+      // iteration 35: the Menu pill hides while reading down and slides in on any upward scroll
+      const pl = pillRef.current
+      if (pl) { if (dy < -1 || y < 40) pl.classList.add('is-on'); else if (dy > 1) pl.classList.remove('is-on') }
+      const fg = rv.current
+      if (fg) {
+        const im = fg.firstChild, h0 = im.offsetHeight || 0
+        const pz = red ? 0 : Math.min(1, Math.max(0, y / (H * 0.5))), ez = pz * (2 - pz)
+        fg.style.height = `${(h0 * (1 - ez)).toFixed(1)}px`
+        im.style.transform = `scale(${Math.max(0.001, 1 - ez).toFixed(4)})`; im.style.opacity = Math.min(1, (1 - ez) * 1.6).toFixed(3)
       }
       const z = zone.current, c = card.current
       if (z && c) {
@@ -1011,31 +1016,28 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
         const q = Math.min(1, Math.max(0, -zr.top / span))           // progress through the pinned card
         const enter = Math.min(1, Math.max(0, (H - zr.top) / H))     // the card coming up the screen
         c.style.setProperty('--q', q.toFixed(4)); c.style.setProperty('--enter', enter.toFixed(4))
-        const sv = discRef.current
-        if (sv) {
-          // bloom: 0 while the card comes up, full by q 0.62; then the painting settles to an inset plate
-          const lv = red ? 1 : Math.min(1, Math.max(0, (enter - 0.35) / 0.65 * 0.35 + q / 0.62 * 0.65))
-          const bl = lv * lv * (3 - 2 * lv)
-          const set = red ? 0 : Math.min(1, Math.max(0, (q - 0.66) / 0.3)), se = set * set * (3 - 2 * set)
-          // edge y in px: starts below the screen (plus the displacement margin), ends above it
-          const yEdge = H * 1.12 - bl * H * 1.32
-          const m = sv.querySelector('.ib32-m'), k = sv.querySelector('.ib32-k')
-          if (m) m.setAttribute('y', yEdge.toFixed(1))
-          if (k) k.setAttribute('y', (yEdge - 4 - 12 * Math.sin(bl * Math.PI)).toFixed(1))
-          sv.style.opacity = red ? (enter > 0.6 ? 1 : 0) : 1
+        // iteration 34: the ink bloom runs on the pinned stretch only (q), so it starts once you keep
+        // scrolling past the "Next:" line; one number p drives a pure function, so it reverses exactly
+        const p = red ? 1 : Math.min(1, q / 0.8)
+        const set = red ? 0 : Math.min(1, Math.max(0, (q - 0.84) / 0.16)), se = set * set * (3 - 2 * set)
+        const ink = inkRef.current, cv = discRef.current
+        if (ink) ink.draw(p)
+        const host = cv || fbRef.current
+        if (host) {
+          if (!ink && fbRef.current) fbRef.current.style.opacity = Math.min(1, Math.max(0, (p - 0.2) / 0.5)).toFixed(3)
+          if (cv) cv.style.opacity = red ? (enter > 0.6 ? 1 : 0) : 1
           const W = window.innerWidth, ins = Math.min(W * 0.14, 180) * se
-          sv.style.clipPath = se > 0 ? `inset(${(ins * 0.8).toFixed(1)}px ${ins.toFixed(1)}px ${(ins * 0.8).toFixed(1)}px ${ins.toFixed(1)}px)` : 'none'
-          const tt = linesRef.current
-          if (tt) {
-            // the title sits in the upper third; it turns paper-white once the bloom passes behind it
-            const over = Math.min(1, Math.max(0, (H * 0.34 - yEdge) / (H * 0.05)))
-            tt.style.setProperty('--ov', over.toFixed(3))
-            tt.style.opacity = (Math.min(1, enter * 1.6) * (1 - se)).toFixed(3)
-          }
+          host.style.clipPath = se > 0 ? `inset(${(ins * 0.8).toFixed(1)}px ${ins.toFixed(1)}px ${(ins * 0.8).toFixed(1)}px ${ins.toFixed(1)}px)` : 'none'
+        }
+        const tt = linesRef.current
+        if (tt) {
+          // the title is written in paper colour once the ink has passed behind it
+          const ov = red ? 1 : Math.min(1, Math.max(0, (p - 0.36) / 0.08))
+          tt.style.setProperty('--ov', ov.toFixed(3)); tt.style.opacity = (ov * (1 - se)).toFixed(3)
         }
       }
       // iteration 32: the story top enters in a scroll-driven stagger (fade + 12px rise, reversible)
-      const art_ = rv.current && rv.current.closest('article')
+      const art_ = zone.current && zone.current.closest('article')
       // staggered by order within each story top, driven by where that top is (all shown once it reaches the top)
       if (art_) art_.querySelectorAll('.st-top').forEach((hd) => {
         const ht = hd.getBoundingClientRect().top, base_ = (H - ht) / H * 1.8
@@ -1069,7 +1071,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
     const springLater = () => {
       clearTimeout(spring)
       if (red) return
-      spring = setTimeout(() => { const zz = inZone(); if (zz && zz.q < 0.18) window.scrollTo({ top: window.scrollY + zz.r.top, behavior: 'smooth' }) }, 900)
+      spring = setTimeout(() => { const zz = inZone(); if (zz && zz.q < 0.92) window.scrollTo({ top: window.scrollY + zz.r.top, behavior: 'smooth' }) }, 700)
     }
     const goUp = (d, now) => { done = true; GEST.s = -1; GEST.t = now; GEST.m = Math.abs(d); SEAM.to = pv.slug; SEAM.dir = -1; SEAM.off = 0; go({ view: 'piece', cat, i: prev }, { seam: true }) }
     const wh = (e) => {
@@ -1114,11 +1116,13 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
   return (
     <article className={`pg pg-piece pg-story pg-c-${cat} is-direct${still ? ' is-seam' : ''}`}>
       <PageTop back={() => go({ view: 'browse', cat })} backLabel={catOf(cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(N)}`} />
+      <a ref={pillRef} className="mp35" href={`#/${cat}`} onClick={(e) => { e.preventDefault(); go({ view: 'browse', cat }) }}><span aria-hidden="true">←</span> Menu</a>
       <StoryTop it={it} meta={meta} credit={credit} honors={honors} nextHref={nxHref} onNext={toNext} still={still} art={art} />
+      {/* iteration 35: the painting sits right under the title block and shrinks away over half a screen
+          of scroll; a pure function of scroll (no easing), so it can never park part-way */}
       {it.src && (
-        <figure className="st-reveal st27-reveal" ref={rv}>
-          <img src={variantFor(it.src, 2000)} alt={credit || it.title} loading="lazy" decoding="async" />
-          {credit && <figcaption>{credit}</figcaption>}
+        <figure className="st35-fig" ref={rv}>
+          <img src={variantFor(it.src, 2000)} alt={credit || it.title} decoding="async" />
         </figure>)}
       {op.length > 0 && <section className="st-open">{op.map((p, k) => <p key={k}>{p}</p>)}</section>}
       {t.pull && <blockquote className="st-pull"><p>{t.pull}</p></blockquote>}
@@ -1133,40 +1137,12 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
             </a>))}
         </div>
       </section>
-      <nav className="pg-nav st-nav">
-        <a href={`#/${cat}/${pv.slug}`} onClick={(e) => { e.preventDefault(); goPiece(cat, prev) }}><small>Previous</small>{pv.title}</a>
-        <a href={nxHref} onClick={toNext}><small>Next</small>{nx.title}</a>
-      </nav>
-      {/* iteration 32: the ink bloom. Pinned for a stretch (0.42x resistance); the next painting is revealed
-          through an organic ink-bleed edge rising from the bottom, driven by scroll, then settles to a plate */}
-      <div className="tc27-zone ib32-zone" ref={zone}>
-        <a className="tc27 ib32" ref={card} href={nxHref} onClick={toNext} aria-label={`Next story: ${nx.title}`}>
-          {nx.src && (
-            <svg className="ib32-svg" ref={discRef} aria-hidden="true" width="100%" height="100%" preserveAspectRatio="none">
-              <defs>
-                <filter id={`ibf-${it.slug}`} x="-10%" y="-30%" width="120%" height="160%" filterUnits="objectBoundingBox">
-                  <feTurbulence type="fractalNoise" baseFrequency="0.006 0.012" numOctaves="3" seed="7" result="n" />
-                  <feDisplacementMap in="SourceGraphic" in2="n" scale="150" xChannelSelector="R" yChannelSelector="G" result="d" />
-                  <feGaussianBlur in="d" stdDeviation="2.2" />
-                </filter>
-                <mask id={`ibm-${it.slug}`} maskUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
-                  <g filter={`url(#ibf-${it.slug})`}><rect className="ib32-m" x="-10%" width="120%" height="150%" fill="#fff" /></g>
-                </mask>
-                <filter id={`ibg-${it.slug}`} x="-10%" y="-30%" width="120%" height="160%" filterUnits="objectBoundingBox">
-                  <feTurbulence type="fractalNoise" baseFrequency="0.006 0.012" numOctaves="3" seed="7" result="n" />
-                  <feDisplacementMap in="SourceGraphic" in2="n" scale="150" xChannelSelector="R" yChannelSelector="G" result="d" />
-                  <feGaussianBlur in="d" stdDeviation="6" />
-                </filter>
-                <mask id={`ibk-${it.slug}`} maskUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
-                  <g filter={`url(#ibg-${it.slug})`}><rect className="ib32-k" x="-10%" width="120%" height="150%" fill="#fff" /></g>
-                </mask>
-              </defs>
-              <rect width="100%" height="100%" fill="#1a1a1a" mask={`url(#ibk-${it.slug})`} className="ib32-ink" />
-              <g mask={`url(#ibm-${it.slug})`}>
-                <rect width="100%" height="100%" fill={placeholderOf(nx.src)} />
-                <image className="ib32-img" href={variantFor(nx.src, 2000)} width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
-              </g>
-            </svg>)}
+      {/* iteration 34: one clear next line; the ink bloom below it needs sustained scroll (pinned, 0.42x) */}
+      <p className="nx34"><a href={nxHref} onClick={toNext}><small>Next</small> {nx.title}</a></p>
+      <div className="tc27-zone ib32-zone ib34-zone" ref={zone}>
+        <a className="tc27 ib32 ib34" ref={card} href={nxHref} onClick={toNext} aria-label={`Next story: ${nx.title}`} tabIndex={-1}>
+          {nx.src && <canvas className="ib34-cv" ref={discRef} aria-hidden="true" />}
+          {nx.src && <img className="ib34-fb" ref={fbRef} src={variantFor(nx.src, 2000)} alt="" aria-hidden="true" loading="lazy" decoding="async" />}
           <span className="tc27-t ib32-t" ref={linesRef}>{nx.title}</span>
         </a>
       </div>

@@ -284,3 +284,13 @@ Built on iteration 16 (A24 system kept: tilted plates, expanded pages, white pap
 - Stagger reworked to be per-header and order-based so every element reaches full opacity once the header is at the top (fixes Read button at 0.55 opacity on load).
 - Caveat: theparisreview.org blocks headless fetch (Cloudflare); the style is based on general knowledge of their pages, not a live reference.
 - Checked at 1440 and 390 (headless), plus reduced-motion. Shots: /workspace/redesign-shots-v34.
+
+## Iteration 34 — ink-on-paper bloom, deliberate entry to the next story
+- `src/lib/inkBloom.js`: WebGL fragment-shader bloom. Simplex noise is **ashima/webgl-noise** (MIT; (C) 2011 Ashima Arts, (C) 2011-2016 Stefan Gustavson), credited in the file header. The technique (fbm height-field thresholded by progress, a pooled darker rim, and a pale diffusion halo ahead of the front) is adapted from viberdy.dev/library/ink-bleed-reveal and ink.niccolofanton.dev; no code was copied from those two.
+- The ink is #1a1a1a and wicks up from the bottom with a feathered fibrous edge, a darker pooled rim and a light halo, then resolves into the next painting and its title. The paper is flat #fdfcfa inside the shader, and the page-wide feTurbulence grain overlay (`.pg-story::after`) supplies the tooth, so there is no seam where the canvas meets the page.
+- The bloom is scroll-driven and reversible. It redraws only when progress changes and renders at a reduced resolution. If WebGL is unavailable, the canvas is hidden and an `<img>` opacity fade takes over. Reduced motion gets a plain fade in a 100svh zone.
+- B: a single "Next: <title>" line follows "More to read". The 250svh zone with 0.42x resistance needs sustained scrolling. Stopping before 92% eases back after 700ms, so one flick does not carry through (tested with a wheel stream at 1440 and touch at 390).
+## Iteration 35 — Menu pill, back link, About font, top painting
+- The "← Prose" back link is 17px. A fixed `← Menu` pill (`.mp35`) hides when you scroll down, slides in when you scroll up or near the top, and links to the section carousel. History is unchanged, so the browser back button still works.
+- The About Chekhov quote now uses Tyrowo Inked with calt forced on; the second line stays in Lora. Mynerve was unused, so its files and @font-face are removed.
+- Story top painting: the figure height and image scale shrink together with ease-out over 0.5 viewport and reach 0 at y=0.5H. The motion is monotonic, identical in both directions and never parks (sampled at 15 offsets at 1440 and 390). The header min-height was dropped so the title sits right under it.
