@@ -448,6 +448,15 @@ export default class Gallery {
     // a mouse wheel notch: line mode, or a big whole delta after a pause (trackpads send small, fractional, continuous deltas)
     const notch = e.deltaMode === 1 || e.deltaMode === 2 || (Math.abs(d) >= 50 && Number.isInteger(d) && gap > 90)
     const inc = notch ? Math.sign(d) : d / CFG.wheelPx
+    // iteration 28: the gesture that crossed a section is spent. Its momentum tail (same sign, no pause
+    // over 120ms, not harder than before) moves nothing, so one swipe is exactly one step. A pause,
+    // a reversal or a harder push is a new gesture and goes through as usual.
+    const sp = this.spent
+    if (sp) {
+      const tail = Math.sign(d) === sp.s && gap < 120 && Math.abs(d) <= sp.m * 1.3 + 2 && !notch
+      if (tail) { sp.m = Math.abs(d); this.lastIn = now; return }
+      this.spent = null
+    }
     this.lastIn = now
     this.dbg.d = d; this.dbg.mode = e.deltaMode; this.dbg.kind = notch ? 'notch' : 'smooth'
     if (this.busy()) { this.pend = clamp(this.pend + inc, -2, 2); return }
@@ -461,7 +470,8 @@ export default class Gallery {
       // the turn: past the end, the row goes on into the next section, carrying what is left of the push
       this.dbg.edge = over > 0 ? 'handoff ↓' : 'handoff ↑'
       this.T = clamp(this.T, 0, hi)
-      this.pend = notch ? 0 : clamp((Math.abs(over) - 0.3) * Math.sign(over), -1, 1)
+      this.pend = 0
+      this.spent = { s: Math.sign(over), m: Math.abs(this.dbg.d || 0) }
       if (this.o.onEdge) this.o.onEdge(Math.sign(over)); else this.nudge(Math.sign(over))
       return
     }

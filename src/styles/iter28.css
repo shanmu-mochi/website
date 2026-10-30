@@ -1,0 +1,24 @@
+/* iteration 28: the pinned transition card with streaming lines and resistance, the next story below */
+.tc27-zone { position: relative; height: 230svh; width: 100vw; margin: 80px 0 0 calc(50% - 50vw); }
+.tc27 { position: sticky !important; top: 0; margin: 0 !important; width: 100vw; height: 100svh; background: #d9d5d1 !important; }
+.tc27-lines { position: absolute; inset: 0; pointer-events: none; --off: 0px; --sp: 25svh; }
+.tc27-lines i { position: absolute; inset: -60svh 0; display: block; }
+.tc27-lines .l1 { background: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--sp) - 1px), rgba(0,0,0,.55) calc(var(--sp) - 1px), rgba(0,0,0,.55) var(--sp)); transform: translate3d(0, var(--o1, 0px), 0); }
+.tc27-lines .l2 { background: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--sp) * .5 - 1px), rgba(0,0,0,.16) calc(var(--sp) * .5 - 1px), rgba(0,0,0,.16) calc(var(--sp) * .5)); transform: translate3d(0, var(--o2, 0px), 0); opacity: calc(var(--q, 0) * 1.4); }
+.tc27-t, .tc27-k { z-index: 1; }
+.tc27-t { background: #d9d5d1; padding: 10px 24px !important; left: 50% !important; right: auto !important; transform: translate(-50%, calc((1 - var(--enter, 0)) * 24px)) !important; white-space: nowrap; max-width: 92vw; overflow: hidden; text-overflow: ellipsis; }
+.tc27-k { background: #d9d5d1; width: max-content; margin: 0 auto; padding: 4px 10px; top: calc(18svh + 92px) !important; }
+/* static disc, no spin: a thin silver rim, the next painting inside, its real kind / author / date on the edge */
+.tc27-disc { --rise: 0; z-index: 1; overflow: visible !important; border-radius: 50%; box-shadow: none !important; transform: translate(-50%, calc(100% - var(--rise) * 62svh)) !important; transition: none; }
+.tc27-face { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px #e9e9ec, 0 0 0 3px #b9b9be, 0 18px 40px rgba(0,0,0,.18); }
+.tc27-face::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(120% 80% at 30% 15%, rgba(255,255,255,.28), transparent 45%); }
+.tc27-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tc27-ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.tc27-ring text { font: 500 5.4px var(--ui, sans-serif); letter-spacing: .32em; fill: rgba(255,255,255,.85); }
+.st27-prewrap { position: relative; background: #fff; min-height: calc(100svh + 4px); }
+.st27-pre { pointer-events: none; }
+/* the painting bleeds up from below as it opens */
+.st27-reveal img { transform: translate3d(0, var(--bl, 0), 0); will-change: transform; }
+.hand.is-still { opacity: 1; }
+@media (max-width: 760px) { .tc27-t { font-size: 30px !important; white-space: normal; } .tc27-k { top: calc(18svh + 110px) !important; } }
+@media (prefers-reduced-motion: reduce) { .tc27-zone { height: 100svh; } .tc27-lines .l2 { display: none; } .st27-reveal img { transform: none; } }

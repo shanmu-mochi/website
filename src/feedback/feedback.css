@@ -34,3 +34,4 @@ html.fb-mode, html.fb-mode * { cursor: crosshair !important; }
 .fb-msg { color: #888; }
 .fb-fallback { min-height: 120px !important; font-family: ui-monospace, monospace !important; font-size: 11px !important; }
 @media (max-width: 720px) { .fb-pill { bottom: 64px; } }
+@media (max-width: 720px) { .fb-pill { bottom: auto !important; top: 46%; right: 0; transform: rotate(-90deg) translateY(-100%); transform-origin: right top; opacity: .7; } }

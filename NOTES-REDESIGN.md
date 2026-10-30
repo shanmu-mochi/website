@@ -246,3 +246,10 @@ Built on iteration 16 (A24 system kept: tilted plates, expanded pages, white pap
 - The end-of-story "next" block is now a ruled transition card (A24 Tony): warm grey, evenly spaced full-width hairlines, next title between two lines, next painting rising from the bottom as a disc. Existing wheel/touch pull-through to the next story and pull-up-to-previous are kept.
 - Home section title cards (.h-card) restyled to the same ruled-lines look (not visually verified).
 - Optional full-bleed hero (screenshot a) skipped: the calm white story top is kept.
+
+## Iteration 28 — gradual story crossing, resistance, single-step up
+- Story end is a pinned `.tc27` card (230svh zone, sticky) with two parallax hairline layers driven by scroll velocity × progress (spacing compresses, settles on arrival), "Keep scrolling" cue, and a static painting disc (no spin) rising from below with curved ring text (kind · Shanmu Raja · date).
+- Next story's top is rendered as a preview below the card; when it reaches the viewport top the route swaps to that story at the same offset (SEAM), no fade/out-animation, Hand shown already written. Up mirrors it, landing on the previous story's preview position.
+- Resistance: wheel/touch over the card scroll at 0.42x; stopping in the first ~18% eases back to the card start after 900ms. Input is never dropped.
+- Double scroll-up root cause: Gallery handoff carried leftover input (`pend`) into the next section, and the previous story mounted at top so the same momentum tail stepped again. Fixed with spent-gesture tracking (Gallery `spent`, Browser `GEST`). Tested: one step from story top, card, and home section first plate at 1440 (wheel stream + notch) and 390 (CDP touch).
+- Reveal is lerped with a torn clip that bleeds up from below. Home section cards: ruled lines removed. Comment pill becomes a vertical right-edge tab at ≤720px. Reduced motion: static lines, no resistance, no image motion.

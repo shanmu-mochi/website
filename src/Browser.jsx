@@ -23,6 +23,7 @@ import './styles/iter23.css'
 import './styles/iter24.css'
 import './styles/iter25.css'
 import './styles/iter27.css'
+import './styles/iter28.css'
 
 const norm = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '')
 const pad2 = (n) => String(n).padStart(2, '0')
@@ -425,6 +426,11 @@ const ICONS = {
 }
 /* ---------------- navigation: one transition at a time; the latest request waits its turn ---------------- */
 const NAV = { busy: false, pending: null, hold: null, dir: 0 }
+// iteration 28: seamless story-to-story crossing. SEAM says where the next page should land so the
+// swap is invisible; GEST marks the wheel gesture that already crossed, so its momentum tail is spent.
+const SEAM = { to: null, dir: 0, off: 0, skipTop: false }
+const GEST = { s: 0, t: 0, m: 0 }
+const gestTail = (d, now) => { if (GEST.s && Math.sign(d) === GEST.s && now - GEST.t < 120 && Math.abs(d) <= GEST.m * 1.3 + 2) { GEST.t = now; GEST.m = Math.abs(d); return true } GEST.s = 0; return false }
 const HOME = { api: null }
 const PAGE = { api: null }
 function fadeOutPage() {
@@ -819,7 +825,7 @@ function Piece({ cat, i, go, via }) {
   const goRef = useRef(go); goRef.current = go
 
   useLayoutEffect(() => {
-    window.scrollTo(0, 0)
+    if (SEAM.skipTop) SEAM.skipTop = false; else window.scrollTo(0, 0)
     NAV.dir = 0
     if (!flying) return
     let live = true
@@ -884,7 +890,7 @@ function Piece({ cat, i, go, via }) {
       />
     )
   }
-  if (cat === 'prose') return <Story key={it.slug} {...{ it, cat, i, items, go, art, meta, honors, credit, cta }} />
+  if (cat === 'prose') return <Story key={it.slug} {...{ it, cat, i, items, go, art, meta, honors, credit }} />
   return (
     <article className={`pg pg-piece pg-c-${cat}${flying ? ' is-flown' : ' is-direct'}${dir ? ` is-step is-step-${dir > 0 ? 'n' : 'p'}` : ''}`}>
       <PageTop back={() => go(home)} backLabel={catOf(home.cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(items.length)}`} />
@@ -924,84 +930,160 @@ function Piece({ cat, i, go, via }) {
    from below with a torn, organic edge and opens out to the full width, once. Then the real opening and one
    real line from the story (verbatim, src/storyTeasers.js), the way to read it again, and the page keeps
    going: a row of more pieces, and past the end the next story takes over (scrolling up past the top goes back). */
-function Story({ it, cat, i, items, go, art, meta, honors, credit, cta }) {
+function StoryTop({ it, meta, credit, honors, nextHref, onNext, still, art, preview }) {
+  const pm = it.src ? META[it.src] : null
+  const mv = (k) => (meta.find(([x]) => x === k) || [])[1]
+  const venue = mv('Venue')
+  const rows = [['Kind', mv('Kind')], ['Published', mv('Published')], ['Published on', venue === 'Unpublished' ? '' : venue], ['Painting', credit]].filter(([, v]) => v)
+  return (
+    <header className={`st-top st27${preview ? ' st27-pre' : ''}`} aria-hidden={preview || undefined}>
+      <h1 className="pg-title st27-t"><span>{it.title}</span></h1>
+      <p className="st27-cr"><span><small>Written by</small> Shanmu Raja</span>{pm && <span><small>Painting</small> {pm.artist}</span>}</p>
+      <dl className="st27-rows">{rows.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+      {!preview && honors}
+      {it.line && <p className="st-first st27-first" key={it.slug}>{still ? <span className="hand is-still">{it.line}</span> : <Hand text={it.line} delay={0.4} speed={0.8 * Math.min(0.05, 1.1 / Math.max(1, it.line.length))} />}</p>}
+      <div className="st27-btns">
+        {it.href ? <a className="st27-b" tabIndex={preview ? -1 : undefined} href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()}</a> : <span className="st27-b is-muted">Not yet published</span>}
+        <a className="st27-b" tabIndex={preview ? -1 : undefined} href={nextHref} onClick={onNext}>Next story</a>
+      </div>
+      {art && <div ref={art} className="st-fly" aria-hidden="true" />}
+    </header>
+  )
+}
+const metaRows = (x) => (x.meta || []).filter(([, v]) => v)
+
+/* iteration 21 / 27 / 28: the story page. A24 film-page top, the painting rising once from below, the real
+   opening, more to read, then the ruled transition card (lines that stream faster the further you push,
+   with resistance) and below it the next story's top, physically below us: when it reaches the top of
+   the screen the route swaps to that story at the same scroll position, so nothing moves. Scrolling up
+   past a story's top lands on the previous story's card at the same spot, so it reverses the same way. */
+function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
   const t = TEASERS[it.slug] || {}
-  const rv = useRef(null), more = useRef(null), endRef = useRef(null), discRef = useRef(null)
+  const rv = useRef(null), more = useRef(null), zone = useRef(null), card = useRef(null), discRef = useRef(null), linesRef = useRef(null), preRef = useRef(null)
   const N = items.length, next = (i + 1) % N, prev = (i - 1 + N) % N
+  const nx = items[next], pv = items[prev]
   const goPiece = (c, k) => go({ view: 'piece', cat: c, i: k })
-  // the reveal: a wavy edge rises through the frame as it comes up the screen, and the frame widens to the edges
-  useEffect(() => {
-    const el = rv.current; if (!el) return
-    const red = reduced(); let raf = 0
-    const draw = () => {
-      raf = 0
-      const r = el.getBoundingClientRect(), H = window.innerHeight
-      const p = red ? 1 : Math.min(1, Math.max(0, (H - r.top) / (H * 0.6)))
-      const e = p * p * (3 - 2 * p), pts = []
-      for (let k = 0; k <= 24; k += 1) {
-        const x = (k / 24) * 100, w = Math.sin(k * 1.7) * 2.6 + Math.sin(k * 0.6 + 1) * 3.4
-        pts.push(`${x.toFixed(1)}% ${Math.max(0, (1 - e) * 104 + w * (1 - e) * 1.6 - 2).toFixed(2)}%`)
-      }
-      el.style.clipPath = e >= 0.999 ? 'none' : `polygon(${pts.join(',')}, 100% 100%, 0% 100%)`
-      el.style.setProperty('--bw', `${(62 + 38 * e).toFixed(2)}vw`)
-      const d = discRef.current
-      if (d) { const q = red ? 1 : Math.min(1, Math.max(0, (H - d.parentNode.getBoundingClientRect().top) / H)); d.style.setProperty('--rise', q.toFixed(3)) }
-    }
-    const on = () => { if (!raf) raf = requestAnimationFrame(draw) }
-    draw(); window.addEventListener('scroll', on, { passive: true }); window.addEventListener('resize', on)
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', on); window.removeEventListener('resize', on) }
+  const still = useRef(SEAM.to === it.slug && SEAM.dir === 1).current
+  // land where the seam says: down = at the same offset into this page's top; up = on this page's own preview
+  useLayoutEffect(() => {
+    if (SEAM.to !== it.slug) return
+    const dir = SEAM.dir, off = SEAM.off
+    SEAM.to = null; SEAM.dir = 0; SEAM.skipTop = true
+    const y = dir < 0 && preRef.current ? preRef.current.getBoundingClientRect().top + window.scrollY - off : off
+    window.scrollTo({ top: Math.max(0, y), behavior: 'instant' })
   }, [it.slug])
-  // never a dead end: past the bottom the next story takes over; pulling up past the top goes back
+  // one rAF loop, everything eased toward where the scroll says it should be (no stepping)
   useEffect(() => {
-    let acc = 0, done = false, tm = 0
-    const atBottom = () => window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2
-    const wh = (e) => {
-      if (done || e.ctrlKey) return
-      const d = e.deltaY * (e.deltaMode === 1 ? 16 : 1)
-      if ((d > 0 && atBottom()) || (d < 0 && window.scrollY <= 0)) {
-        acc = Math.sign(acc) === Math.sign(d) ? acc + d : d
-        clearTimeout(tm); tm = setTimeout(() => { acc = 0 }, 400)
-        if (endRef.current) endRef.current.style.setProperty('--pull', Math.min(1, Math.max(0, acc / 260)).toFixed(3))
-        if (Math.abs(acc) > 260) { done = true; goPiece(cat, d > 0 ? next : prev) }
-      } else acc = 0
+    const red = reduced(); let raf = 0, live = true, rp = red ? 1 : 0, lastY = window.scrollY, vel = 0, off = 0, armed = false, crossed = false
+    const tick = () => {
+      if (!live) return
+      raf = requestAnimationFrame(tick)
+      const H = window.innerHeight, y = window.scrollY
+      const dy = y - lastY; lastY = y
+      vel = vel * 0.85 + dy * 0.15
+      const el = rv.current
+      if (el) {
+        const r = el.getBoundingClientRect()
+        const tp = red ? 1 : Math.min(1, Math.max(0, (H - r.top) / (H * 0.75)))
+        rp += (tp - rp) * 0.14
+        if (Math.abs(tp - rp) < 0.0005) rp = tp
+        const e = rp * rp * (3 - 2 * rp), pts = []
+        for (let k = 0; k <= 32; k += 1) {
+          const x = (k / 32) * 100, w = Math.sin(k * 1.3) * 2.2 + Math.sin(k * 0.45 + 1) * 3.1
+          pts.push(`${x.toFixed(1)}% ${Math.max(0, (1 - e) * 104 + w * (1 - e) * 1.6 - 2).toFixed(2)}%`)
+        }
+        el.style.clipPath = e >= 0.999 ? 'none' : `polygon(${pts.join(',')}, 100% 100%, 0% 100%)`
+        el.style.setProperty('--bw', `${(62 + 38 * e).toFixed(2)}vw`)
+        el.style.setProperty('--bl', `${((1 - e) * 14).toFixed(2)}vh`)
+      }
+      const z = zone.current, c = card.current
+      if (z && c) {
+        const zr = z.getBoundingClientRect()
+        const span = Math.max(1, zr.height - H)
+        const q = Math.min(1, Math.max(0, -zr.top / span))           // progress through the pinned card
+        const enter = Math.min(1, Math.max(0, (H - zr.top) / H))     // the card coming up the screen
+        c.style.setProperty('--q', q.toFixed(4)); c.style.setProperty('--enter', enter.toFixed(4))
+        if (!red && linesRef.current) {
+          const speed = (1 + q * 5) * (1 - Math.max(0, q - 0.85) / 0.15 * 0.9)
+          off += vel * speed + (q > 0 && q < 1 ? 0.6 * (1 + q * 3) : 0)
+          const sp = (25 - q * 13) * H / 100, m = (a, b) => ((a % b) + b) % b
+          linesRef.current.style.setProperty('--sp', `${sp.toFixed(2)}px`)
+          linesRef.current.style.setProperty('--o1', `${(-m(off, sp)).toFixed(1)}px`)
+          linesRef.current.style.setProperty('--o2', `${(-m(off * 1.7, sp / 2)).toFixed(1)}px`)
+        }
+        if (discRef.current) discRef.current.style.setProperty('--rise', (red ? 1 : Math.min(1, enter * 0.5 + q * 0.5)).toFixed(4))
+      }
+      const pr = preRef.current
+      if (pr) {
+        const top = pr.getBoundingClientRect().top
+        if (top > 8) armed = true
+        if (armed && !crossed && top <= 2 && !NAV.busy) {
+          crossed = true
+          SEAM.to = nx.slug; SEAM.dir = 1; SEAM.off = -top
+          go({ view: 'piece', cat, i: next }, { seam: true })
+        }
+        if (crossed && SEAM.to === nx.slug) SEAM.off = Math.max(0, -pr.getBoundingClientRect().top)
+      }
     }
-    let ty = null
-    const ts = (e) => { ty = e.touches[0].clientY }
-    const tmv = (e) => { if (ty == null || done) return; const dy = ty - e.touches[0].clientY; if (dy > 140 && atBottom()) { done = true; goPiece(cat, next) } }
-    window.addEventListener('wheel', wh, { passive: true }); window.addEventListener('touchstart', ts, { passive: true }); window.addEventListener('touchmove', tmv, { passive: true })
-    return () => { clearTimeout(tm); window.removeEventListener('wheel', wh); window.removeEventListener('touchstart', ts); window.removeEventListener('touchmove', tmv) }
+    raf = requestAnimationFrame(tick)
+    return () => { live = false; cancelAnimationFrame(raf) }
+  }, [it.slug]) // eslint-disable-line react-hooks/exhaustive-deps
+  // the card resists: over the pinned zone a wheel or swipe moves the page at 0.42x, and stopping
+  // short eases back to the start of the card. Nothing is dropped; up is as easy as down.
+  // past a story's top, one upward gesture goes back exactly one story (its momentum tail is spent)
+  useEffect(() => {
+    const red = reduced()
+    let acc = 0, done = false, spring = 0, ty = null, upAcc = 0
+    const inZone = () => { const z = zone.current; if (!z) return null; const r = z.getBoundingClientRect(), H = window.innerHeight; const span = r.height - H; return r.top <= 0.5 && -r.top < span - 0.5 ? { r, span, q: -r.top / span } : null }
+    const springLater = () => {
+      clearTimeout(spring)
+      if (red) return
+      spring = setTimeout(() => { const zz = inZone(); if (zz && zz.q < 0.18) window.scrollTo({ top: window.scrollY + zz.r.top, behavior: 'smooth' }) }, 900)
+    }
+    const goUp = (d, now) => { done = true; GEST.s = -1; GEST.t = now; GEST.m = Math.abs(d); SEAM.to = pv.slug; SEAM.dir = -1; SEAM.off = 0; go({ view: 'piece', cat, i: prev }, { seam: true }) }
+    const wh = (e) => {
+      if (e.ctrlKey || done) return
+      const now = performance.now()
+      const d = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1)
+      if (!d) return
+      if (gestTail(d, now)) { if (window.scrollY <= 0 && d < 0) e.preventDefault(); return }
+      const zz = !red && inZone()
+      if (zz) { e.preventDefault(); window.scrollBy({ top: d * 0.42, behavior: 'instant' }); springLater(); return }
+      if (d < 0 && window.scrollY <= 0 && !NAV.busy) {
+        upAcc += -d
+        if (e.deltaMode === 1 || upAcc > 40) goUp(d, now)
+        return
+      }
+      upAcc = 0; void acc
+    }
+    const ts = (e) => { ty = e.touches[0].clientY; upAcc = 0 }
+    const tmv = (e) => {
+      if (ty == null || done) return
+      const yy = e.touches[0].clientY, dy = ty - yy; ty = yy
+      const zz = !red && inZone()
+      if (zz) { e.preventDefault(); window.scrollBy({ top: dy * 0.42, behavior: 'instant' }); springLater(); return }
+      if (dy < 0 && window.scrollY <= 0 && !NAV.busy) { upAcc += -dy; if (upAcc > 70) { e.preventDefault(); goUp(dy, performance.now()) } }
+    }
+    const te = () => { ty = null; if (inZone()) springLater() }
+    window.addEventListener('wheel', wh, { passive: false }); window.addEventListener('touchstart', ts, { passive: true }); window.addEventListener('touchmove', tmv, { passive: false }); window.addEventListener('touchend', te, { passive: true })
+    return () => { clearTimeout(spring); window.removeEventListener('wheel', wh); window.removeEventListener('touchstart', ts); window.removeEventListener('touchmove', tmv); window.removeEventListener('touchend', te) }
   }, [it.slug]) // eslint-disable-line react-hooks/exhaustive-deps
   // the row of more pieces: a vertical wheel over it moves it sideways until it reaches an end
   useEffect(() => {
     const el = more.current; if (!el) return
-    const wh = (e) => { if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; const m = el.scrollWidth - el.clientWidth, d = e.deltaY; if ((d > 0 && el.scrollLeft < m - 1) || (d < 0 && el.scrollLeft > 1)) { e.preventDefault(); el.scrollLeft += d } }
+    const wh = (e) => { if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; const m = el.scrollWidth - el.clientWidth, d = e.deltaY; if ((d > 0 && el.scrollLeft < m - 1) || (d < 0 && el.scrollLeft > 1)) { e.preventDefault(); e.stopPropagation(); el.scrollLeft += d } }
     el.addEventListener('wheel', wh, { passive: false }); return () => el.removeEventListener('wheel', wh)
   }, [])
   const others = [...items.slice(i + 1), ...items.slice(0, i)].map((x) => ({ x, c: cat, k: items.indexOf(x) }))
   const pubs = (catOf0('publications').items || []).map((x, k) => ({ x, c: 'publications', k }))
   const op = t.opening || []
-  const pm = it.src ? META[it.src] : null
-  const rows27 = [['Kind', meta.find(([k]) => k === 'Kind')?.[1]], ['Published', meta.find(([k]) => k === 'Published')?.[1]], ['Published on', (meta.find(([k]) => k === 'Venue') || [])[1] === 'Unpublished' ? '' : (meta.find(([k]) => k === 'Venue') || [])[1]], ['Painting', credit]].filter(([, v]) => v)
-  const nx = items[next]
+  const nxMeta = metaRows(nx), nxCredit = nx.src ? creditText(nx.src) : ''
+  const nxHref = `#/${cat}/${nx.slug}`, toNext = (e) => { e.preventDefault(); goPiece(cat, next) }
+  const ring = [((nxMeta.find(([k]) => k === 'Kind') || [])[1]), 'Shanmu Raja', ((nxMeta.find(([k]) => k === 'Published') || [])[1])].filter(Boolean).join('   ·   ').toUpperCase()
   return (
-    <article className={`pg pg-piece pg-story pg-c-${cat} is-direct`}>
+    <article className={`pg pg-piece pg-story pg-c-${cat} is-direct${still ? ' is-seam' : ''}`}>
       <PageTop back={() => go({ view: 'browse', cat })} backLabel={catOf(cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(N)}`} />
-      {/* iteration 27: the A24 film-page order (Backrooms): huge thin title, small-caps credits, full-width ruled rows,
-          the first line in the open space, two ruled buttons, and the painting rising from the bottom once */}
-      <header className="st-top st27">
-        <h1 className="pg-title st27-t"><span>{it.title}</span></h1>
-        <p className="st27-cr"><span><small>Written by</small> Shanmu Raja</span>{pm && <span><small>Painting</small> {pm.artist}</span>}</p>
-        <dl className="st27-rows">
-          {rows27.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
-        </dl>
-        {honors}
-        {it.line && <p className="st-first st27-first" key={it.slug}><Hand text={it.line} delay={0.4} speed={0.8 * Math.min(0.05, 1.1 / Math.max(1, it.line.length))} /></p>}
-        <div className="st27-btns">
-          {it.href ? <a className="st27-b" href={it.href} target="_blank" rel="noreferrer">{`Read on ${meta.find(([k]) => k === 'Venue')?.[1] || ''}`.trim()}</a> : <span className="st27-b is-muted">Not yet published</span>}
-          <a className="st27-b" href={`#/${cat}/${items[next].slug}`} onClick={(e) => { e.preventDefault(); goPiece(cat, next) }}>Next story</a>
-        </div>
-        <div ref={art} className="st-fly" aria-hidden="true" />
-      </header>
+      <StoryTop it={it} meta={meta} credit={credit} honors={honors} nextHref={nxHref} onNext={toNext} still={still} art={art} />
       {it.src && (
         <figure className="st-reveal st27-reveal" ref={rv}>
           <img src={variantFor(it.src, 2000)} alt={credit || it.title} loading="lazy" decoding="async" />
@@ -1009,7 +1091,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, cta }) {
         </figure>)}
       {op.length > 0 && <section className="st-open">{op.map((p, k) => <p key={k}>{p}</p>)}</section>}
       {t.pull && <blockquote className="st-pull"><p>{t.pull}</p></blockquote>}
-      {cta && op.length > 0 && <div className="pg-cta st-cta">{cta}</div>}
+      {op.length > 0 && it.href && <div className="st27-btns st27-btns-end"><a className="st27-b" href={it.href} target="_blank" rel="noreferrer">{it.cta}</a></div>}
       <section className="st-more">
         <h2>More to read</h2>
         <div className="st-row" ref={more}>
@@ -1021,15 +1103,23 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, cta }) {
         </div>
       </section>
       <nav className="pg-nav st-nav">
-        <a href={`#/${cat}/${items[prev].slug}`} onClick={(e) => { e.preventDefault(); goPiece(cat, prev) }}><small>Previous</small>{items[prev].title}</a>
-        <a href={`#/${cat}/${items[next].slug}`} onClick={(e) => { e.preventDefault(); goPiece(cat, next) }}><small>Next</small>{items[next].title}</a>
+        <a href={`#/${cat}/${pv.slug}`} onClick={(e) => { e.preventDefault(); goPiece(cat, prev) }}><small>Previous</small>{pv.title}</a>
+        <a href={nxHref} onClick={toNext}><small>Next</small>{nx.title}</a>
       </nav>
-      {/* iteration 27: the transition card (A24 "TONY"): ruled lines, the next title between two of them, its painting rising */}
-      <a className="st-next tc27" ref={endRef} href={`#/${cat}/${nx.slug}`} onClick={(e) => { e.preventDefault(); goPiece(cat, next) }} aria-label={`Next story: ${nx.title}`}>
-        <span className="tc27-t">{nx.title}</span>
-        <small className="tc27-k">Keep scrolling</small>
-        {nx.src && <span className="tc27-disc" ref={discRef} style={{ background: placeholderOf(nx.src) }}><img src={variantFor(nx.src, 1400)} alt="" loading="lazy" decoding="async" /></span>}
-      </a>
+      {/* the transition card: pinned for a stretch (with resistance), its lines stream faster the further in */}
+      <div className="tc27-zone" ref={zone}>
+        <a className="tc27" ref={card} href={nxHref} onClick={toNext} aria-label={`Next story: ${nx.title}`}>
+          <span className="tc27-lines" ref={linesRef} aria-hidden="true"><i className="l1" /><i className="l2" /></span>
+          <span className="tc27-t">{nx.title}</span>
+          <small className="tc27-k">Keep scrolling</small>
+          {nx.src && (
+            <span className="tc27-disc" ref={discRef} aria-hidden="true">
+              <span className="tc27-face" style={{ background: placeholderOf(nx.src) }}><img src={variantFor(nx.src, 1400)} alt="" loading="lazy" decoding="async" /></span>
+              {ring && <svg className="tc27-ring" viewBox="0 0 200 200"><defs><path id={`ring-${nx.slug}`} d="M100,100 m-88,0 a88,88 0 1,1 176,0 a88,88 0 1,1 -176,0" /></defs><text><textPath href={`#ring-${nx.slug}`} startOffset="30%">{ring}</textPath></text></svg>}
+            </span>)}
+        </a>
+      </div>
+      <div ref={preRef} className="st27-prewrap"><StoryTop it={nx} meta={nxMeta} credit={nxCredit} nextHref={nxHref} onNext={toNext} still preview /></div>
     </article>
   )
 }
@@ -1107,7 +1197,7 @@ export default function Browser() {
         } else if (r.view !== 'browse' && HOME.api && !reduced()) await HOME.api.leave()
       } else if (from.view === 'piece' && r.view === 'piece' && r.cat === from.cat) {
         NAV.dir = (r.i > from.i && !(from.i === 0 && r.i === catOf(r.cat).items.length - 1)) || (from.i === catOf(r.cat).items.length - 1 && r.i === 0) ? 1 : -1
-        if (!reduced()) { const el = document.querySelector('.pg'); if (el) { el.classList.add(NAV.dir > 0 ? 'is-out-n' : 'is-out-p'); await wait(240) } }
+        if (!reduced() && !opts.seam) { const el = document.querySelector('.pg'); if (el) { el.classList.add(NAV.dir > 0 ? 'is-out-n' : 'is-out-p'); await wait(240) } }
       } else if (from.view === 'piece' && r.view === 'browse' && PAGE.api) await PAGE.api.toGallery()
       else if (from.view !== 'browse') await fadeOutPage()
     } catch (e) { void e }
