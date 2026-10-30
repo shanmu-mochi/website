@@ -25,6 +25,7 @@ import './styles/iter25.css'
 import './styles/iter27.css'
 import './styles/iter28.css'
 import './styles/iter32.css'
+import './styles/iter33.css'
 
 const norm = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '')
 const pad2 = (n) => String(n).padStart(2, '0')
@@ -938,17 +939,20 @@ function StoryTop({ it, meta, credit, honors, nextHref, onNext, still, art, prev
   const pm = it.src ? META[it.src] : null
   const mv = (k) => (meta.find(([x]) => x === k) || [])[1]
   const venue = mv('Venue')
-  const rows = [['Kind', mv('Kind')], ['Published', mv('Published')], ['Published on', venue === 'Unpublished' ? '' : venue], ['Painting', credit]].filter(([, v]) => v)
+  // iteration 33: Paris Review title block. Kicker (kind · date), title, byline, one quiet line, real fields only
+  const kick = [mv('Kind'), mv('Published')].filter(Boolean).join(' · ')
+  const quiet = [venue && venue !== 'Unpublished' ? `Published on ${venue}` : '', credit ? `Painting: ${credit}` : ''].filter(Boolean)
   return (
-    <header className={`st-top st27${preview ? ' st27-pre' : ''}`} aria-hidden={preview || undefined}>
-      <h1 data-rv className="pg-title st27-t"><span>{it.title}</span></h1>
-      <p data-rv className="st27-cr"><span><small>Written by</small> Shanmu Raja</span>{pm && <span><small>Painting</small> {pm.artist}</span>}</p>
-      <dl data-rv className="st27-rows">{rows.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+    <header className={`st-top st27 pr33${preview ? ' st27-pre' : ''}`} aria-hidden={preview || undefined}>
+      {kick && <p data-rv className="pr33-kick">{kick}</p>}
+      <h1 data-rv className="pg-title st27-t pr33-t"><span>{it.title}</span></h1>
+      <p data-rv className="pr33-by">by Shanmu Raja</p>
+      {quiet.length > 0 && <p data-rv className="pr33-meta">{quiet.map((q, k) => <span key={k}>{q}</span>)}</p>}
       {!preview && honors}
       {it.line && <p data-rv className="st-first st27-first" key={it.slug}>{still ? <span className="hand is-still">{it.line}</span> : <Hand text={it.line} delay={0.4} speed={0.8 * Math.min(0.05, 1.1 / Math.max(1, it.line.length))} />}</p>}
-      <div data-rv className="st27-btns">
-        {it.href ? <a className="st27-b" tabIndex={preview ? -1 : undefined} href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()}</a> : <span className="st27-b is-muted">Not yet published</span>}
-        <a className="st27-b" tabIndex={preview ? -1 : undefined} href={nextHref} onClick={onNext}>Next story</a>
+      <div data-rv className="st27-btns pr33-btns">
+        {it.href ? <a className="pr33-read" tabIndex={preview ? -1 : undefined} href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()}<b aria-hidden="true"> ↗</b></a> : <span className="pr33-read is-muted">Not yet published</span>}
+        <a className="pr33-next" tabIndex={preview ? -1 : undefined} href={nextHref} onClick={onNext}>Next story →</a>
       </div>
       {art && <div ref={art} className="st-fly" aria-hidden="true" />}
     </header>
@@ -1032,9 +1036,13 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
       }
       // iteration 32: the story top enters in a scroll-driven stagger (fade + 12px rise, reversible)
       const art_ = rv.current && rv.current.closest('article')
-      if (art_) art_.querySelectorAll('[data-rv]').forEach((x) => {
-        const p = red ? 1 : Math.min(1, Math.max(0, (H * 0.94 - x.getBoundingClientRect().top) / (H * 0.2)))
-        x.style.opacity = p.toFixed(3); x.style.transform = p >= 1 ? '' : `translate3d(0, ${((1 - p) * 12).toFixed(1)}px, 0)`
+      // staggered by order within each story top, driven by where that top is (all shown once it reaches the top)
+      if (art_) art_.querySelectorAll('.st-top').forEach((hd) => {
+        const ht = hd.getBoundingClientRect().top, base_ = (H - ht) / H * 1.8
+        hd.querySelectorAll('[data-rv]').forEach((x, k) => {
+          const p = red ? 1 : Math.min(1, Math.max(0, base_ - k * 0.12))
+          x.style.opacity = p.toFixed(3); x.style.transform = p >= 1 ? '' : `translate3d(0, ${((1 - p) * 12).toFixed(1)}px, 0)`
+        })
       })
       const pr = preRef.current
       if (pr) {
@@ -1114,7 +1122,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
         </figure>)}
       {op.length > 0 && <section className="st-open">{op.map((p, k) => <p key={k}>{p}</p>)}</section>}
       {t.pull && <blockquote className="st-pull"><p>{t.pull}</p></blockquote>}
-      {op.length > 0 && it.href && <div className="st27-btns st27-btns-end"><a className="st27-b" href={it.href} target="_blank" rel="noreferrer">{it.cta}</a></div>}
+      {op.length > 0 && it.href && <div className="st27-btns st27-btns-end"><a className="pr33-read" href={it.href} target="_blank" rel="noreferrer">{it.cta}</a></div>}
       <section className="st-more">
         <h2>More to read</h2>
         <div className="st-row" ref={more}>

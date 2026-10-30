@@ -1,0 +1,14 @@
+/* iteration 33: story title block after The Paris Review's story pages */
+.pr33 { text-align: center; padding-top: clamp(40px, 9vh, 110px); }
+.pr33-kick { margin: 0 0 clamp(18px, 3vh, 30px); font: 400 13px/1.4 'Lora', serif; font-variant: small-caps; text-transform: lowercase; letter-spacing: .12em; color: #555; }
+.st27-t.pr33-t { font: 400 clamp(40px, 5.4vw, 80px)/1.06 'Lora', serif !important; text-transform: none; letter-spacing: -.005em; max-width: 16ch; margin: 0 auto !important; padding: 0 20px; color: #111; }
+.pr33-by { margin: clamp(20px, 3.4vh, 34px) 0 0; font: 400 15px/1.4 'Lora', serif; font-variant: small-caps; letter-spacing: .1em; color: #222; }
+.pr33-meta { margin: 22px auto 0; padding-top: 18px; max-width: 560px; border-top: 1px solid rgba(0,0,0,.14); font: italic 400 14px/1.6 'Lora', serif; color: #666; }
+.pr33-meta span + span::before { content: ' · '; font-style: normal; }
+.pr33-btns { flex-direction: column; align-items: center; gap: 18px !important; }
+.pr33-read { display: inline-block; padding: 15px 34px; border-radius: 999px; background: #111; color: #fff !important; font: 500 15px/1 var(--ui, sans-serif); letter-spacing: .1em; text-transform: uppercase; text-decoration: none; transition: background .2s; }
+.pr33-read:hover { background: #333; }
+.pr33-read.is-muted { background: #eee; color: #777 !important; }
+.pr33-next { font: italic 400 14px/1 'Lora', serif; color: #888 !important; text-decoration: none; border-bottom: 1px solid transparent; }
+.pr33-next:hover { color: #333 !important; border-bottom-color: #bbb; }
+@media (max-width: 760px) { .pr33-meta { padding-left: 24px; padding-right: 24px; font-size: 13px; } .pr33-read { padding: 14px 28px; font-size: 14px; } }

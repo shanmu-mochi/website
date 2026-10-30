@@ -277,3 +277,10 @@ Built on iteration 16 (A24 system kept: tilted plates, expanded pages, white pap
 - Fixed: in dev (React StrictMode) the page layout effect ran twice and reset the scroll to 0 after an upward crossing, so the previous story opened at its top and the momentum tail stepped again (several stories per gesture). skipTop now clears on a timeout. Production was likely unaffected, but the dev preview had it.
 - Reduced motion: zone 100svh, bloom shown full with a plain opacity fade, no stagger.
 - Tested (headless Chrome, wheel streams at 1440, CDP touch at 390): down crosses once into the next story at the same visual position; up from the next story's top crosses once back onto the bloom and un-blooms it. Frames in redesign-shots-v33 (down-*, up-*, edge-*); no seam visible.
+
+## Iteration 33 — Paris Review-style title block
+- Story header restyled (src/styles/iter33.css, `pr33-*` classes): small-caps kind · date kicker, lighter 400-weight serif title, small-caps "by Shanmu Raja" byline, one quiet italic meta line (venue + painting credit, real data only) with a single thin rule. Tyrowo Inked handwritten line kept.
+- "Read on Medium/Substack ↗" is now the dominant black pill; "Next story →" is a small muted italic link.
+- Stagger reworked to be per-header and order-based so every element reaches full opacity once the header is at the top (fixes Read button at 0.55 opacity on load).
+- Caveat: theparisreview.org blocks headless fetch (Cloudflare); the style is based on general knowledge of their pages, not a live reference.
+- Checked at 1440 and 390 (headless), plus reduced-motion. Shots: /workspace/redesign-shots-v34.
