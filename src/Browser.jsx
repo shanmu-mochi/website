@@ -509,9 +509,10 @@ function Home({ cat, go }) {
     const now = ROW[base.current] ? ROW[base.current].rowCat : 'prose', k = SEC_ORDER.indexOf(now) + 1
     // iteration 24: every section has its own opening space before its first plate. Past the end you scrub
     // into the next section's opening; back past the start you scrub into this section's own opening
+    // iteration 31: back past the start scrubs into the previous section's card (destination), not this one's
     const p = (ov > 0 && k < SEC_ORDER.length) || ov < 0 ? Math.min(1, Math.abs(ov) / 0.3) : 0
     if (!p && cd.dataset.fl) return
-    if (p > 0) { if (cd.dataset.fl) { gsap.killTweensOf(cd); delete cd.dataset.fl } setCard(ov > 0 ? SEC_ORDER[k] : now) }
+    if (p > 0) { if (cd.dataset.fl) { gsap.killTweensOf(cd); delete cd.dataset.fl } setCard(ov > 0 ? SEC_ORDER[k] : (k > 1 ? SEC_ORDER[k - 2] : now)) }
     const d = Math.sign(ov) || 1, e = p * p
     el.style.transform = p ? `translate(${(-d * 3.4 * e).toFixed(3)}vw, ${(-d * 2 * e).toFixed(3)}vw)` : ''
     cd.style.opacity = (p * 0.55).toFixed(3); cd.style.setProperty('--cp', (p * 0.35).toFixed(3))
@@ -526,7 +527,8 @@ function Home({ cat, go }) {
     try { history.replaceState(null, '', `#/${c}`) } catch { /* ignore */ }
     const red = reduced(), E = 'cubic-bezier(0.32,0.72,0,1)', X = 'power2.inOut'
     // going on you pass through the next section's opening; going back, back out through this one's
-    setCard(jump || dir > 0 ? c : from)
+    // iteration 31: the card always names the destination section, in both directions
+    setCard(c)
     gsap.killTweensOf([el, cd]); if (cd) delete cd.dataset.fl
     // along the row's diagonal (up-left going on, down-right going back): cos30, sin30
     const dx = 26, dy = 15

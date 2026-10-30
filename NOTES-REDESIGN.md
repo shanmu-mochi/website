@@ -263,3 +263,7 @@ Built on iteration 16 (A24 system kept: tilted plates, expanded pages, white pap
 - A 10px #1a1a1a dot with a thin white ring (chosen over mix-blend difference, which tinted the dot pink/blue over paintings) so it reads as ink on light pages and stays visible on dark paintings and the grey card.
 - Follows the pointer with a 0.35 lerp on rAF using translate3d; scales to 1.8 over links/buttons/plates/nav, squashes to 0.8 when pressed; hides on window leave/blur; pointer-events: none.
 - Only enabled when `(hover: hover) and (pointer: fine)` matches; JS adds `html.has-ink`, and only that class hides the system cursor, so if JS fails the normal cursor remains. Text inputs/textareas keep the I-beam (dot hides there). Reduced motion: no lag.
+
+## Iteration 31 — section card names the destination
+- Scrolling up across a section boundary now shows the section you are going TO (name, "NN pieces", "0k / 04"), same as going down. Both the scrubbed pre-card (back past a section's first plate) and the hand-off card use the destination; back past Prose's first plate still replays Prose's own opening.
+- Tested with trackpad-style wheel streams at 1440 and CDP touch swipes at 390, reading the card DOM text mid-transition: every boundary both directions shows only the destination (Prose↔Publications, Publications↔Luck, Luck↔Deep Dives). One gesture up from a section's first plate = one section step. Shots: redesign-shots-v32.
