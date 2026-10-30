@@ -1068,10 +1068,11 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
     window.addEventListener('wheel', wh, { passive: false }); window.addEventListener('touchstart', ts, { passive: true }); window.addEventListener('touchmove', tmv, { passive: false }); window.addEventListener('touchend', te, { passive: true })
     return () => { clearTimeout(spring); window.removeEventListener('wheel', wh); window.removeEventListener('touchstart', ts); window.removeEventListener('touchmove', tmv); window.removeEventListener('touchend', te) }
   }, [it.slug]) // eslint-disable-line react-hooks/exhaustive-deps
-  // the row of more pieces: a vertical wheel over it moves it sideways until it reaches an end
+  // the row of more pieces: vertical input always scrolls the page; only shift+wheel is mapped sideways
+  // (deltaX, horizontal swipes, drag and the row's arrows scroll it natively)
   useEffect(() => {
     const el = more.current; if (!el) return
-    const wh = (e) => { if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; const m = el.scrollWidth - el.clientWidth, d = e.deltaY; if ((d > 0 && el.scrollLeft < m - 1) || (d < 0 && el.scrollLeft > 1)) { e.preventDefault(); e.stopPropagation(); el.scrollLeft += d } }
+    const wh = (e) => { if (!e.shiftKey || e.deltaX) return; e.preventDefault(); el.scrollLeft += e.deltaY }
     el.addEventListener('wheel', wh, { passive: false }); return () => el.removeEventListener('wheel', wh)
   }, [])
   const others = [...items.slice(i + 1), ...items.slice(0, i)].map((x) => ({ x, c: cat, k: items.indexOf(x) }))

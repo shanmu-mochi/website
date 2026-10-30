@@ -253,3 +253,7 @@ Built on iteration 16 (A24 system kept: tilted plates, expanded pages, white pap
 - Resistance: wheel/touch over the card scroll at 0.42x; stopping in the first ~18% eases back to the card start after 900ms. Input is never dropped.
 - Double scroll-up root cause: Gallery handoff carried leftover input (`pend`) into the next section, and the previous story mounted at top so the same momentum tail stepped again. Fixed with spent-gesture tracking (Gallery `spent`, Browser `GEST`). Tested: one step from story top, card, and home section first plate at 1440 (wheel stream + notch) and 390 (CDP touch).
 - Reveal is lerped with a torn clip that bleeds up from below. Home section cards: ruled lines removed. Comment pill becomes a vertical right-edge tab at ≤720px. Reduced motion: static lines, no resistance, no image motion.
+
+## Iteration 29 — no stall over "More to read"
+- The story page's "More to read" row no longer turns vertical wheel/trackpad input into sideways scrolling. Vertical input always scrolls the page; the row scrolls sideways only with deltaX, shift+wheel (mapped explicitly), horizontal swipe, drag, or its arrows.
+- Re-tested at 1440 with the pointer over the row and at 390 with touch: continuous scroll through the card into the next story, one-step-up from story top / card / home section unchanged, back/forward and reduced motion unchanged.
