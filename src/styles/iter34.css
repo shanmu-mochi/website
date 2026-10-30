@@ -1,0 +1,28 @@
+/* iteration 34: real-ink bloom on one paper (WebGL; see src/lib/inkBloom.js for credits) */
+.pg-story, .ib32-zone, .tc27.ib32, .st27-prewrap { background: var(--paper) !important; }
+/* faint paper grain over the whole story page, so the bloom's paper and the page's paper are one sheet */
+.pg-story { position: relative; }
+.pg-story::after { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 50; opacity: .05; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>"); }
+.ib34-zone { height: 250svh !important; margin-top: 0 !important; }
+.ib34-cv, .ib34-fb { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; object-fit: cover; }
+.ib34-fb { opacity: 0; }
+.tc27-t.ib32-t { color: #fdfcfa !important; text-shadow: none !important; }
+.nx34 { margin: 72px auto 0; padding: 0 24px 26svh; text-align: center; font: 400 clamp(26px, 2.6vw, 38px)/1.2 'Lora', serif; }
+.nx34 a { color: #1a1a1a; text-decoration: none; }
+.nx34 small { display: block; margin-bottom: 10px; font: 400 13px/1 'Lora', serif; font-variant: small-caps; letter-spacing: .14em; text-transform: lowercase; color: #777; }
+@media (prefers-reduced-motion: reduce) { .ib34-zone { height: 100svh !important; } .ib34-cv { transition: opacity .6s ease; } }
+/* iteration 35: clearer way back to the menu from a story */
+.pg-story .pg-back { font: 400 17px/1 'Lora', serif !important; letter-spacing: .02em; text-transform: none; color: #1a1a1a; padding: 10px 0; }
+.pg-story .pg-back span { font-size: 20px; margin-right: 4px; }
+.mp35 { position: fixed; top: 16px; left: 50%; z-index: 60; transform: translate(-50%, -72px); transition: transform .35s cubic-bezier(.2,.7,.2,1), opacity .35s;
+  opacity: 0; background: #1a1a1a; color: #fdfcfa; text-decoration: none; padding: 10px 20px; border-radius: 999px; font: 400 15px/1 'Lora', serif; }
+.mp35.is-on { transform: translate(-50%, 0); opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .mp35 { transition: opacity .3s; transform: translate(-50%, 0); } }
+/* iteration 35: no full-screen header gap; painting right under it, collapsing with scroll */
+.pg-story { overflow-anchor: none; }
+.pg-story > .st-top.st27:not(.st27-pre) { min-height: 0; padding-bottom: 36px; }
+.st35-fig { margin: 0 auto; width: min(76vw, 1100px); overflow: hidden; }
+.st35-fig img { display: block; width: 100%; height: auto; max-height: 64vh; object-fit: cover; transform-origin: 50% 0; will-change: transform, opacity; }
+@media (max-width: 760px) { .st35-fig { width: calc(100vw - 32px); } .st35-fig img { max-height: 52vh; } }
+.ab-epi-1 { font-feature-settings: 'calt' 1, 'kern' 1 !important; }
