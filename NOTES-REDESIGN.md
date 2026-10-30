@@ -267,3 +267,13 @@ Built on iteration 16 (A24 system kept: tilted plates, expanded pages, white pap
 ## Iteration 31 — section card names the destination
 - Scrolling up across a section boundary now shows the section you are going TO (name, "NN pieces", "0k / 04"), same as going down. Both the scrubbed pre-card (back past a section's first plate) and the hand-off card use the destination; back past Prose's first plate still replays Prose's own opening.
 - Tested with trackpad-style wheel streams at 1440 and CDP touch swipes at 390, reading the card DOM text mid-transition: every boundary both directions shows only the destination (Prose↔Publications, Publications↔Luck, Luck↔Deep Dives). One gesture up from a section's first plate = one section step. Shots: redesign-shots-v32.
+
+## Iteration 32 — ink bloom crossing, one paper
+- Removed the grey ruled card, the rising disc, its ring text, the moving hairlines and "Keep scrolling".
+- Ink bloom: the pinned zone (still 0.42x resistance, same spring-back) is one SVG. The next story's painting is revealed through a mask whose top edge is a rect displaced by fractal noise (feTurbulence + feDisplacementMap, soft blur), rising from the bottom of the screen with scroll position; a slightly higher, blurrier copy of the same edge in #1a1a1a (72%) gives the wet ink fringe. Noise is fixed to the screen so the edge reshapes as it moves (no spin). Fully scroll-driven, so scrolling up un-blooms it exactly.
+- Next title sits in the upper third, ink on paper until the bloom passes behind it, then paper-white. Past ~66% the full-bleed painting settles to an inset plate, then the zone scrolls away onto the next story's top.
+- One paper: zone, card and next-story preview are all #fff (same as the story page) — no grey-to-white edge.
+- Story top enters in a scroll-driven stagger: title, credit line, details, handwritten first line, buttons each fade + rise 12px as they come up the screen (reversible). Row boxes/rules removed; one thin rule left in the info block.
+- Fixed: in dev (React StrictMode) the page layout effect ran twice and reset the scroll to 0 after an upward crossing, so the previous story opened at its top and the momentum tail stepped again (several stories per gesture). skipTop now clears on a timeout. Production was likely unaffected, but the dev preview had it.
+- Reduced motion: zone 100svh, bloom shown full with a plain opacity fade, no stagger.
+- Tested (headless Chrome, wheel streams at 1440, CDP touch at 390): down crosses once into the next story at the same visual position; up from the next story's top crosses once back onto the bloom and un-blooms it. Frames in redesign-shots-v33 (down-*, up-*, edge-*); no seam visible.

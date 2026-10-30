@@ -24,6 +24,7 @@ import './styles/iter24.css'
 import './styles/iter25.css'
 import './styles/iter27.css'
 import './styles/iter28.css'
+import './styles/iter32.css'
 
 const norm = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '')
 const pad2 = (n) => String(n).padStart(2, '0')
@@ -827,7 +828,8 @@ function Piece({ cat, i, go, via }) {
   const goRef = useRef(go); goRef.current = go
 
   useLayoutEffect(() => {
-    if (SEAM.skipTop) SEAM.skipTop = false; else window.scrollTo(0, 0)
+    // iteration 32: keep skipTop for this commit (StrictMode re-runs layout effects in dev, which used to reset to 0)
+    if (SEAM.skipTop) setTimeout(() => { SEAM.skipTop = false }, 0); else window.scrollTo(0, 0)
     NAV.dir = 0
     if (!flying) return
     let live = true
@@ -939,12 +941,12 @@ function StoryTop({ it, meta, credit, honors, nextHref, onNext, still, art, prev
   const rows = [['Kind', mv('Kind')], ['Published', mv('Published')], ['Published on', venue === 'Unpublished' ? '' : venue], ['Painting', credit]].filter(([, v]) => v)
   return (
     <header className={`st-top st27${preview ? ' st27-pre' : ''}`} aria-hidden={preview || undefined}>
-      <h1 className="pg-title st27-t"><span>{it.title}</span></h1>
-      <p className="st27-cr"><span><small>Written by</small> Shanmu Raja</span>{pm && <span><small>Painting</small> {pm.artist}</span>}</p>
-      <dl className="st27-rows">{rows.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+      <h1 data-rv className="pg-title st27-t"><span>{it.title}</span></h1>
+      <p data-rv className="st27-cr"><span><small>Written by</small> Shanmu Raja</span>{pm && <span><small>Painting</small> {pm.artist}</span>}</p>
+      <dl data-rv className="st27-rows">{rows.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
       {!preview && honors}
-      {it.line && <p className="st-first st27-first" key={it.slug}>{still ? <span className="hand is-still">{it.line}</span> : <Hand text={it.line} delay={0.4} speed={0.8 * Math.min(0.05, 1.1 / Math.max(1, it.line.length))} />}</p>}
-      <div className="st27-btns">
+      {it.line && <p data-rv className="st-first st27-first" key={it.slug}>{still ? <span className="hand is-still">{it.line}</span> : <Hand text={it.line} delay={0.4} speed={0.8 * Math.min(0.05, 1.1 / Math.max(1, it.line.length))} />}</p>}
+      <div data-rv className="st27-btns">
         {it.href ? <a className="st27-b" tabIndex={preview ? -1 : undefined} href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()}</a> : <span className="st27-b is-muted">Not yet published</span>}
         <a className="st27-b" tabIndex={preview ? -1 : undefined} href={nextHref} onClick={onNext}>Next story</a>
       </div>
@@ -1005,16 +1007,35 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
         const q = Math.min(1, Math.max(0, -zr.top / span))           // progress through the pinned card
         const enter = Math.min(1, Math.max(0, (H - zr.top) / H))     // the card coming up the screen
         c.style.setProperty('--q', q.toFixed(4)); c.style.setProperty('--enter', enter.toFixed(4))
-        if (!red && linesRef.current) {
-          const speed = (1 + q * 5) * (1 - Math.max(0, q - 0.85) / 0.15 * 0.9)
-          off += vel * speed + (q > 0 && q < 1 ? 0.6 * (1 + q * 3) : 0)
-          const sp = (25 - q * 13) * H / 100, m = (a, b) => ((a % b) + b) % b
-          linesRef.current.style.setProperty('--sp', `${sp.toFixed(2)}px`)
-          linesRef.current.style.setProperty('--o1', `${(-m(off, sp)).toFixed(1)}px`)
-          linesRef.current.style.setProperty('--o2', `${(-m(off * 1.7, sp / 2)).toFixed(1)}px`)
+        const sv = discRef.current
+        if (sv) {
+          // bloom: 0 while the card comes up, full by q 0.62; then the painting settles to an inset plate
+          const lv = red ? 1 : Math.min(1, Math.max(0, (enter - 0.35) / 0.65 * 0.35 + q / 0.62 * 0.65))
+          const bl = lv * lv * (3 - 2 * lv)
+          const set = red ? 0 : Math.min(1, Math.max(0, (q - 0.66) / 0.3)), se = set * set * (3 - 2 * set)
+          // edge y in px: starts below the screen (plus the displacement margin), ends above it
+          const yEdge = H * 1.12 - bl * H * 1.32
+          const m = sv.querySelector('.ib32-m'), k = sv.querySelector('.ib32-k')
+          if (m) m.setAttribute('y', yEdge.toFixed(1))
+          if (k) k.setAttribute('y', (yEdge - 4 - 12 * Math.sin(bl * Math.PI)).toFixed(1))
+          sv.style.opacity = red ? (enter > 0.6 ? 1 : 0) : 1
+          const W = window.innerWidth, ins = Math.min(W * 0.14, 180) * se
+          sv.style.clipPath = se > 0 ? `inset(${(ins * 0.8).toFixed(1)}px ${ins.toFixed(1)}px ${(ins * 0.8).toFixed(1)}px ${ins.toFixed(1)}px)` : 'none'
+          const tt = linesRef.current
+          if (tt) {
+            // the title sits in the upper third; it turns paper-white once the bloom passes behind it
+            const over = Math.min(1, Math.max(0, (H * 0.34 - yEdge) / (H * 0.05)))
+            tt.style.setProperty('--ov', over.toFixed(3))
+            tt.style.opacity = (Math.min(1, enter * 1.6) * (1 - se)).toFixed(3)
+          }
         }
-        if (discRef.current) discRef.current.style.setProperty('--rise', (red ? 1 : Math.min(1, enter * 0.5 + q * 0.5)).toFixed(4))
       }
+      // iteration 32: the story top enters in a scroll-driven stagger (fade + 12px rise, reversible)
+      const art_ = rv.current && rv.current.closest('article')
+      if (art_) art_.querySelectorAll('[data-rv]').forEach((x) => {
+        const p = red ? 1 : Math.min(1, Math.max(0, (H * 0.94 - x.getBoundingClientRect().top) / (H * 0.2)))
+        x.style.opacity = p.toFixed(3); x.style.transform = p >= 1 ? '' : `translate3d(0, ${((1 - p) * 12).toFixed(1)}px, 0)`
+      })
       const pr = preRef.current
       if (pr) {
         const top = pr.getBoundingClientRect().top
@@ -1082,7 +1103,6 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
   const op = t.opening || []
   const nxMeta = metaRows(nx), nxCredit = nx.src ? creditText(nx.src) : ''
   const nxHref = `#/${cat}/${nx.slug}`, toNext = (e) => { e.preventDefault(); goPiece(cat, next) }
-  const ring = [((nxMeta.find(([k]) => k === 'Kind') || [])[1]), 'Shanmu Raja', ((nxMeta.find(([k]) => k === 'Published') || [])[1])].filter(Boolean).join('   ·   ').toUpperCase()
   return (
     <article className={`pg pg-piece pg-story pg-c-${cat} is-direct${still ? ' is-seam' : ''}`}>
       <PageTop back={() => go({ view: 'browse', cat })} backLabel={catOf(cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(N)}`} />
@@ -1109,17 +1129,37 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
         <a href={`#/${cat}/${pv.slug}`} onClick={(e) => { e.preventDefault(); goPiece(cat, prev) }}><small>Previous</small>{pv.title}</a>
         <a href={nxHref} onClick={toNext}><small>Next</small>{nx.title}</a>
       </nav>
-      {/* the transition card: pinned for a stretch (with resistance), its lines stream faster the further in */}
-      <div className="tc27-zone" ref={zone}>
-        <a className="tc27" ref={card} href={nxHref} onClick={toNext} aria-label={`Next story: ${nx.title}`}>
-          <span className="tc27-lines" ref={linesRef} aria-hidden="true"><i className="l1" /><i className="l2" /></span>
-          <span className="tc27-t">{nx.title}</span>
-          <small className="tc27-k">Keep scrolling</small>
+      {/* iteration 32: the ink bloom. Pinned for a stretch (0.42x resistance); the next painting is revealed
+          through an organic ink-bleed edge rising from the bottom, driven by scroll, then settles to a plate */}
+      <div className="tc27-zone ib32-zone" ref={zone}>
+        <a className="tc27 ib32" ref={card} href={nxHref} onClick={toNext} aria-label={`Next story: ${nx.title}`}>
           {nx.src && (
-            <span className="tc27-disc" ref={discRef} aria-hidden="true">
-              <span className="tc27-face" style={{ background: placeholderOf(nx.src) }}><img src={variantFor(nx.src, 1400)} alt="" loading="lazy" decoding="async" /></span>
-              {ring && <svg className="tc27-ring" viewBox="0 0 200 200"><defs><path id={`ring-${nx.slug}`} d="M100,100 m-88,0 a88,88 0 1,1 176,0 a88,88 0 1,1 -176,0" /></defs><text><textPath href={`#ring-${nx.slug}`} startOffset="30%">{ring}</textPath></text></svg>}
-            </span>)}
+            <svg className="ib32-svg" ref={discRef} aria-hidden="true" width="100%" height="100%" preserveAspectRatio="none">
+              <defs>
+                <filter id={`ibf-${it.slug}`} x="-10%" y="-30%" width="120%" height="160%" filterUnits="objectBoundingBox">
+                  <feTurbulence type="fractalNoise" baseFrequency="0.006 0.012" numOctaves="3" seed="7" result="n" />
+                  <feDisplacementMap in="SourceGraphic" in2="n" scale="150" xChannelSelector="R" yChannelSelector="G" result="d" />
+                  <feGaussianBlur in="d" stdDeviation="2.2" />
+                </filter>
+                <mask id={`ibm-${it.slug}`} maskUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
+                  <g filter={`url(#ibf-${it.slug})`}><rect className="ib32-m" x="-10%" width="120%" height="150%" fill="#fff" /></g>
+                </mask>
+                <filter id={`ibg-${it.slug}`} x="-10%" y="-30%" width="120%" height="160%" filterUnits="objectBoundingBox">
+                  <feTurbulence type="fractalNoise" baseFrequency="0.006 0.012" numOctaves="3" seed="7" result="n" />
+                  <feDisplacementMap in="SourceGraphic" in2="n" scale="150" xChannelSelector="R" yChannelSelector="G" result="d" />
+                  <feGaussianBlur in="d" stdDeviation="6" />
+                </filter>
+                <mask id={`ibk-${it.slug}`} maskUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
+                  <g filter={`url(#ibg-${it.slug})`}><rect className="ib32-k" x="-10%" width="120%" height="150%" fill="#fff" /></g>
+                </mask>
+              </defs>
+              <rect width="100%" height="100%" fill="#1a1a1a" mask={`url(#ibk-${it.slug})`} className="ib32-ink" />
+              <g mask={`url(#ibm-${it.slug})`}>
+                <rect width="100%" height="100%" fill={placeholderOf(nx.src)} />
+                <image className="ib32-img" href={variantFor(nx.src, 2000)} width="100%" height="100%" preserveAspectRatio="xMidYMid slice" />
+              </g>
+            </svg>)}
+          <span className="tc27-t ib32-t" ref={linesRef}>{nx.title}</span>
         </a>
       </div>
       <div ref={preRef} className="st27-prewrap"><StoryTop it={nx} meta={nxMeta} credit={nxCredit} nextHref={nxHref} onNext={toNext} still preview /></div>

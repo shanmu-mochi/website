@@ -1,0 +1,12 @@
+/* iteration 32: ink bloom crossing on one continuous paper (no grey card, no hairlines, no disc) */
+.ib32-zone { background: #fff; }
+.tc27.ib32 { background: #fff !important; overflow: hidden; }
+.ib32-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.ib32-ink { opacity: .72; }
+.tc27-t.ib32-t { --ov: 0; background: none; top: 30svh !important; transform: translate(-50%, 0) !important; z-index: 2;
+  color: color-mix(in srgb, #1a1a1a calc((1 - var(--ov)) * 100%), #fff); text-shadow: 0 1px 18px rgba(0,0,0, calc(var(--ov) * .35)); }
+.st27-prewrap { background: #fff; }
+/* boxes and hard rules go; one thin rule stays in the info block */
+.st27-rows div, .st27-rows div:last-child { border: 0 !important; }
+.st27-cr { border-top: 1px solid rgba(0,0,0,.18) !important; }
+@media (prefers-reduced-motion: reduce) { .ib32-svg { transition: opacity .6s ease; } [data-rv] { opacity: 1 !important; transform: none !important; } }
