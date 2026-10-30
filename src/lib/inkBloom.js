@@ -107,18 +107,17 @@ void main() {
   float ink = smoothstep(-1.2 * px, 1.2 * px + .0015, d);
   float halo = smoothstep(-.03, 0., d + fib * .01) * (1. - ink);
   float pool = ink * exp(-max(d, 0.) * 70.);             // ink pools darker at the rim
-  vec3 paper = vec3(.992, .988, .98);                    // #fdfcfa; the page-wide grain overlay supplies the tooth
   vec3 inkc = vec3(.102, .1, .098) * (1. + .05 * fine * (1. - pool)) * (1. - .35 * pool);
-  vec3 col = mix(paper, vec3(.62, .61, .6), halo * halo * .22);   // pale wet diffusion into the fibres
-  col = mix(col, inkc, ink);
+  float a = clamp(ink + halo * halo * .22 * (1. - ink), 0., 1.);   // transparent paper: the next plate shows through (iter 37)
+  vec3 col = mix(vec3(.62, .61, .6), inkc, ink);                   // pale wet diffusion, then ink
   col += (hash(gl_FragCoord.xy) - .5) / 255.;            // dither: no banding in the halo
-  gl_FragColor = vec4(col, 1.);
+  gl_FragColor = vec4(col * a, a);                         // premultiplied
 }`
 const VS = 'attribute vec2 p; varying vec2 vUv; void main() { vUv = p * .5 + .5; gl_Position = vec4(p, 0., 1.); }'
 
 export function makeInk(canvas) {
   let gl = null
-  try { gl = canvas.getContext('webgl', { antialias: false, alpha: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' }) } catch (e) { gl = null }
+  try { gl = canvas.getContext('webgl', { antialias: false, alpha: true, premultipliedAlpha: true, preserveDrawingBuffer: false, powerPreference: 'high-performance' }) } catch (e) { gl = null }
   if (!gl) return null
   const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o }
   const prog = (fs) => { const pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(pr); if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error('link'); return pr }

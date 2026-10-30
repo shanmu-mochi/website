@@ -321,3 +321,21 @@ Headless rAF does not see compositor or raster cost (the blend-mode grain, backd
 - The Next title uses difference blending so it reads on both paper and ink.
 
 **Verified on the box:** frames at every 10% of q (1440 wheel, 390 touch) in `redesign-shots-v36/`; flick retracts; commit lands at y=0 of the next story; up lands at the bottom; partial and reverse retract; Menu pill and About checks pass; no page errors.
+
+## Iteration 37 — story page redesign (one order, one spacing system)
+
+Order, top to bottom (one continuous page, no second painting entrance, no shrink/vanish):
+1. Hero `figure.s37-hero`: the clicked painting, static in flow; small-caps caption (title, artist, year). The gallery click now flies onto this hero (the `art` ref lives on `.s37-hero-f`), so the painting no longer rushes into a tiny box.
+2. Title block `header.s37-head`: kind · date (small caps) → title → by Shanmu Raja → 128px hairline → "Published on {venue}".
+3. Prose: handwritten first line (only if the story has one) → primary "Read on {venue} ↗" → small "Next story →".
+4. Teaser `section.s37-teaser` (only if there is an opening/pull): opening paragraphs, pull line with a left rule, 640px column.
+5. "More to read" row.
+6. Next zone `section.nx36.s37-end` (100svh): next painting plate above, NEXT + title anchored near the bottom, "keep scrolling" hint. The iter-36 ink commit gesture is unchanged (0.6 commit, 170ms release, 420ms retract, one story per gesture). The ink shader now outputs premultiplied alpha, so the plate shows through the un-inked paper.
+
+Tokens (on `.pg-story`, used only between blocks):
+- Space, 8px base: --s1 8 · --s2 16 · --s3 24 · --s4 32 · --s5 48 · --s6 64 · --s7 96 · --s8 128.
+- Rhythm: hero top s4 (s3 mobile); caption s2; head s6; kick→title s2; by s2; rule s3; meta s3; first line s6; actions s5 (gap s2); every section break s7.
+- Type: --t-title clamp(40px,5.2vw,72px) · --t-body 19px (17 mobile) · --t-meta 11px small caps .14em · --t-hand clamp(26px,2.6vw,34px). Caption, kick, labels, card kinds, NEXT and the hint all share the meta style.
+- Deliberate deviation: the painting credit appears once, in the hero caption. The meta line carries only the venue.
+
+Mac (M5 Pro, Metal, temp build; the machine had load ~4–5 during the run), p95/max ms: home 16.8/150 · prose-index 16.7/16.8 · story-read 16.7/50 (1 long task, 64ms) · bloom-down 16.7/16.8 · bloom-up 16.8/83.3.

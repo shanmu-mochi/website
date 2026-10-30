@@ -1,9 +1,5 @@
 /* iteration 36: story flow without in-between paintings, the ink commit screen, and cheaper layers */
 .pg-story::after { mix-blend-mode: normal; opacity: .035; }   /* plain alpha: no full-screen blend pass per frame */
-.st36-plate { margin: 0 auto; padding: clamp(84px, 11vh, 120px) 16px 0; display: flex; justify-content: center; }
-.st36-plate img { display: block; max-width: min(76vw, 1100px); max-height: 62vh; width: auto; height: auto; }
-@media (max-width: 760px) { .st36-plate { padding-top: 76px; } .st36-plate img { max-width: calc(100vw - 32px); max-height: 52vh; } }
-.pg-story > .st36-plate + .st-top.st27 { padding-top: 28px; }
 /* the last screen: "Next" and the title, centred; the ink rises around it */
 .nx36 { position: relative; width: 100vw; margin-left: calc(50% - 50vw); height: 100svh; display: grid; place-items: center; overflow: hidden; background: var(--paper); contain: strict; }
 .nx36-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; visibility: hidden; }

@@ -29,6 +29,7 @@ import './styles/iter33.css'
 import './styles/iter34.css'
 import { makeInk } from './lib/inkBloom.js'
 import './styles/iter36.css'
+import './styles/iter37.css'
 
 const norm = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '')
 const pad2 = (n) => String(n).padStart(2, '0')
@@ -938,26 +939,26 @@ function Piece({ cat, i, go, via }) {
    from below with a torn, organic edge and opens out to the full width, once. Then the real opening and one
    real line from the story (verbatim, src/storyTeasers.js), the way to read it again, and the page keeps
    going: a row of more pieces, and past the end the next story takes over (scrolling up past the top goes back). */
-function StoryTop({ it, meta, credit, honors, nextHref, onNext, still, art, preview }) {
-  const pm = it.src ? META[it.src] : null
+/* iteration 37: the story head. One order, fixed rhythm: kind · date, title, byline, rule, venue,
+   then (prose) the handwritten first line, the Read button and a small Next link. Empty fields leave no slot. */
+function StoryTop({ it, meta, honors, nextHref, onNext }) {
   const mv = (k) => (meta.find(([x]) => x === k) || [])[1]
   const venue = mv('Venue')
-  // iteration 33: Paris Review title block. Kicker (kind · date), title, byline, one quiet line, real fields only
   const kick = [mv('Kind'), mv('Published')].filter(Boolean).join(' · ')
-  const quiet = [venue && venue !== 'Unpublished' ? `Published on ${venue}` : '', credit ? `Painting: ${credit}` : ''].filter(Boolean)
+  const pub = venue && venue !== 'Unpublished' ? `Published on ${venue}` : ''
   return (
-    <header className={`st-top st27 pr33${preview ? ' st27-pre' : ''}`} aria-hidden={preview || undefined}>
-      {kick && <p data-rv className="pr33-kick">{kick}</p>}
-      <h1 data-rv className="pg-title st27-t pr33-t"><span>{it.title}</span></h1>
-      <p data-rv className="pr33-by">by Shanmu Raja</p>
-      {quiet.length > 0 && <p data-rv className="pr33-meta">{quiet.map((q, k) => <span key={k}>{q}</span>)}</p>}
-      {!preview && honors}
-      {it.line && <p data-rv className="st-first st27-first" key={it.slug}>{still ? <span className="hand is-still">{it.line}</span> : <Hand text={it.line} delay={0.4} speed={0.8 * Math.min(0.05, 1.1 / Math.max(1, it.line.length))} />}</p>}
-      <div data-rv className="st27-btns pr33-btns">
-        {it.href ? <a className="pr33-read" tabIndex={preview ? -1 : undefined} href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()}<b aria-hidden="true"> ↗</b></a> : <span className="pr33-read is-muted">Not yet published</span>}
-        <a className="pr33-next" tabIndex={preview ? -1 : undefined} href={nextHref} onClick={onNext}>Next story →</a>
+    <header className="s37-head">
+      {kick && <p data-rv className="s37-kick">{kick}</p>}
+      <h1 data-rv className="s37-title">{it.title}</h1>
+      <p data-rv className="s37-by">by Shanmu Raja</p>
+      <hr data-rv className="s37-rule" />
+      {pub && <p data-rv className="s37-meta">{pub}</p>}
+      {honors}
+      {it.cat === 'prose' && it.line && <p data-rv className="s37-first" key={it.slug}><Hand text={it.line} delay={0.4} speed={0.8 * Math.min(0.05, 1.1 / Math.max(1, it.line.length))} /></p>}
+      <div data-rv className="s37-acts">
+        {it.href ? <a className="s37-read" href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()}<b aria-hidden="true"> ↗</b></a> : <span className="s37-read is-muted">Not yet published</span>}
+        <a className="s37-next" href={nextHref} onClick={onNext}>Next story →</a>
       </div>
-      {art && <div ref={art} className="st-fly" aria-hidden="true" />}
     </header>
   )
 }
@@ -1107,25 +1108,32 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
     <article className={`pg pg-piece pg-story pg-c-${cat} is-direct${lift ? ' is-lift' : ''}`}>
       <PageTop back={() => go({ view: 'browse', cat })} backLabel={catOf(cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(N)}`} />
       <a ref={pillRef} className="mp35" href={`#/${cat}`} onClick={(e) => { e.preventDefault(); go({ view: 'browse', cat }) }}><span aria-hidden="true">←</span> Menu</a>
-      {it.src && <figure className="st36-plate"><img src={variantFor(it.src, 2000)} width={Math.round(1000 * aspectOf(it.src))} height={1000} alt={credit || it.title} decoding="async" fetchpriority="high" /></figure>}
-      <StoryTop it={it} meta={meta} credit={credit} honors={honors} nextHref={nxHref} onNext={toNext} still={false} art={art} />
-      {op.length > 0 && <section className="st-open">{op.map((p, k) => <p key={k}>{p}</p>)}</section>}
-      {t.pull && <blockquote className="st-pull"><p>{t.pull}</p></blockquote>}
-      {op.length > 0 && it.href && <div className="st27-btns st27-btns-end"><a className="pr33-read" href={it.href} target="_blank" rel="noreferrer">{it.cta}</a></div>}
-      <section className="st-more">
-        <h2>More to read</h2>
-        <div className="st-row" ref={more}>
+      {it.src && (
+        <figure className="s37-hero">
+          <div ref={art} className="s37-hero-f"><img src={variantFor(it.src, 2000)} width={Math.round(1000 * aspectOf(it.src))} height={1000} alt={credit || it.title} decoding="async" fetchpriority="high" /></div>
+          {credit && <figcaption data-rv>{credit}</figcaption>}
+        </figure>)}
+      <StoryTop it={it} meta={meta} honors={honors} nextHref={nxHref} onNext={toNext} />
+      {(op.length > 0 || t.pull) && (
+        <section className="s37-teaser">
+          {op.map((p, k) => <p key={k}>{p}</p>)}
+          {t.pull && <blockquote className="s37-pull"><p>{t.pull}</p></blockquote>}
+        </section>)}
+      <section className="s37-more">
+        <h2 className="s37-label">More to read</h2>
+        <div className="s37-row" ref={more}>
           {[...others, ...pubs].map(({ x, c, k }) => (
-            <a key={`${c}-${x.slug}`} className="st-plate" href={`#/${c}/${x.slug}`} onClick={(e) => { e.preventDefault(); goPiece(c, k) }}>
-              <span className="st-plate-f" style={{ background: x.src ? placeholderOf(x.src) : '#f4f2ec' }}>{x.src ? <img src={variantFor(x.src, 400)} alt="" loading="lazy" decoding="async" /> : <em>{x.title}</em>}</span>
+            <a key={`${c}-${x.slug}`} className="s37-card" href={`#/${c}/${x.slug}`} onClick={(e) => { e.preventDefault(); goPiece(c, k) }}>
+              <span className="s37-card-f" style={{ background: x.src ? placeholderOf(x.src) : '#f4f2ec' }}>{x.src ? <img src={variantFor(x.src, 400)} alt="" loading="lazy" decoding="async" /> : <em>{x.title}</em>}</span>
               <small>{catOf(c).label}</small><b>{x.title}</b>
             </a>))}
         </div>
       </section>
-      <section className="nx36" ref={zone} aria-label={`Next story: ${nx.title}`}>
+      <section className="nx36 s37-end" ref={zone} aria-label={`Next story: ${nx.title}`}>
+        {nx.src && <img className="s37-end-plate" src={variantFor(nx.src, 800)} width={Math.round(1000 * aspectOf(nx.src))} height={1000} alt="" fetchpriority="low" decoding="async" />}
         <canvas className="nx36-cv" ref={discRef} aria-hidden="true" />
-        <a className="nx36-t" ref={linesRef} href={nxHref} onClick={toNext}><small>Next</small><span>{nx.title}</span></a>
-        <p className="nx36-hint" aria-hidden="true">Keep scrolling</p>
+        <a className="nx36-t s37-end-t" ref={linesRef} href={nxHref} onClick={toNext}><small>Next</small><span>{nx.title}</span></a>
+        <p className="nx36-hint s37-end-hint" aria-hidden="true">Keep scrolling</p>
       </section>
     </article>
   )
