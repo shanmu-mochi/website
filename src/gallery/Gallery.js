@@ -120,6 +120,9 @@ export default class Gallery {
     this.ray = new THREE.Raycaster(); this.ptr = new THREE.Vector2()
     this.geos = []
     this.bind()
+    this.dirty = true; this.lastDraw = 0
+    const dirt = () => { this.dirty = true }
+    window.addEventListener('resize', dirt); el.addEventListener('pointermove', dirt, { passive: true }); this.undirt = () => { window.removeEventListener('resize', dirt); el.removeEventListener('pointermove', dirt) }
     this.last = performance.now()
     this.raf = requestAnimationFrame(this.frame)
   }
@@ -168,8 +171,8 @@ export default class Gallery {
     p.load = () => {
       if (p.loaded) return
       p.loaded = true
-      Promise.resolve(this.o.frontTexture(it, this.mode, w / h)).then((t) => { if (t && this.plates[i] === p) { front.map = t; front.color.set(0xffffff); front.needsUpdate = true } res() })
-      Promise.resolve(this.o.backTexture(it, this.mode, w / h)).then((t) => { if (t && this.plates[i] === p) { back.map = t; back.needsUpdate = true } })
+      Promise.resolve(this.o.frontTexture(it, this.mode, w / h)).then((t) => { if (t && this.plates[i] === p) { front.map = t; front.color.set(0xffffff); front.needsUpdate = true; this.dirty = true } res() })
+      Promise.resolve(this.o.backTexture(it, this.mode, w / h)).then((t) => { if (t && this.plates[i] === p) { back.map = t; back.needsUpdate = true; this.dirty = true } })
     }
     if (Math.abs(i - this.L) <= CFG.renderRadius + 2) p.load()
     return p
@@ -318,7 +321,7 @@ export default class Gallery {
         .to(this.G, { others: 1, duration: 0.75, ease: 'none' }, 0.06)
     })
   }
-  tone(css) { this.scene.fog.color.set(css) }
+  tone(css) { this.scene.fog.color.set(css); this.dirty = true }
   hidePlate(i, v = true) { const p = this.plates[i]; if (p) p.hidden = v }
   flip() {
     if (this.reduced || this.flight) return
@@ -745,6 +748,12 @@ export default class Gallery {
     const c = this.index()
     if (c !== this.cur) { this.cur = c; this.o.onChange && this.o.onChange(c) }
     this.layout(dt)
+    // iteration 36: render (and run the DOM-measuring onFrame) only when something moved; a still row
+    // costs nothing. Safety: still redraw every 500ms (late textures, fog/tone changes)
+    let sig = this.L * 7.1 + this.cam.position.x + this.cam.position.y * 3 + this.cam.position.z * 5 + this.root.rotation.x + this.root.rotation.y * 3 + this.root.position.x + this.root.position.y
+    for (const p of this.plates) { const g = p.group; sig += g.position.x * 1.3 + g.position.y * 1.7 + g.position.z * 2.3 + g.rotation.x * 2.9 + g.rotation.y * 3.1 + g.rotation.z * 3.7 + g.scale.x * 4.1 + (p.spin ? p.spin.rotation.x * 5.3 + p.spin.rotation.y * 5.9 : 0); p.mats && p.mats.forEach((m) => { sig += (m.opacity || 0) * 6.7 }) }
+    if (sig === this.sig && now - this.lastDraw < 500 && !this.dirty) return
+    this.sig = sig; this.lastDraw = now; this.dirty = false
     this.renderer.render(this.scene, this.cam)
     if (this.o.onFrame) this.o.onFrame()
   }
@@ -766,6 +775,7 @@ export default class Gallery {
   }
 
   destroy() {
+    if (this.undirt) this.undirt()
     this.dead = true
     cancelAnimationFrame(this.raf)
     this.cancel()

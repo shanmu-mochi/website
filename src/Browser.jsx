@@ -28,6 +28,7 @@ import './styles/iter32.css'
 import './styles/iter33.css'
 import './styles/iter34.css'
 import { makeInk } from './lib/inkBloom.js'
+import './styles/iter36.css'
 
 const norm = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '')
 const pad2 = (n) => String(n).padStart(2, '0')
@@ -962,147 +963,137 @@ function StoryTop({ it, meta, credit, honors, nextHref, onNext, still, art, prev
 }
 const metaRows = (x) => (x.meta || []).filter(([, v]) => v)
 
-/* iteration 21 / 27 / 28: the story page. A24 film-page top, the painting rising once from below, the real
-   opening, more to read, then the ruled transition card (lines that stream faster the further you push,
-   with resistance) and below it the next story's top, physically below us: when it reaches the top of
-   the screen the route swaps to that story at the same scroll position, so nothing moves. Scrolling up
-   past a story's top lands on the previous story's card at the same spot, so it reverses the same way. */
+/* iteration 36: the story page. Painting plate, title block, handwritten line, Read and Next, the
+   opening and more to read, then one last screen: "Next" and the next title, centred. Keep scrolling there
+   and the ink bleeds up around the title (a commit gesture, with resistance); let go before the threshold
+   and it draws back, pass it and the ink fills the page and lifts away into the next story's top.
+   At a story's top one upward gesture goes back exactly one story, landing on its last screen. */
+const INK36 = { veil: null }
+function inkVeil(title) {
+  let v = INK36.veil
+  if (!v) { v = INK36.veil = document.createElement('div'); v.className = 'nx36-veil'; v.setAttribute('aria-hidden', 'true'); document.body.appendChild(v) }
+  v.innerHTML = '<small>Next</small><span></span>'; v.lastChild.textContent = title
+  v.getAnimations().forEach((x) => x.cancel()); v.style.transform = ''; v.style.opacity = '1'; v.classList.add('is-on')
+  return v
+}
+function liftVeil() {
+  const v = INK36.veil; if (!v || !v.classList.contains('is-on')) return
+  const red = reduced()
+  const a = v.animate(red ? [{ opacity: 1 }, { opacity: 0 }] : [{ transform: 'translate3d(0,0,0)' }, { transform: 'translate3d(0,-100%,0)' }],
+    { duration: red ? 300 : 820, delay: red ? 0 : 140, easing: 'cubic-bezier(.65,0,.25,1)', fill: 'forwards' })
+  a.onfinish = () => { v.classList.remove('is-on'); a.cancel() }
+}
+const COMMIT36 = 0.6
 function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
   const t = TEASERS[it.slug] || {}
-  const rv = useRef(null), more = useRef(null), zone = useRef(null), card = useRef(null), discRef = useRef(null), inkRef = useRef(null), fbRef = useRef(null), pillRef = useRef(null), linesRef = useRef(null), preRef = useRef(null)
+  const more = useRef(null), zone = useRef(null), discRef = useRef(null), inkRef = useRef(null), pillRef = useRef(null), linesRef = useRef(null)
   const N = items.length, next = (i + 1) % N, prev = (i - 1 + N) % N
   const nx = items[next], pv = items[prev]
   const goPiece = (c, k) => go({ view: 'piece', cat: c, i: k })
-  const still = useRef(SEAM.to === it.slug && SEAM.dir === 1).current
-  // land where the seam says: down = at the same offset into this page's top; up = on this page's own preview
+  const lift = useRef(SEAM.to === it.slug && SEAM.dir === 1).current
+  // land where the seam says: down = at the top (the ink veil lifts off it); up = on this story's last screen
   useLayoutEffect(() => {
     if (SEAM.to !== it.slug) return
-    const dir = SEAM.dir, off = SEAM.off
-    SEAM.to = null; SEAM.dir = 0; SEAM.skipTop = true
-    const y = dir < 0 && preRef.current ? preRef.current.getBoundingClientRect().top + window.scrollY - off : off
-    window.scrollTo({ top: Math.max(0, y), behavior: 'instant' })
-  }, [it.slug])
-  // iteration 34: WebGL ink renderer for the next painting (falls back to a plain fade without WebGL)
-  useEffect(() => {
-    const cv = discRef.current; if (!cv) return
-    let r = null
-    try { r = makeInk(cv, variantFor(nx.src, 2000)) } catch (e) { r = null }
-    if (r) { inkRef.current = r; if (fbRef.current) fbRef.current.style.display = 'none' } else cv.style.display = 'none'
-    return () => { inkRef.current = null; if (r) r.dispose() }
-  }, [it.slug]) // eslint-disable-line react-hooks/exhaustive-deps
-  // one rAF loop, everything eased toward where the scroll says it should be (no stepping)
-  useEffect(() => {
-    const red = reduced(); let raf = 0, live = true, rp = red ? 1 : 0, lastY = window.scrollY, vel = 0, off = 0, armed = false, crossed = false
-    const tick = () => {
-      if (!live) return
-      raf = requestAnimationFrame(tick)
-      const H = window.innerHeight, y = window.scrollY
-      const dy = y - lastY; lastY = y
-      vel = vel * 0.85 + dy * 0.15
-      // iteration 35: the Menu pill hides while reading down and slides in on any upward scroll
-      const pl = pillRef.current
-      if (pl) { if (dy < -1 || y < 40) pl.classList.add('is-on'); else if (dy > 1) pl.classList.remove('is-on') }
-      const fg = rv.current
-      if (fg) {
-        const im = fg.firstChild, h0 = im.offsetHeight || 0
-        const pz = red ? 0 : Math.min(1, Math.max(0, y / (H * 0.5))), ez = pz * (2 - pz)
-        fg.style.height = `${(h0 * (1 - ez)).toFixed(1)}px`
-        im.style.transform = `scale(${Math.max(0.001, 1 - ez).toFixed(4)})`; im.style.opacity = Math.min(1, (1 - ez) * 1.6).toFixed(3)
-      }
-      const z = zone.current, c = card.current
-      if (z && c) {
-        const zr = z.getBoundingClientRect()
-        const span = Math.max(1, zr.height - H)
-        const q = Math.min(1, Math.max(0, -zr.top / span))           // progress through the pinned card
-        const enter = Math.min(1, Math.max(0, (H - zr.top) / H))     // the card coming up the screen
-        c.style.setProperty('--q', q.toFixed(4)); c.style.setProperty('--enter', enter.toFixed(4))
-        // iteration 34: the ink bloom runs on the pinned stretch only (q), so it starts once you keep
-        // scrolling past the "Next:" line; one number p drives a pure function, so it reverses exactly
-        const p = red ? 1 : Math.min(1, q / 0.8)
-        const set = red ? 0 : Math.min(1, Math.max(0, (q - 0.84) / 0.16)), se = set * set * (3 - 2 * set)
-        const ink = inkRef.current, cv = discRef.current
-        if (ink) ink.draw(p)
-        const host = cv || fbRef.current
-        if (host) {
-          if (!ink && fbRef.current) fbRef.current.style.opacity = Math.min(1, Math.max(0, (p - 0.2) / 0.5)).toFixed(3)
-          if (cv) cv.style.opacity = red ? (enter > 0.6 ? 1 : 0) : 1
-          const W = window.innerWidth, ins = Math.min(W * 0.14, 180) * se
-          host.style.clipPath = se > 0 ? `inset(${(ins * 0.8).toFixed(1)}px ${ins.toFixed(1)}px ${(ins * 0.8).toFixed(1)}px ${ins.toFixed(1)}px)` : 'none'
-        }
-        const tt = linesRef.current
-        if (tt) {
-          // the title is written in paper colour once the ink has passed behind it
-          const ov = red ? 1 : Math.min(1, Math.max(0, (p - 0.36) / 0.08))
-          tt.style.setProperty('--ov', ov.toFixed(3)); tt.style.opacity = (ov * (1 - se)).toFixed(3)
-        }
-      }
-      // iteration 32: the story top enters in a scroll-driven stagger (fade + 12px rise, reversible)
-      const art_ = zone.current && zone.current.closest('article')
-      // staggered by order within each story top, driven by where that top is (all shown once it reaches the top)
-      if (art_) art_.querySelectorAll('.st-top').forEach((hd) => {
-        const ht = hd.getBoundingClientRect().top, base_ = (H - ht) / H * 1.8
-        hd.querySelectorAll('[data-rv]').forEach((x, k) => {
-          const p = red ? 1 : Math.min(1, Math.max(0, base_ - k * 0.12))
-          x.style.opacity = p.toFixed(3); x.style.transform = p >= 1 ? '' : `translate3d(0, ${((1 - p) * 12).toFixed(1)}px, 0)`
-        })
-      })
-      const pr = preRef.current
-      if (pr) {
-        const top = pr.getBoundingClientRect().top
-        if (top > 8) armed = true
-        if (armed && !crossed && top <= 2 && !NAV.busy) {
-          crossed = true
-          SEAM.to = nx.slug; SEAM.dir = 1; SEAM.off = -top
-          go({ view: 'piece', cat, i: next }, { seam: true })
-        }
-        if (crossed && SEAM.to === nx.slug) SEAM.off = Math.max(0, -pr.getBoundingClientRect().top)
-      }
+    const dir = SEAM.dir
+    SEAM.to = null; SEAM.dir = 0
+    if (dir < 0) {
+      SEAM.skipTop = true
+      const pin = () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' })
+      pin()
+      // late fonts and images can still grow the page; stay on the last screen until the reader moves
+      const ro = new ResizeObserver(pin); ro.observe(document.body)
+      window.addEventListener('scroll', pin, { passive: true })   // and absorb the fling left over from the gesture
+      const stop = () => { ro.disconnect(); clearTimeout(tm); window.removeEventListener('scroll', pin); window.removeEventListener('wheel', stopIn); window.removeEventListener('touchstart', stop); window.removeEventListener('keydown', stop) }
+      const stopIn = (e) => { if (!gestTail(e.deltaY, performance.now()) || e.deltaY > 0) stop() }
+      const tm = setTimeout(stop, 2500)
+      window.addEventListener('wheel', stopIn, { passive: true }); window.addEventListener('touchstart', stop, { passive: true }); window.addEventListener('keydown', stop)
     }
-    raf = requestAnimationFrame(tick)
-    return () => { live = false; cancelAnimationFrame(raf) }
-  }, [it.slug]) // eslint-disable-line react-hooks/exhaustive-deps
-  // the card resists: over the pinned zone a wheel or swipe moves the page at 0.42x, and stopping
-  // short eases back to the start of the card. Nothing is dropped; up is as easy as down.
-  // past a story's top, one upward gesture goes back exactly one story (its momentum tail is spent)
+    else { window.scrollTo({ top: 0, behavior: 'instant' }); requestAnimationFrame(liftVeil) }
+  }, [it.slug])
+  // the ink renderer exists only while its screen is near; its field is prepared before the gesture starts
+  useEffect(() => {
+    const z = zone.current, cv = discRef.current; if (!z || !cv || reduced()) return
+    let r = null, pend = 0, dead = false
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting && !r && !pend) {   // shader compile + field render (~0.1s once) waits for an idle moment, not mid-scroll
+        const mk = () => { pend = 0; if (dead || r) return; try { r = makeInk(cv) } catch (er) { r = null } if (r) { inkRef.current = r; r.prepare() } }
+        pend = window.requestIdleCallback ? requestIdleCallback(mk, { timeout: 900 }) : setTimeout(mk, 200)
+      }
+      else if (!e.isIntersecting && r) { inkRef.current = null; r.dispose(); r = null; cv.style.visibility = 'hidden' }
+    }, { rootMargin: '60% 0px' })
+    io.observe(z)
+    return () => { dead = true; io.disconnect(); inkRef.current = null; if (r) r.dispose() }
+  }, [it.slug])
+  // Menu pill: hides while reading down, slides in on any upward scroll (scroll events only, no rAF loop)
+  useEffect(() => {
+    let lastY = window.scrollY
+    const on = () => { const y = window.scrollY, dy = y - lastY; lastY = y; const pl = pillRef.current; if (!pl) return; if (dy < -1 || y < 40) pl.classList.add('is-on'); else if (dy > 1) pl.classList.remove('is-on') }
+    on(); window.addEventListener('scroll', on, { passive: true })
+    return () => window.removeEventListener('scroll', on)
+  }, [it.slug])
+  // the commit gesture. q (0..1) is driven by input at the bottom of the page, never by scroll position
   useEffect(() => {
     const red = reduced()
-    let acc = 0, done = false, spring = 0, ty = null, upAcc = 0
-    const inZone = () => { const z = zone.current; if (!z) return null; const r = z.getBoundingClientRect(), H = window.innerHeight; const span = r.height - H; return r.top <= 0.5 && -r.top < span - 0.5 ? { r, span, q: -r.top / span } : null }
-    const springLater = () => {
-      clearTimeout(spring)
-      if (red) return
-      spring = setTimeout(() => { const zz = inZone(); if (zz && zz.q < 0.92) window.scrollTo({ top: window.scrollY + zz.r.top, behavior: 'smooth' }) }, 700)
+    let q = 0, raf = 0, anim = null, idle = 0, done = false, ty = null, upAcc = 0, lastIn = 0, lastD = 0
+    const H = () => window.innerHeight
+    const atBottom = () => window.scrollY >= document.documentElement.scrollHeight - H() - 2
+    const paint = () => {
+      raf = 0
+      const ink = inkRef.current, cv = discRef.current, tt = linesRef.current
+      if (cv) cv.style.visibility = q > 0.001 && ink ? 'visible' : 'hidden'
+      if (ink && q > 0.001) ink.draw(q)
+      if (zone.current) zone.current.style.setProperty('--q', q.toFixed(4))
+      if (tt) tt.style.setProperty('--ov', red ? (q > 0.5 ? 1 : 0) : Math.min(1, Math.max(0, (q - 0.4) / 0.14)).toFixed(3))
+      if (red && zone.current) zone.current.style.setProperty('--fade', q.toFixed(3))
     }
-    const goUp = (d, now) => { done = true; GEST.s = -1; GEST.t = now; GEST.m = Math.abs(d); SEAM.to = pv.slug; SEAM.dir = -1; SEAM.off = 0; go({ view: 'piece', cat, i: prev }, { seam: true }) }
+    const set = (v) => { q = Math.min(1, Math.max(0, v)); if (!raf) raf = requestAnimationFrame(paint) }
+    const tween = (to, ms, then) => {
+      cancelAnimationFrame(anim); const from = q, t0 = performance.now()
+      const st = (now) => { const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3); set(from + (to - from) * e); if (k < 1) anim = requestAnimationFrame(st); else { anim = null; then && then() } }
+      anim = requestAnimationFrame(st)
+    }
+    const commit = () => {
+      if (done) return; done = true; clearTimeout(idle)
+      tween(1, 260 * (1 - q) + 60, () => {
+        inkVeil(nx.title)
+        GEST.s = 1; GEST.t = performance.now(); GEST.m = lastD; GEST.touch = ty != null
+        SEAM.to = nx.slug; SEAM.dir = 1; SEAM.off = 0
+        go({ view: 'piece', cat, i: next }, { seam: true })
+      })
+    }
+    const release = () => { clearTimeout(idle); idle = setTimeout(() => { if (done) return; if (q >= COMMIT36) commit(); else if (q > 0) tween(0, 420) }, 170) }
+    const push = (d) => {   // d in px of input, + = down
+      if (anim) { cancelAnimationFrame(anim); anim = null }
+      lastD = Math.abs(d)
+      set(q + d * 0.42 / (1.5 * H()))
+      if (q >= 1) commit(); else release()
+    }
+    const goUp = (d, now) => { done = true; GEST.touch = ty != null; GEST.s = -1; GEST.t = now; GEST.m = Math.abs(d); SEAM.to = pv.slug; SEAM.dir = -1; SEAM.off = 0; go({ view: 'piece', cat, i: prev }, { seam: true }) }
     const wh = (e) => {
-      if (e.ctrlKey || done) return
+      if (e.ctrlKey) return
+      if (done) { e.preventDefault(); return }
       const now = performance.now()
-      const d = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1)
+      const d = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H() : 1)
       if (!d) return
-      if (gestTail(d, now)) { if (window.scrollY <= 0 && d < 0) e.preventDefault(); return }
-      const zz = !red && inZone()
-      if (zz) { e.preventDefault(); window.scrollBy({ top: d * 0.42, behavior: 'instant' }); springLater(); return }
-      if (d < 0 && window.scrollY <= 0 && !NAV.busy) {
-        upAcc += -d
-        if (e.deltaMode === 1 || upAcc > 40) goUp(d, now)
-        return
-      }
-      upAcc = 0; void acc
+      if (gestTail(d, now)) { e.preventDefault(); return }   // the rest of the gesture that just changed story
+      if ((d > 0 && atBottom()) || (d < 0 && q > 0)) { e.preventDefault(); lastIn = now; push(d); return }
+      if (d < 0 && window.scrollY <= 0 && !NAV.busy) { upAcc += -d; if (e.deltaMode === 1 || upAcc > 40) goUp(d, now); return }
+      upAcc = 0; void lastIn
     }
-    const ts = (e) => { ty = e.touches[0].clientY; upAcc = 0 }
+    const ts = (e) => { ty = e.touches[0].clientY; upAcc = 0; GEST.touch = false }
     const tmv = (e) => {
-      if (ty == null || done) return
+      if (ty == null) { if (GEST.touch) e.preventDefault(); return }   // the same finger that changed story: hold the landing
+      if (done) { e.preventDefault(); return }
       const yy = e.touches[0].clientY, dy = ty - yy; ty = yy
-      const zz = !red && inZone()
-      if (zz) { e.preventDefault(); window.scrollBy({ top: dy * 0.42, behavior: 'instant' }); springLater(); return }
+      if ((dy > 0 && atBottom()) || (dy < 0 && q > 0)) { e.preventDefault(); push(dy * 1.6); return }
       if (dy < 0 && window.scrollY <= 0 && !NAV.busy) { upAcc += -dy; if (upAcc > 70) { e.preventDefault(); goUp(dy, performance.now()) } }
     }
-    const te = () => { ty = null; if (inZone()) springLater() }
-    window.addEventListener('wheel', wh, { passive: false }); window.addEventListener('touchstart', ts, { passive: true }); window.addEventListener('touchmove', tmv, { passive: false }); window.addEventListener('touchend', te, { passive: true })
-    return () => { clearTimeout(spring); window.removeEventListener('wheel', wh); window.removeEventListener('touchstart', ts); window.removeEventListener('touchmove', tmv); window.removeEventListener('touchend', te) }
+    const te = () => { ty = null; if (q > 0 && !done) release() }
+    const key = (e) => { if (done || !atBottom()) return; if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); push(H() * 0.5) } }
+    window.addEventListener('wheel', wh, { passive: false }); window.addEventListener('touchstart', ts, { passive: true }); window.addEventListener('touchmove', tmv, { passive: false }); window.addEventListener('touchend', te, { passive: true }); window.addEventListener('keydown', key)
+    return () => { clearTimeout(idle); cancelAnimationFrame(raf); cancelAnimationFrame(anim); window.removeEventListener('wheel', wh); window.removeEventListener('touchstart', ts); window.removeEventListener('touchmove', tmv); window.removeEventListener('touchend', te); window.removeEventListener('keydown', key) }
   }, [it.slug]) // eslint-disable-line react-hooks/exhaustive-deps
   // the row of more pieces: vertical input always scrolls the page; only shift+wheel is mapped sideways
-  // (deltaX, horizontal swipes, drag and the row's arrows scroll it natively)
   useEffect(() => {
     const el = more.current; if (!el) return
     const wh = (e) => { if (!e.shiftKey || e.deltaX) return; e.preventDefault(); el.scrollLeft += e.deltaY }
@@ -1111,19 +1102,13 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
   const others = [...items.slice(i + 1), ...items.slice(0, i)].map((x) => ({ x, c: cat, k: items.indexOf(x) }))
   const pubs = (catOf0('publications').items || []).map((x, k) => ({ x, c: 'publications', k }))
   const op = t.opening || []
-  const nxMeta = metaRows(nx), nxCredit = nx.src ? creditText(nx.src) : ''
   const nxHref = `#/${cat}/${nx.slug}`, toNext = (e) => { e.preventDefault(); goPiece(cat, next) }
   return (
-    <article className={`pg pg-piece pg-story pg-c-${cat} is-direct${still ? ' is-seam' : ''}`}>
+    <article className={`pg pg-piece pg-story pg-c-${cat} is-direct${lift ? ' is-lift' : ''}`}>
       <PageTop back={() => go({ view: 'browse', cat })} backLabel={catOf(cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(N)}`} />
       <a ref={pillRef} className="mp35" href={`#/${cat}`} onClick={(e) => { e.preventDefault(); go({ view: 'browse', cat }) }}><span aria-hidden="true">←</span> Menu</a>
-      <StoryTop it={it} meta={meta} credit={credit} honors={honors} nextHref={nxHref} onNext={toNext} still={still} art={art} />
-      {/* iteration 35: the painting sits right under the title block and shrinks away over half a screen
-          of scroll; a pure function of scroll (no easing), so it can never park part-way */}
-      {it.src && (
-        <figure className="st35-fig" ref={rv}>
-          <img src={variantFor(it.src, 2000)} alt={credit || it.title} decoding="async" />
-        </figure>)}
+      {it.src && <figure className="st36-plate"><img src={variantFor(it.src, 2000)} width={Math.round(1000 * aspectOf(it.src))} height={1000} alt={credit || it.title} decoding="async" fetchpriority="high" /></figure>}
+      <StoryTop it={it} meta={meta} credit={credit} honors={honors} nextHref={nxHref} onNext={toNext} still={false} art={art} />
       {op.length > 0 && <section className="st-open">{op.map((p, k) => <p key={k}>{p}</p>)}</section>}
       {t.pull && <blockquote className="st-pull"><p>{t.pull}</p></blockquote>}
       {op.length > 0 && it.href && <div className="st27-btns st27-btns-end"><a className="pr33-read" href={it.href} target="_blank" rel="noreferrer">{it.cta}</a></div>}
@@ -1137,16 +1122,11 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
             </a>))}
         </div>
       </section>
-      {/* iteration 34: one clear next line; the ink bloom below it needs sustained scroll (pinned, 0.42x) */}
-      <p className="nx34"><a href={nxHref} onClick={toNext}><small>Next</small> {nx.title}</a></p>
-      <div className="tc27-zone ib32-zone ib34-zone" ref={zone}>
-        <a className="tc27 ib32 ib34" ref={card} href={nxHref} onClick={toNext} aria-label={`Next story: ${nx.title}`} tabIndex={-1}>
-          {nx.src && <canvas className="ib34-cv" ref={discRef} aria-hidden="true" />}
-          {nx.src && <img className="ib34-fb" ref={fbRef} src={variantFor(nx.src, 2000)} alt="" aria-hidden="true" loading="lazy" decoding="async" />}
-          <span className="tc27-t ib32-t" ref={linesRef}>{nx.title}</span>
-        </a>
-      </div>
-      <div ref={preRef} className="st27-prewrap"><StoryTop it={nx} meta={nxMeta} credit={nxCredit} nextHref={nxHref} onNext={toNext} still preview /></div>
+      <section className="nx36" ref={zone} aria-label={`Next story: ${nx.title}`}>
+        <canvas className="nx36-cv" ref={discRef} aria-hidden="true" />
+        <a className="nx36-t" ref={linesRef} href={nxHref} onClick={toNext}><small>Next</small><span>{nx.title}</span></a>
+        <p className="nx36-hint" aria-hidden="true">Keep scrolling</p>
+      </section>
     </article>
   )
 }

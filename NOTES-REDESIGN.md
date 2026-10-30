@@ -294,3 +294,30 @@ Built on iteration 16 (A24 system kept: tilted plates, expanded pages, white pap
 - The "← Prose" back link is 17px. A fixed `← Menu` pill (`.mp35`) hides when you scroll down, slides in when you scroll up or near the top, and links to the section carousel. History is unchanged, so the browser back button still works.
 - The About Chekhov quote now uses Tyrowo Inked with calt forced on; the second line stays in Lora. Mynerve was unused, so its files and @font-face are removed.
 - Story top painting: the figure height and image scale shrink together with ease-out over 0.5 viewport and reach 0 at y=0.5H. The motion is monotonic, identical in both directions and never parks (sampled at 15 offsets at 1440 and 390). The header min-height was dropped so the title sits right under it.
+
+## Iteration 36: scroll performance and the ink as a commit gesture
+
+**Brief (pt116u):** "so glithcy since there are so many competing animations". Steering: remove the paintings between a story's buttons and the next section; the ink becomes a commit gesture (A24-like, no disc); full-res ink; one gap-free crossing.
+
+**Measured on the Mac** (M5 Pro, Chrome headless with ANGLE Metal, DPR 2, 1440x900, the same wheel script before and after; rAF frame deltas, long-task observer, CDP metrics):
+
+| segment | before (274a82a) p95 / max / >33ms / dropped / long tasks | after p95 / max / >33ms / dropped / long tasks |
+|---|---|---|
+| home | 16.7 / 133.4 / 2 / 12 / 0 (script 1640ms) | 16.8 / 16.8 / 0 / 0 / 0 (script 1254ms) |
+| prose index | 16.7 / 16.8 / 0 / 0 / 0 (script 1210ms) | 16.7 / 16.8 / 0 / 0 / 0 (script 828ms) |
+| story read | 16.8 / 133.3 / 2 / 19 / 0 | 16.8 / 33.4 / 1 / 4 / 0 (script 45ms, was 118) |
+| crossing down | 16.7 / 16.8 / 0 / 0 / 0 | 16.7 / 16.8 / 0 / 0 / 0 |
+| crossing up | 16.7 / 16.8 / 0 / 0 / 0 | 16.7 / 33.3 / 0 / 6 / 0 |
+
+Headless rAF does not see compositor or raster cost (the blend-mode grain, backdrop-filter, image decode), and Safari/Arc were not measured.
+
+**What changed**
+- Gallery (home/index): the three.js frame skips render and the per-frame DOM label work (getBoundingClientRect/setAttribute) when nothing moved. It is marked dirty on texture load, tone, resize and pointer move, with a 500ms safety refresh.
+- Story pages have no always-running rAF loop now. The Menu pill runs off scroll events. The ink WebGL context exists only near the Next screen (IntersectionObserver), is created at an idle moment, and draws only while the gesture moves.
+- Grain overlay on stories: mix-blend removed (normal blend at .035).
+- Removed the shrinking hero figure, the prewrap preview, and the intermediate painting zone. Order: handwritten line → Read → Next (centred, full screen) → next story.
+- Ink (`src/lib/inkBloom.js`): the static fibrous field is rendered once per size; each frame is a threshold at 1:1 device pixels (DPR ≤ 2), 1.2px AA edge, hash dither, flat #1a1a1a.
+- Commit gesture: input at the page bottom drives q. If you release below 0.6 it retracts (420ms); at 0.6 or more it fills, a fixed veil carries the title, and the next story lifts in (plate → title/info → line → Read). Up at the top goes back one story and lands pinned on its last screen. The leftover fling/tail of the same gesture is absorbed.
+- The Next title uses difference blending so it reads on both paper and ink.
+
+**Verified on the box:** frames at every 10% of q (1440 wheel, 390 touch) in `redesign-shots-v36/`; flick retracts; commit lands at y=0 of the next story; up lands at the bottom; partial and reverse retract; Menu pill and About checks pass; no page errors.
