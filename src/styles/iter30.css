@@ -1,0 +1,8 @@
+/* Iteration 30: ink-dot cursor. Only active with html.has-ink (set by JS on fine pointers). */
+  html.has-ink, html.has-ink * { cursor: none !important; }
+  html.has-ink input:not([type="button"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]),
+  html.has-ink textarea, html.has-ink [contenteditable="true"] { cursor: text !important; }
+.ink-dot { position: fixed; left: 0; top: 0; width: 10px; height: 10px; border-radius: 50%;
+  background: #1a1a1a; box-shadow: 0 0 0 1.5px rgba(255,255,255,.9), 0 0 6px rgba(0,0,0,.18); pointer-events: none; z-index: 2147483647;
+  opacity: 0; transition: opacity .18s ease; will-change: transform; transform: translate3d(-100px,-100px,0); }
+.ink-dot.is-on { opacity: 1; }

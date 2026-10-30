@@ -257,3 +257,9 @@ Built on iteration 16 (A24 system kept: tilted plates, expanded pages, white pap
 ## Iteration 29 — no stall over "More to read"
 - The story page's "More to read" row no longer turns vertical wheel/trackpad input into sideways scrolling. Vertical input always scrolls the page; the row scrolls sideways only with deltaX, shift+wheel (mapped explicitly), horizontal swipe, drag, or its arrows.
 - Re-tested at 1440 with the pointer over the row and at 390 with touch: continuous scroll through the card into the next story, one-step-up from story top / card / home section unchanged, back/forward and reduced motion unchanged.
+
+## Iteration 30 — ink-dot cursor
+- `src/lib/inkCursor.js` + `src/styles/iter30.css`, wired into all four entries (site, papers index, both white papers).
+- A 10px #1a1a1a dot with a thin white ring (chosen over mix-blend difference, which tinted the dot pink/blue over paintings) so it reads as ink on light pages and stays visible on dark paintings and the grey card.
+- Follows the pointer with a 0.35 lerp on rAF using translate3d; scales to 1.8 over links/buttons/plates/nav, squashes to 0.8 when pressed; hides on window leave/blur; pointer-events: none.
+- Only enabled when `(hover: hover) and (pointer: fine)` matches; JS adds `html.has-ink`, and only that class hides the system cursor, so if JS fails the normal cursor remains. Text inputs/textareas keep the I-beam (dot hides there). Reduced motion: no lag.

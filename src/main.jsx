@@ -1,5 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { inkCursor } from './lib/inkCursor.js'
+import './styles/iter30.css'
 import Browser from './Browser.jsx'
 
 /* The browser restores the last scroll position on reload, which on a one-page
@@ -17,3 +19,4 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 // Preview-only feedback overlay. Statically false in `npm run build`, so it is tree-shaken out.
 // eslint-disable-next-line no-undef
 if (__FEEDBACK__) import('./feedback/mount.jsx').then((m) => m.mount())
+inkCursor()
