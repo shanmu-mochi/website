@@ -395,3 +395,8 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - Removed "More to read" from the story page (markup, the `others` data and all .s38-more CSS). The flow is now: description/teaser (or the painting, when there's no teaser) leading straight into the Next story push zone. The top and bottom resistant push zones are unchanged.
 - Removed the torn edge: deleted torn()/seedOf() and the clipPath on .s38-paint and .s38-npaint. The story painting and the next-zone preview are now clean, straight-edged and full-width. Painting behaviour is unchanged.
 - Verified on the production build at 1024x640@2, 1280x720, 1440x900, 1728x1117 and 390x844: fugue-state (no teaser), to-get-the-face-right, a-boring-call and publications/same-result-different-price (separate paper template, unaffected). Wheel and touch crossings (commit and spring back both ways, first-story-up to #/prose) pass at all five sizes. 1728 down-commit only passes with frame capture off, because the screenshots are slower than the 180ms hold.
+
+## Iteration 41
+- The story CTA is now just the Read button ("Read on Substack/Medium ↗", or the muted "Not yet published" for Fugue State). Removed the "Next story →" button from the story page and its replica in the next-story preview. The bottom push zone and its "Next story" label are unchanged.
+- The button is centred with its styling unchanged: 24px below the handwritten line and 56px of padding below it, at every size. Fugue State has no handwritten line and shows only the centred button.
+- Verified on the production build at 1024x640@2, 1280x720, 1440x900 and 390x844: measured all 15 prose stories and viewed screenshots of fugue-state, to-get-the-face-right and a-boring-call.

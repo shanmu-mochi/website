@@ -1065,7 +1065,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
         <div className="s38-cta">
           <i className="s38-plus is-tl" aria-hidden="true" /><i className="s38-plus is-tr" aria-hidden="true" /><i className="s38-plus is-bl" aria-hidden="true" /><i className="s38-plus is-br" aria-hidden="true" />
           {it.line && <p className="s38-first">{it.line}</p>}
-          <div className="s38-btns">{read}<a className="s38-btn" href={nxHref} onClick={toNext}>Next story <b aria-hidden="true">→</b></a></div>
+          <div className="s38-btns">{read}</div>
         </div>
       </header>
       {it.src && (
@@ -1083,7 +1083,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
           <h2 className="s38-title">{nx.title}</h2>
           <div className="s38-credit"><span className="s38-lab">Written by</span> <span className="s38-val">Shanmu Raja</span></div>
           <dl className="s38-rows">{['Kind', 'Published', 'Venue', 'Painting'].map((k) => [k, ((nx.meta || []).find(([x]) => x === k) || [])[1]]).filter(([, v]) => v).map(([k, v]) => <div key={k}><dt className="s38-lab">{k}</dt><dd className="s38-val">{v}</dd></div>)}</dl>
-          <div className="s38-cta">{nx.line && <p className="s38-first">{nx.line}</p>}<div className="s38-btns" aria-hidden="true"><span className="s38-btn">{nx.href ? `Read on ${((nx.meta || []).find(([x]) => x === 'Venue') || [])[1] || ''}`.trim() : 'Not yet published'} <b>{nx.href ? '↗' : ''}</b></span><span className="s38-btn">Next story <b>→</b></span></div></div>
+          <div className="s38-cta">{nx.line && <p className="s38-first">{nx.line}</p>}<div className="s38-btns" aria-hidden="true"><span className="s38-btn">{nx.href ? `Read on ${((nx.meta || []).find(([x]) => x === 'Venue') || [])[1] || ''}`.trim() : 'Not yet published'} <b>{nx.href ? '↗' : ''}</b></span></div></div>
         </a>
         {nx.src && <div className="s38-npaint"><img src={variantFor(nx.src, 1200)} alt="" loading="lazy" decoding="async" /></div>}
       </section>
