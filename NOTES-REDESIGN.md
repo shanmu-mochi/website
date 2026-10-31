@@ -552,3 +552,8 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
   - Flights in and out land to the pixel at 1440 and 390, with the strip at 0 on landing in a story and 1 on landing home.
   - Turned at 7 angles with no shadow through the book; the sheen tuned after it washed out the painting at 30%.
   - Space turns it over; the wheel step, contents, nav hover, story push and the publications row all work; no errors.
+
+## Iteration 50: no "Next story" row
+- The footer's first row ("NEXT STORY" on the left, "02 / 15" on the right, and its empty band) is removed. The footer opens straight onto the next title over four rows; the section's aria-label still says "Next story: {title}".
+- On a phone "Keep scrolling" used to sit under the count. With the count gone it collided with the first title line, so it now sits centred just above the next painting.
+- Verified: on all 15 stories at 390, 375 and 1440 the row is gone and the hint is clear of both the title and the painting; the end-of-story push still turns the page.

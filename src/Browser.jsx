@@ -1292,10 +1292,9 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, hold }) {
       {it.src && credit && <p className="s42-cap"><span className="s38-lab">Painting</span><span className="s42-cap-v">{credit}</span></p>}
       <div className="s42-again">{it.href && <a className="s38-btn" href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()} <b aria-hidden="true">↗</b></a>}</div>
       <section className="s38-next s42-nx" ref={zone} aria-label={`Next story: ${nx.title}`}>
-        {[0, 1, 2, 3, 4].map((k) => (
+        {[1, 2, 3, 4].map((k) => (
           <div key={k} className="s38-row"><i className="s38-rule" aria-hidden="true" />
-            {k === 0 && <><span className="s42-m s42-kick"><span className="s42-r s38-lab">Next story</span></span><span className="s42-m s42-dest"><span className="s42-r s38-lab">{pad2(next + 1)} / {pad2(N)}</span></span></>}
-            {k >= 1 && k <= 3 && nxLines[k - 1] && <a className={`s42-m s42-line ${k % 2 ? 'is-l' : 'is-r'}`} href={nxHref} onClick={toNext}><span className="s42-r">{nxLines[k - 1]}</span></a>}
+            {k <= 3 && nxLines[k - 1] && <a className={`s42-m s42-line ${k % 2 ? 'is-l' : 'is-r'}`} href={nxHref} onClick={toNext}><span className="s42-r">{nxLines[k - 1]}</span></a>}
           </div>))}
         {nx.src && <a className="s42-nplate" href={nxHref} onClick={toNext} aria-hidden="true" tabIndex={-1}><span className="s42-nplate-in"><img src={variantFor(nx.src, 1200)} alt="" loading="lazy" decoding="async" /></span></a>}
         <div className="s42-bar" aria-hidden="true"><i className="s38-fill" /></div>
