@@ -6,6 +6,9 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import gsap from 'gsap'
+import { CustomEase } from 'gsap/CustomEase'
+import Lenis from 'lenis'
+import 'lenis/dist/lenis.css'
 import { CATS, META, PAINTINGS, SOCIALS, SELECTED_ITEMS, variantFor, aspectOf, placeholderOf, tintOf, creditText } from './pieces'
 import NOTES from './pieceNotes'
 import PaperPage from './PaperPage'
@@ -415,12 +418,27 @@ const ICONS = {
   x: <path d="M5 4.5h3.6l3.3 4.7 3.8-4.7H19l-5.2 6.3L19.6 19.5H16l-3.7-5.2-4.2 5.2H5.4l5.6-6.8L5 4.5zm2.1 1.2l9.1 12.6h1.6L8.7 5.7H7.1z" />,
 }
 /* ---------------- navigation: one transition at a time; the latest request waits its turn ---------------- */
+// iteration 43: the A24 scroll layer (a24.raviklaassens.com). Pages scroll through Lenis, eased on a mouse or
+// trackpad and left native on touch, with their exact settings. Lenis is the only thing that handles the wheel.
+gsap.registerPlugin(CustomEase)
+CustomEase.create('energy', 'M0,0 C0.32,0.72 0,1 1,1')
+const SCROLL = { lenis: null, tick: null }
+function startLenis() {
+  if (SCROLL.lenis || reduced()) return
+  const coarse = window.matchMedia('(pointer: coarse)').matches
+  SCROLL.lenis = new Lenis({ lerp: coarse ? 1 : 0.165, wheelMultiplier: coarse ? 1 : 1.25, touchMultiplier: 1, allowNestedScroll: true })
+  SCROLL.tick = (s) => { if (SCROLL.lenis) SCROLL.lenis.raf(s * 1000) }
+  gsap.ticker.add(SCROLL.tick); gsap.ticker.lagSmoothing(0)
+}
+function stopLenis() { if (!SCROLL.lenis) return; gsap.ticker.remove(SCROLL.tick); SCROLL.lenis.destroy(); SCROLL.lenis = null }
+function toTop() { if (SCROLL.lenis) SCROLL.lenis.scrollTo(0, { immediate: true, force: true }); window.scrollTo(0, 0) }
+// A24's "Next production" push (their scroll-next constants, unchanged)
+const NEXT = { wheel: 620, touch: 380, key: 0.34, hold: 180, drain: 0.9, settle: 350, gap: 140, surge: 1.6, surgeMin: 6, clamp: 140, ease: 10, arrive: 0.3, grow: 1.04, exitGo: 0.48 }
+// A24's production hero reveal timings
+const RISE = { dur: 0.7, shift: 120, titleStagger: 0.08, text: 0.12, textStagger: 0.03, cta: 0.38, pop: 0.5 }
 const NAV = { busy: false, pending: null, hold: null, dir: 0 }
-// iteration 28: seamless story-to-story crossing. SEAM says where the next page should land so the
-// swap is invisible; GEST marks the wheel gesture that already crossed, so its momentum tail is spent.
+// SEAM.skipTop lets a page keep its scroll position on arrival instead of starting at the top
 const SEAM = { to: null, dir: 0, off: 0, skipTop: false }
-const GEST = { s: 0, t: 0, m: 0 }
-const gestTail = (d, now) => { if (GEST.s && Math.sign(d) === GEST.s && now - GEST.t < 150 && Math.abs(d) <= GEST.m * 1.5 + 4) { GEST.t = now; GEST.m = Math.abs(d); return true } GEST.s = 0; return false }
 const HOME = { api: null }
 const PAGE = { api: null }
 function fadeOutPage() {
@@ -818,7 +836,7 @@ function Piece({ cat, i, go, via }) {
 
   useLayoutEffect(() => {
     // iteration 32: keep skipTop for this commit (StrictMode re-runs layout effects in dev, which used to reset to 0)
-    if (SEAM.skipTop) setTimeout(() => { SEAM.skipTop = false }, 0); else window.scrollTo(0, 0)
+    if (SEAM.skipTop) setTimeout(() => { SEAM.skipTop = false }, 0); else toTop()
     NAV.dir = 0
     if (!flying) return
     let live = true
@@ -967,113 +985,116 @@ const factsOf = (x) => { const v = (k) => ((x.meta || []).find(([y]) => y === k)
 function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
   const t = TEASERS[it.slug] || {}
   const root = useRef(null), zone = useRef(null), pillRef = useRef(null)
-  const N = items.length, next = (i + 1) % N, prev = (i - 1 + N) % N
-  const nx = items[next], pv = items[prev]
-  const goPiece = (c, k) => go({ view: 'piece', cat: c, i: k })
+  const N = items.length, next = (i + 1) % N
+  const nx = items[next]
   const mobile = typeof window !== 'undefined' && window.innerWidth <= 760
-  // land where the seam says: down = at the top; up = on this story's last screen
+  // the story arrives the way A24's film page does: the page fades in, then the head rises out of its masks
   useLayoutEffect(() => {
-    if (SEAM.to !== it.slug) return
-    const dir = SEAM.dir, off = SEAM.off
-    SEAM.to = null; SEAM.dir = 0; SEAM.off = 0
-    if (dir < 0) {
-      SEAM.skipTop = true
-      const pin = () => window.scrollTo({ top: Math.max(0, document.documentElement.scrollHeight - 2 * window.innerHeight), behavior: 'instant' })
-      pin()
-      const ro = new ResizeObserver(pin); ro.observe(document.body)
-      window.addEventListener('scroll', pin, { passive: true })
-      const stop = () => { ro.disconnect(); clearTimeout(tm); window.removeEventListener('scroll', pin); window.removeEventListener('wheel', stopIn); window.removeEventListener('touchstart', stop); window.removeEventListener('keydown', stop); window.removeEventListener('pointerdown', stop) }
-      const stopIn = (e) => { if (!gestTail(e.deltaY, performance.now()) || e.deltaY > 0) stop() }
-      const tm = setTimeout(stop, 2500)
-      window.addEventListener('wheel', stopIn, { passive: true }); window.addEventListener('touchstart', stop, { passive: true }); window.addEventListener('keydown', stop); window.addEventListener('pointerdown', stop)
-    }
-    else { const tt = root.current && root.current.querySelector('.s38-head .s38-title'); const y = tt && off ? Math.max(0, tt.getBoundingClientRect().top + window.scrollY - off) : 0; if (y) SEAM.skipTop = true; window.scrollTo({ top: y, behavior: 'instant' }) }
+    toTop()
+    const el = root.current; if (!el || reduced()) return
+    const q = (s) => [...el.querySelectorAll(s)]
+    const tl = gsap.timeline()
+    tl.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5 }, 0)
+    tl.fromTo(q('.s42-head .s38-title .s42-r'), { yPercent: RISE.shift }, { yPercent: 0, duration: RISE.dur, ease: 'energy', stagger: RISE.titleStagger }, 0.05)
+    tl.fromTo(q('.s42-head > :not(.s38-title):not(.s42-open) .s42-r'), { yPercent: RISE.shift }, { yPercent: 0, duration: RISE.dur, ease: 'energy', stagger: RISE.textStagger }, RISE.text)
+    tl.fromTo(q('.s42-head .s42-open > :not(.s42-btns)'), { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: RISE.dur, ease: 'energy', stagger: RISE.textStagger }, RISE.text + 0.08)
+    tl.fromTo(q('.s42-head .s42-btns'), { autoAlpha: 0, scale: 0.94 }, { autoAlpha: 1, scale: 1, duration: RISE.pop, ease: 'energy' }, RISE.cta)
+    return () => { tl.kill() }
   }, [it.slug])
-  // THE scroll driver: one rAF-coalesced function reads scroll (and q) and writes every transform on the page
+  // THE scroll driver. Its listeners are all passive and never cancel anything; Lenis does the scrolling. At the end of the
+  // page a deliberate push fills the bar and turns to the next story, with A24's rules for what counts as one.
   useEffect(() => {
     const el = root.current; if (!el) return
     const red = reduced()
-    let raf = 0, q = 0, pq = 0, pqT = 0, lastY = window.scrollY, drainT = 0, done = false, ty = null, upAcc = 0
-    // iteration 42: the end zones only take a fresh gesture. Momentum that carried you to the end of a story
-    // stops there; a new scroll after a pause (or a sharp new swipe) is what turns the page.
-    let lastWT = 0, lastWD = 0, armD = false, armU = false, armK = false, tBot = false, tTop = false
-    const fresh = (d, now) => { const f = now - lastWT > 180 || Math.sign(d) !== Math.sign(lastWD) || Math.abs(d) > Math.abs(lastWD) * 1.6 + 8; lastWT = now; lastWD = d; return f }
+    let raf = 0, lastY = window.scrollY, P = 0, D = 0, lastPush = 0, loopRaf = 0, loopT = 0, leaving = false, armed = false, endSince = 0, lastT = 0, lastAbs = 0, arrived = false, ty = null
     const q$ = (s) => el.querySelectorAll(s)
-    const hero = el.querySelector('.s38-paint'), img = el.querySelector('.s38-paint-img'), words = q$('.s38-paint .s38-w'), nwords = q$('.s38-next .s38-w'), rules = q$('.s38-next .s38-rule'), fill = el.querySelector('.s38-next .s38-fill'), kick = el.querySelector('.s38-next .s38-next-k'), nhead = el.querySelector('.s38-reveal'), pz = el.querySelector('.s38-prev'), pwords = q$('.s38-prev .s38-w'), prules = q$('.s38-prev .s38-rule'), pfill = el.querySelector('.s38-prev .s38-fill')
+    const hero = el.querySelector('.s38-paint'), img = el.querySelector('.s38-paint-img'), words = q$('.s38-paint .s38-w')
+    const nx$ = zone.current, nlines = q$('.s42-nx .s42-r'), nrules = q$('.s42-nx .s38-rule'), fill = el.querySelector('.s42-nx .s38-fill'), plate = el.querySelector('.s42-nplate'), plateIn = el.querySelector('.s42-nplate-in'), hint = el.querySelector('.s42-nx .s42-hint')
     const prog = (node) => { const b = node.getBoundingClientRect(), H = window.innerHeight; return { p: clamp01((H - b.top) / (H + b.height)), h: b.height } }
+    const atEnd = () => { const l = SCROLL.lenis; if (l && typeof l.limit === 'number') return (typeof l.targetScroll === 'number' ? l.targetScroll : l.scroll) >= l.limit - 2; return window.scrollY >= document.documentElement.scrollHeight - window.innerHeight - 2 }
+    if (!red) { gsap.set(nrules, { scaleX: 0, transformOrigin: 'left center' }); gsap.set(nlines, { yPercent: RISE.shift }); if (plate) gsap.set(plate, { scale: 0.35, autoAlpha: 0 }) }
+    const arrive = () => {   // the footer comes in: rules draw, the next title rises, the plate pops (A24 arriveStart .3)
+      arrived = true
+      if (red) return
+      gsap.to(nrules, { scaleX: 1, duration: 0.9, ease: 'energy', stagger: 0.06 })
+      gsap.to(nlines, { yPercent: 0, duration: RISE.dur, ease: 'energy', stagger: 0.05, delay: 0.08 })
+      if (plate) gsap.to(plate, { scale: 1, autoAlpha: 1, duration: 1.05, ease: 'energy', delay: 0.12 })
+    }
     const paint = () => {
       raf = 0
       const y = window.scrollY, dy = y - lastY; lastY = y
       const pl = pillRef.current
-      if (pl) { if (y < window.innerHeight * 0.6 || dy > 1 || (zone.current && zone.current.getBoundingClientRect().top < window.innerHeight - 40)) pl.classList.remove('is-on'); else if (dy < -1) pl.classList.add('is-on') }   // the back link is on screen near the top
-      el.style.setProperty('--pq', pq.toFixed(4)); el.classList.toggle('is-pq', pq > 0)
-      if (pz) {
-        pwords.forEach((w, k) => { const s2 = k % 2 ? 1 : -1; w.style.transform = `translate3d(${(s2 * (1 - clamp01(pq * 2)) * 6).toFixed(2)}vw,${((1 - pq) * -24).toFixed(1)}px,0)` })
-        prules.forEach((r, k) => { r.style.transform = `scaleX(${clamp01(pq * 1.6 - (4 - k) * 0.12).toFixed(4)})` })
-        if (pfill) pfill.style.transform = `scaleX(${pq.toFixed(4)})`
-      }
-      if (red) { if (zone.current) zone.current.style.setProperty('--q', q.toFixed(3)); return }
-      if (hero && img) {
+      if (pl) { if (y < window.innerHeight * 0.6 || dy > 1 || (nx$ && nx$.getBoundingClientRect().top < window.innerHeight - 40)) pl.classList.remove('is-on'); else if (dy < -1) pl.classList.add('is-on') }
+      if (!red && hero && img) {
         const { p, h } = prog(hero), extra = img.offsetHeight - h
         img.style.transform = `translate3d(0,${((p - 1) * extra).toFixed(1)}px,0)`
         words.forEach((w, k) => { const s = k % 2 ? -1 : 1; w.style.transform = `translate3d(${(s * (p - 0.5) * (window.innerWidth <= 760 ? 3 : 8)).toFixed(2)}vw,0,0)` })
       }
-      if (zone.current) {
-        const { p } = prog(zone.current), e = clamp01(p * 2)   // entering: words slide in to their places on the rules
-        nwords.forEach((w, k) => { const s = k % 2 ? 1 : -1; w.style.transform = `translate3d(${(s * (1 - e) * 6 + (k % 2 ? 1 : -1) * q * 4).toFixed(2)}vw,${(-q * 40).toFixed(1)}px,0)`; w.style.opacity = (1 - q * 0.6).toFixed(3) })
-        rules.forEach((r, k) => { r.style.transform = `scaleX(${clamp01(1 - clamp01(q * 1.6 - k * 0.12)).toFixed(4)})` })
-        if (fill) fill.style.transform = `scaleX(${q.toFixed(4)})`
-        if (kick) kick.style.opacity = (1 - q).toFixed(3)
-        if (nhead) { nhead.style.clipPath = `inset(${((1 - q) * 100).toFixed(2)}% 0 0 0)`; nhead.style.visibility = q > 0 ? 'visible' : 'hidden' }
+      if (nx$) {
+        const { p } = prog(nx$)
+        if (!arrived && p >= NEXT.arrive) arrive()
+        if (fill) fill.style.transform = `scaleX(${D.toFixed(4)})`
+        if (plateIn && !red) plateIn.style.transform = `translate3d(0,${(-D * 6).toFixed(2)}%,0) scale(${(1 + D * (NEXT.grow - 1)).toFixed(4)})`
       }
+      const end = atEnd()
+      if (end) { if (!endSince) endSince = performance.now() } else { endSince = 0; armed = false; if (P > 0) P = 0 }
+      if (hint) hint.classList.toggle('is-on', end && !leaving)
     }
     const kickP = () => { if (!raf) raf = requestAnimationFrame(paint) }
-    // the incoming story's title is wiped in exactly where its page will put it, so the seam has no jump
-    const setT0 = () => { const tt = el.querySelector('.s38-head .s38-title'); if (tt && !pq) el.style.setProperty('--t0', `${(tt.getBoundingClientRect().top + window.scrollY).toFixed(1)}px`) }
-    const onResize = () => { setT0(); kickP() }
-    const H = () => window.innerHeight
-    const atBottom = () => window.scrollY >= document.documentElement.scrollHeight - H() - 2
-    const drain = () => { clearTimeout(drainT); drainT = setTimeout(function d() { if (done || q <= 0) return; q = q * PUSH38.drain - 0.002; if (q < 0.002) q = 0; kickP(); if (q > 0) drainT = setTimeout(d, 16) }, PUSH38.hold) }
-    const commit = (d) => {
-      done = true; clearTimeout(drainT)
-      GEST.s = 1; GEST.t = performance.now(); GEST.m = Math.abs(d); GEST.touch = ty != null
-      SEAM.to = nx.slug; SEAM.dir = 1; { const nt = el.querySelector('.s38-nhead .s38-title'); SEAM.off = nt ? nt.getBoundingClientRect().top : 0 }
-      go({ view: 'piece', cat, i: next }, { seam: true })
+    // after 180ms without input the push drains at 0.9 per second; the bar follows it at 10 per second
+    const step = (now) => {
+      loopRaf = 0
+      const dt = Math.min(0.05, Math.max(0, (now - loopT) / 1000)); loopT = now
+      if (now - lastPush > NEXT.hold) P = Math.max(0, P - dt * NEXT.drain)
+      D += (P - D) * Math.min(1, dt * NEXT.ease); if (Math.abs(P - D) < 0.0015) D = P
+      kickP()
+      if (!leaving && (P > 0 || D > 0)) loopRaf = requestAnimationFrame(step)
     }
-    const push = (d, per) => { q = clamp01(q + d / per); kickP(); if (q >= 1) commit(d); else drain() }
-    const drainP = () => { clearTimeout(pqT); pqT = setTimeout(function d() { if (done || pq <= 0) return; pq = pq * PUSH38.drain - 0.002; if (pq < 0.002) pq = 0; kickP(); if (pq > 0) pqT = setTimeout(d, 16) }, PUSH38.hold) }
-    const pushUp = (d, per, now) => { pq = clamp01(pq + d / per); kickP(); if (pq >= 1) goUp(d, now); else drainP() }
-    const goUp = (d, now) => { clearTimeout(pqT); if (i === 0) { done = true; GEST.touch = ty != null; GEST.s = -1; GEST.t = now; GEST.m = Math.abs(d); go({ view: 'browse', cat }); return } done = true; GEST.touch = ty != null; GEST.s = -1; GEST.t = now; GEST.m = Math.abs(d); SEAM.to = pv.slug; SEAM.dir = -1; SEAM.off = 0; go({ view: 'piece', cat, i: prev }, { seam: true }) }
+    const loop = () => { if (!loopRaf) { loopT = performance.now(); loopRaf = requestAnimationFrame(step) } }
+    const commit = () => {
+      if (leaving) return
+      leaving = true; P = 1; D = 1; kickP()
+      const turn = () => go({ view: 'piece', cat, i: next }, { fade: true })
+      if (red) { turn(); return }
+      const tl = gsap.timeline()
+      if (plate) tl.to(plate, { scale: 0.35, autoAlpha: 0, duration: 0.45, ease: 'power2.in' }, 0)
+      tl.to(nlines, { yPercent: -RISE.shift, duration: 0.45, ease: 'energy', stagger: 0.03, overwrite: 'auto' }, 0)
+      tl.to(nrules, { scaleX: 0, duration: 0.5, ease: 'energy', stagger: { each: 0.04, from: 'end' }, overwrite: 'auto' }, 0.05)
+      tl.call(turn, null, NEXT.exitGo)
+    }
+    const push = (v) => {
+      if (leaving || !atEnd()) return
+      P = clamp01(P + v); lastPush = performance.now()
+      if (P >= 1) { commit(); return }
+      loop()
+    }
     const wh = (e) => {
       if (e.ctrlKey) return
-      if (done) { e.preventDefault(); return }
-      const now = performance.now()
-      const d = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H() : 1)
+      const d = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1)
       if (!d) return
-      const f = fresh(d, now)
-      if (gestTail(d, now)) { e.preventDefault(); return }
-      const bot = atBottom(), top = window.scrollY <= 0
-      if (!bot) armD = false
-      if (!top) armU = false
-      if (d > 0 && bot && !armD && q === 0) { if (f) armD = true; else return }
-      if (d < 0 && top && !armU && pq === 0) { if (f) armU = true; else return }
-      if ((d > 0 && atBottom()) || (d < 0 && q > 0)) { e.preventDefault(); push(d, PUSH38.wheel); return }
-      if ((d < 0 && window.scrollY <= 0 && !NAV.busy) || (d > 0 && pq > 0)) { e.preventDefault(); pushUp(-d, PUSH38.wheel, now); return }
+      const now = e.timeStamp || performance.now(), prev = lastT; lastT = now
+      const a = Math.abs(d), surge = a > NEXT.surgeMin && a > lastAbs * NEXT.surge; lastAbs = a
+      if (!atEnd()) return
+      if (!endSince) endSince = now
+      if (!armed) { if (now - endSince < NEXT.settle || !(now - prev >= NEXT.gap || surge)) return; armed = true }
+      push(Math.max(-NEXT.clamp, Math.min(NEXT.clamp, d)) / NEXT.wheel)
     }
-    const ts = (e) => { ty = e.touches[0].clientY; upAcc = 0; GEST.touch = false; tBot = atBottom(); tTop = window.scrollY <= 0 }
-    const tmv = (e) => {
-      if (ty == null) { if (GEST.touch) e.preventDefault(); return }
-      if (done) { e.preventDefault(); return }
-      const yy = e.touches[0].clientY, dy = ty - yy; ty = yy
-      if ((dy > 0 && atBottom() && (tBot || q > 0)) || (dy < 0 && q > 0)) { e.preventDefault(); push(dy, PUSH38.touch); return }
-      if ((dy < 0 && window.scrollY <= 0 && !NAV.busy && (tTop || pq > 0)) || (dy > 0 && pq > 0)) { e.preventDefault(); pushUp(-dy, PUSH38.touch, performance.now()) }
-    }
+    const ts = (e) => { ty = e.touches[0] ? e.touches[0].clientY : null }
+    const tmv = (e) => { const yy = e.touches[0] && e.touches[0].clientY; if (ty == null || yy == null) return; const dy = ty - yy; ty = yy; push(dy / NEXT.touch) }
     const te = () => { ty = null }
-    const key = (e) => { if (done) return; if (!atBottom()) { armK = false; return } if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { if (e.repeat && !armK) return; armK = true; e.preventDefault(); push(PUSH38.wheel / 2, PUSH38.wheel) } }
-    setT0(); paint()
-    window.addEventListener('scroll', kickP, { passive: true }); window.addEventListener('resize', onResize)
-    window.addEventListener('wheel', wh, { passive: false }); window.addEventListener('touchstart', ts, { passive: true }); window.addEventListener('touchmove', tmv, { passive: false }); window.addEventListener('touchend', te, { passive: true }); window.addEventListener('keydown', key)
-    return () => { clearTimeout(drainT); clearTimeout(pqT); cancelAnimationFrame(raf); window.removeEventListener('scroll', kickP); window.removeEventListener('resize', onResize); window.removeEventListener('wheel', wh); window.removeEventListener('touchstart', ts); window.removeEventListener('touchmove', tmv); window.removeEventListener('touchend', te); window.removeEventListener('keydown', key) }
+    const key = (e) => {
+      if (e.defaultPrevented || (e.target && e.target !== document.body && e.target.closest && e.target.closest('input, textarea, select, [contenteditable]'))) return
+      if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') push(NEXT.key)
+    }
+    paint()
+    const L = SCROLL.lenis; if (L) L.on('scroll', kickP)
+    window.addEventListener('scroll', kickP, { passive: true }); window.addEventListener('resize', kickP)
+    window.addEventListener('wheel', wh, { passive: true }); window.addEventListener('touchstart', ts, { passive: true }); window.addEventListener('touchmove', tmv, { passive: true }); window.addEventListener('touchend', te, { passive: true }); window.addEventListener('keydown', key)
+    return () => {
+      cancelAnimationFrame(raf); cancelAnimationFrame(loopRaf); if (L) L.off('scroll', kickP)
+      gsap.killTweensOf([...nlines, ...nrules, plate].filter(Boolean))
+      window.removeEventListener('scroll', kickP); window.removeEventListener('resize', kickP); window.removeEventListener('wheel', wh); window.removeEventListener('touchstart', ts); window.removeEventListener('touchmove', tmv); window.removeEventListener('touchend', te); window.removeEventListener('keydown', key)
+    }
   }, [it.slug]) // eslint-disable-line react-hooks/exhaustive-deps
   const mv = (k) => (meta.find(([x]) => x === k) || [])[1]
   const venue = mv('Venue')
@@ -1081,29 +1102,20 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
   const op = t.opening || []
   const body = restOf(it.line, op)
   const fit = fitPull(t.pull, mobile), pull = fit.rows
-  const nxHref = `#/${cat}/${nx.slug}`, toNext = (e) => { e.preventDefault(); goPiece(cat, next) }
-  const pvWords = chunks(i === 0 ? catOf(cat).label : pv.title, mobile ? 40 : 14).slice(0, 3)
-  const nxWords = chunks(nx.title, mobile ? 40 : 14).slice(0, 4)
+  const nxHref = `#/${cat}/${nx.slug}`, toNext = (e) => { e.preventDefault(); go({ view: 'piece', cat, i: next }, { fade: true }) }
+  const nxLines = (() => { const c = chunks(nx.title, mobile ? 14 : 16); return c.length > 3 ? [c[0], c[1], c.slice(2).join(' ')] : c })()
   const read = it.href
     ? <a className="s38-btn" href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()} <b aria-hidden="true">↗</b></a>
     : <span className="s38-btn is-muted">Not yet published</span>
   return (
     <article ref={root} className={`pg pg-piece pg-story s38 pg-c-${cat} is-direct`}>
       <PageTop back={() => go({ view: 'browse', cat })} backLabel={catOf(cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(N)}`} />
-      <section className="s38-prev s38-sec" aria-label={i === 0 ? catOf(cat).label : `Previous story: ${pv.title}`} aria-hidden="true">
-        {[0, 1, 2, 3, 4].map((k) => (
-          <div key={k} className="s38-row"><i className="s38-rule" aria-hidden="true" />
-            {k === 0 && <><i className="s38-fill" aria-hidden="true" /><span className="s38-lab s38-hint">Keep scrolling</span></>}
-            {k >= 1 && k <= 3 && pvWords[k - 1] && <span className={`s38-w ${k % 2 ? 'is-l' : 'is-r'}`}>{pvWords[k - 1]}</span>}
-            {k === 4 && <span className="s38-lab s38-next-k">{i === 0 ? `Back to ${catOf(cat).label}` : 'Previous story'}</span>}
-          </div>))}
-      </section>
       <a ref={pillRef} className="mp35" href={`#/${cat}`} onClick={(e) => { e.preventDefault(); go({ view: 'browse', cat }) }}><span aria-hidden="true">←</span> Menu</a>
       <header className="s38-head s42-head">
-        <h1 className="s38-title">{it.title}</h1>
-        {it.subject && <p className="s42-deck">{it.subject}</p>}
-        {facts && <p className="s42-facts">{facts}</p>}
-        {honors && <div className="s42-honors">{honors}</div>}
+        <h1 className="s38-title"><span className="s42-m"><span className="s42-r">{it.title}</span></span></h1>
+        {it.subject && <p className="s42-deck"><span className="s42-m"><span className="s42-r">{it.subject}</span></span></p>}
+        {facts && <p className="s42-facts"><span className="s42-m"><span className="s42-r">{facts}</span></span></p>}
+        {honors && <div className="s42-honors"><div className="s42-m"><div className="s42-r">{honors}</div></div></div>}
         <div className={`s42-open${it.line || body.length ? '' : ' is-bare'}`}>
           {it.line && <p className="s38-first s42-first">{it.line}</p>}
           {body.map((x, k) => <p key={k} className="s42-p">{x}</p>)}
@@ -1116,34 +1128,22 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
           {Array.from({ length: fit.n + 1 }, (_, k) => <div key={k} className="s38-row">{k > 0 && pull[k - 1] && <span className={`s38-w ${k % 2 ? 'is-l' : 'is-r'}`} style={fit.f ? { fontSize: `${fit.f}px` } : undefined}>{pull[k - 1]}</span>}</div>)}
         </section>)}
       {it.src && credit && <p className="s42-cap"><span className="s38-lab">Painting</span><span className="s42-cap-v">{credit}</span></p>}
-      <section className="s38-next" ref={zone} aria-label={`Next story: ${nx.title}`}>
-        <div className="s38-gate" aria-hidden="true">
-          <div className="s38-nbar"><span className="s38-lab s38-next-k">End of {it.title}</span><i className="s38-fill" /><span className="s38-lab s38-hint">Keep scrolling</span></div>
-          {[0, 1, 2, 3].map((k) => (
-            <div key={k} className="s38-row"><i className="s38-rule" />
-              {k === 0 && <span className="s38-w is-l">Next</span>}
-              {k === 1 && <span className="s38-w is-r">story</span>}
-              {k === 2 && <span className="s38-lab s38-gate-n">{pad2(next + 1)} / {pad2(N)} · {catOf(cat).label}</span>}
-              {k === 3 && <span className="s38-lab s38-gate-h">Hold the scroll to turn the page</span>}
-            </div>))}
-        </div>
-        <div className="s38-reveal">
-          <a className="s38-nhead" href={nxHref} onClick={toNext}>
-          <h2 className="s38-title">{nx.title}</h2>
-          {nx.subject && <p className="s42-deck">{nx.subject}</p>}
-          {factsOf(nx) && <p className="s42-facts">{factsOf(nx)}</p>}
-          {nx.honors && <div className="s42-honors">{nx.honors.map((h) => <p key={h.href} className="pg-honor"><span>{h.text}</span></p>)}</div>}
-          {nx.line && <div className="s42-open"><p className="s38-first s42-first">{nx.line}</p></div>}
-        </a>
-          {nx.src && <div className="s38-npaint"><img src={variantFor(nx.src, 1200)} alt="" loading="lazy" decoding="async" /></div>}
-        </div>
+      <section className="s38-next s42-nx" ref={zone} aria-label={`Next story: ${nx.title}`}>
+        {[0, 1, 2, 3, 4].map((k) => (
+          <div key={k} className="s38-row"><i className="s38-rule" aria-hidden="true" />
+            {k === 0 && <><span className="s42-m s42-kick"><span className="s42-r s38-lab">Next story</span></span><span className="s42-m s42-dest"><span className="s42-r s38-lab">{pad2(next + 1)} / {pad2(N)}</span></span></>}
+            {k >= 1 && k <= 3 && nxLines[k - 1] && <a className={`s42-m s42-line ${k % 2 ? 'is-l' : 'is-r'}`} href={nxHref} onClick={toNext}><span className="s42-r">{nxLines[k - 1]}</span></a>}
+          </div>))}
+        {nx.src && <a className="s42-nplate" href={nxHref} onClick={toNext} aria-hidden="true" tabIndex={-1}><span className="s42-nplate-in"><img src={variantFor(nx.src, 1200)} alt="" loading="lazy" decoding="async" /></span></a>}
+        <div className="s42-bar" aria-hidden="true"><i className="s38-fill" /></div>
+        <span className="s38-lab s42-hint" aria-hidden="true">Keep scrolling</span>
       </section>
     </article>
   )
 }
 
 function About({ go }) {
-  useLayoutEffect(() => { window.scrollTo(0, 0) }, [])
+  useLayoutEffect(() => { toTop() }, [])
   return (
     <article className="pg pg-about">
       <PageTop back={() => go({ view: 'browse', cat: lastCat.current })} backLabel="Back" go={go} active="about" right="" />
@@ -1163,7 +1163,7 @@ function About({ go }) {
   )
 }
 function Paintings({ go }) {
-  useLayoutEffect(() => { window.scrollTo(0, 0) }, [])
+  useLayoutEffect(() => { toTop() }, [])
   return (
     <article className="pg pg-paint">
       <PageTop back={() => go({ view: 'browse', cat: lastCat.current })} backLabel="Back" go={go} active="paintings" right={`${PAINTINGS.length} paintings`} />
@@ -1209,7 +1209,8 @@ export default function Browser() {
         } else if (r.view !== 'browse' && HOME.api && !reduced()) await HOME.api.leave()
       } else if (from.view === 'piece' && r.view === 'piece' && r.cat === from.cat) {
         NAV.dir = (r.i > from.i && !(from.i === 0 && r.i === catOf(r.cat).items.length - 1)) || (from.i === catOf(r.cat).items.length - 1 && r.i === 0) ? 1 : -1
-        if (!reduced() && !opts.seam) { const el = document.querySelector('.pg'); if (el) { el.classList.add(NAV.dir > 0 ? 'is-out-n' : 'is-out-p'); await wait(240) } }
+        if (!reduced() && opts.fade) { const el = document.querySelector('.pg'); if (el) await gsap.to(el, { autoAlpha: 0, duration: 0.4 }) }
+        else if (!reduced() && !opts.seam) { const el = document.querySelector('.pg'); if (el) { el.classList.add(NAV.dir > 0 ? 'is-out-n' : 'is-out-p'); await wait(240) } }
       } else if (from.view === 'piece' && r.view === 'browse' && PAGE.api) await PAGE.api.toGallery()
       else if (from.view !== 'browse') await fadeOutPage()
     } catch (e) { void e }
@@ -1235,6 +1236,9 @@ export default function Browser() {
     return () => window.removeEventListener('keydown', on)
   }, [route.view, go])
   useEffect(() => { document.documentElement.classList.toggle('b-lock', route.view === 'browse') }, [route.view])
+  useEffect(() => { if (route.view === 'browse') stopLenis(); else startLenis() }, [route.view])
+  useEffect(() => { document.documentElement.classList.toggle('is-story', route.view === 'piece' && route.cat === 'prose') }, [route.view, route.cat])
+  useEffect(() => () => stopLenis(), [])
   useEffect(() => {
     // Esc pressed while a transition is still running: queue the way back instead of dropping it
     const on = (e) => {

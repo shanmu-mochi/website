@@ -422,3 +422,33 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
   - Seam: under 0.5px at 1440/1728/1280/1024/390.
   - No console errors on 22 routes.
 - **Caveat:** headless Chrome can't reproduce real Mac trackpad momentum or GPU timing. The 180ms pause threshold is the setting to tune by feel.
+
+## Iteration 43: A24's scrolling and page turns, from their source
+- **Studied a24.raviklaassens.com's shipped bundle.** It's Astro + Barba.js page transitions + GSAP (ScrollTrigger, Observer, CustomEase, SplitText) + Lenis + three.js. The difference was never the look; it was the input layer. Their listeners are passive and never fight the browser. Ours intercepted and cancelled scrolling everywhere.
+- **Page scroll: Lenis with their exact config.** That is `lerp 0.165` and `wheelMultiplier 1.25` on a mouse or trackpad, and `lerp 1` (native) on touch, plus `allowNestedScroll`, driven by `gsap.ticker` with `lagSmoothing(0)`. It runs on every page that scrolls and is destroyed on the home gallery, which owns its own input. Scroll resets go through `toTop()`.
+- **Story footer = their "Next production" push.** Same constants (`NEXT`):
+  - Wheel 620 and touch 380 per full push; a key press is 0.34.
+  - Each event is clamped to ±140.
+  - It arms only after 350ms at the end AND (a 140ms gap OR a 1.6x surge over 6).
+  - It drains linearly at 0.9/s after a 180ms hold, and the bar follows at 10/s.
+  - "At the end" means Lenis's target scroll is at the limit; leaving the end resets the push and disarms it.
+  - Every listener is passive.
+- **Page turn = theirs.** Over 0.45s the next-story copy rises out of its masks (stagger 0.03) and the plate pops out. The rules retract from the end from 0.05s (0.5s, stagger 0.04). At 0.48s it navigates: the old page fades for 0.4s, the new one fades in for 0.5s at the top, and its head rises out of masks (title 0.7s with stagger 0.08, text at 0.12, button at 0.38). The ease is "energy", `M0,0 C0.32,0.72 0,1 1,1`. The gap between pages fades through paper (#f2f2f2), not white. Measured from the fill completing: copy out at 18ms, fade at 485ms, swap at 869ms, new page fully in at 1.3s.
+- **Footer layout = theirs.** "Next story" and the count on the first rule, the next title across the next three rules alternating sides, the next story's painting rising from the bottom edge where their disc is (it grows and lifts with the push), a fill bar along the bottom, and "Keep scrolling" once you're at the end.
+- **Removed, because A24 doesn't have them:** the top "Previous story" pull zone, the seam (the clip-path wipe of the next head and its scroll alignment), "End of {title}", and "Hold the scroll to turn the page".
+- **Home wheel = their disc-gallery step detector** (same constants, `WHEEL` in Gallery.js):
+  - One piece per gesture. The rest of that swipe and its momentum are ignored until a pause (130ms), a fresh mouse tick (a 34ms gap at least 90ms after the step), a new flick (a 1.2x rise at least 190ms after the step) or held scrolling (one more every 480ms).
+  - Noise floor 0.3, a step at 6, each event capped at 24, envelope tau 550ms, reset after 150ms idle, and the dominant axis needs 1.25x.
+  - This replaces the continuous proportional `wheelOne`, whose six stacked models were the cause of the loose feel. Drag already matched A24 and is unchanged.
+- **Beyond A24:**
+  - Both detectors time gestures with `e.timeStamp`. A section load stalls the main thread about 170ms, and with `performance.now()` the queued momentum tail looked like a fresh gesture and took an extra step after a section handover. A24 never hands over between sections, so it never hits this.
+  - While the row is busy, the gesture is kept spent but still tracked.
+- **Verified with real-style input** (CDP wheel events sent with OS timing, not in-page timers, which stall with the page):
+  - Home: a swipe is 1 step, 3 notches are 3, held scrolling for 1.5s is 4, a new flick in the tail is 2, noise is 0. Handover past the end of Prose lands on Publications 01 with no extra step, and back past the start returns to Prose 15.
+  - Story: a long flick stops at the end; pause then scroll turns the page; a nudge drains back; nothing happens at the top; 3x Space turns; touch drag at the end turns; it lands at the top with the head risen.
+  - Layout: all 15 stories at 1440 and 390 (no duplicate, no x-overflow, footer present, no top pull, Lenis on).
+  - No errors on 22 routes.
+- **Caveats:**
+  - Headless can't reproduce a real Mac trackpad; the constants are A24's, so it should feel the same, but that is unconfirmed by hand.
+  - Touch now follows A24: any drag at the end pushes. Iteration 42's "drag must start at the edge" gate is gone.
+  - Lint is down to 1 pre-existing problem (`from`, unused, in Home).

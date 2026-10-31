@@ -25,6 +25,8 @@ const pressure = (v) => {
   const m = Math.abs(v)
   return m < 1 ? 0 : Math.max(-CFG.mMax, Math.min(CFG.mMax, Math.sign(v) * CFG.mRef * Math.pow(m / CFG.mRef, CFG.mGamma) * CFG.mPower))
 }
+// A24's disc-gallery wheel (a24.raviklaassens.com), unchanged
+const WHEEL = { noiseFloor: 0.3, stepThreshold: 6, eventCap: 24, envelopeTau: 550, riseFactor: 1.2, tickGap: 34, tickRatio: 1, pauseGap: 130, idleReset: 150, minStepTick: 90, minStepFlick: 190, sustainDelay: 480, sustainRatio: 0.8 }
 export const CFG = {
   galleryScale: 1.08, camDist: 4.4, fov: 40,
   hoverTilt: 0.21, dragSens: 0.95, dragSmooth: 0.32, dragMaxV: 0.5, dragStart: 5,
@@ -439,32 +441,47 @@ export default class Gallery {
      both directions, nothing is gated, swallowed or timed out. A mouse notch is one plate. Pushing on
      past the last plate (or before the first) hands over to the next section at once; whatever the hand
      keeps sending while the sections change is kept in pend and applied when the new row is ready. */
+  /* iteration 43: A24's wheel (their disc gallery's step detector, same constants). One piece per gesture: after a
+     step the rest of that swipe and its momentum are ignored until a pause (130ms), a fresh mouse tick, a new flick
+     (a 1.2x rise at least 190ms after the step) or held scrolling (one more every 480ms). The dominant axis wins
+     and 150ms of quiet resets everything. Past either end, a step hands over to the next section, once. */
   wheelOne(e) {
     if (e.ctrlKey) return                                  // pinch zoom
-    const now = performance.now()
-    const k = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1
-    let dx = e.deltaX * k, dy = e.deltaY * k
+    const W = WHEEL, s = this.ws || (this.ws = {}); if (s.free === undefined) this.wheelReset()
+    const kx = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerWidth : 1, ky = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1
+    let dx = e.deltaX * kx, dy = e.deltaY * ky
     if (e.shiftKey && !dx) { dx = dy; dy = 0 }
-    const d = Math.abs(dy) >= Math.abs(dx) ? dy : dx
-    if (!d) return
-    const gap = now - this.lastIn
-    // a mouse wheel notch: line mode, or a big whole delta after a pause (trackpads send small, fractional, continuous deltas)
-    const notch = e.deltaMode === 1 || e.deltaMode === 2 || (Math.abs(d) >= 50 && Number.isInteger(d) && gap > 90)
-    const inc = notch ? Math.sign(d) : d / CFG.wheelPx
-    // iteration 28: the gesture that crossed a section is spent. Its momentum tail (same sign, no pause
-    // over 120ms, not harder than before) moves nothing, so one swipe is exactly one step. A pause,
-    // a reversal or a harder push is a new gesture and goes through as usual.
-    const sp = this.spent
-    if (sp) {
-      const tail = Math.sign(d) === sp.s && gap < 120 && Math.abs(d) <= sp.m * 1.3 + 2 && !notch
-      if (tail) { sp.m = Math.abs(d); this.lastIn = now; return }
-      this.spent = null
+    const d = Math.abs(dx) > Math.abs(dy) * 1.25 ? dx : dy, a = Math.abs(d)
+    // the event's own time, not when it was handled: input that queued behind a busy frame keeps the hand's rhythm
+    const now = e.timeStamp || performance.now(), gap = s.seen ? now - s.t : Infinity
+    s.t = now; s.seen = true
+    clearTimeout(s.idle); s.idle = setTimeout(() => this.wheelReset(), W.idleReset)
+    const env0 = gap === Infinity ? 0 : s.env * Math.exp(-gap / W.envelopeTau)
+    if (a < W.noiseFloor) { s.env = env0; return }
+    const rising = a > env0 * W.riseFactor
+    s.env = Math.max(a, env0)
+    // while the row is busy (a section loading) the gesture stays spent, but its timing is still tracked, so its
+    // momentum tail doesn't look like a fresh gesture the moment the new row is ready
+    if (this.busy()) { s.free = false; s.stepT = now; s.n = 0; s.peak = Math.max(s.peak, a); return }
+    if (!s.free) {
+      s.n += 1; s.peak = Math.max(s.peak, a)
+      const since = now - s.stepT
+      const pause = gap >= W.pauseGap
+      const tick = gap >= W.tickGap && s.n <= 2 && since >= W.minStepTick && a >= s.peak * W.tickRatio
+      const flick = rising && since >= W.minStepFlick
+      const sustain = since >= W.sustainDelay && s.env >= s.peak * W.sustainRatio
+      if (!(pause || tick || flick || sustain)) return
+      s.free = true; s.acc = 0; s.dir = 0; s.surge = !(pause || tick || sustain)
     }
-    this.lastIn = now
-    this.dbg.d = d; this.dbg.mode = e.deltaMode; this.dbg.kind = notch ? 'notch' : 'smooth'
-    if (this.busy()) { this.pend = clamp(this.pend + inc, -2, 2); return }
-    this.push(inc, notch)
+    const dir = d > 0 ? 1 : -1
+    if (dir !== s.dir) { s.acc = 0; s.dir = dir }
+    s.acc += Math.min(s.surge ? Math.max(0, a - env0) : a, W.eventCap)
+    if (s.acc < W.stepThreshold) return
+    s.free = false; s.surge = false; s.acc = 0; s.stepT = now; s.n = 0; s.peak = a
+    this.dbg.kind = 'step'; this.dbg.d = d
+    this.step(dir, 'wheel')
   }
+  wheelReset() { const s = this.ws || (this.ws = {}); clearTimeout(s.idle); Object.assign(s, { free: true, surge: false, acc: 0, dir: 0, env: 0, peak: 0, n: 0, stepT: 0, t: 0, seen: false, idle: 0 }) }
   push(inc, notch) {
     if (notch) { const b = Math.round(this.T); this.T = (Math.sign(inc) === Math.sign(this.T - b) ? this.T : b) + inc } else this.T += inc
     this.T = Math.round(this.T * 1e4) / 1e4

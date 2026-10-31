@@ -187,3 +187,28 @@
 .s42-deck { font: italic 400 20px/1.35 'Lora', Georgia, serif; text-align: center; margin: -8px auto 14px; max-width: 30ch; text-wrap: balance; }
 @media (max-width: 760px) { .s42-deck { font-size: 17px; margin-top: -10px; } }
 .s38-reveal .s38-nhead { padding-top: var(--t0, calc(var(--h1-top) + 24px)); }
+/* iteration 43: A24's motion. Lines rise out of masks; the footer is their "Next production": kicker and
+   destination on the first rule, the next title on the next three, its painting rising from the bottom
+   edge where their disc is, a fill bar along the bottom, and a hint once you are at the end. */
+.s42-m { display: block; overflow: hidden; padding-bottom: .08em; margin-bottom: -.08em; }
+.s42-r { display: block; will-change: transform; }
+.s42-nx { display: grid !important; grid-template-rows: repeat(5, 1fr); }
+.s42-nx .s38-row { align-items: flex-start; z-index: auto; }
+.s42-line, .s42-kick, .s42-dest { position: relative; z-index: 2; }
+.s42-kick { margin-top: 9px; } .s42-dest { margin: 9px 0 0 auto; }
+.s42-line { font: 400 min(calc(var(--t-h1) * 1.6), 8.4vw)/1 'Lora', Georgia, serif; letter-spacing: -.04em; text-transform: uppercase; color: var(--ink); text-decoration: none; white-space: nowrap; margin-top: 10px; }
+.s42-line.is-l { margin-left: 8%; } .s42-line.is-r { margin-left: auto; margin-right: 8%; }
+.s42-nplate { position: absolute; left: 0; right: 0; top: 76%; width: min(34vw, 520px); margin: 0 auto; z-index: 1; display: block; }
+.s42-nplate-in { display: block; transform-origin: 50% 0; will-change: transform; }
+.s42-nplate img { display: block; width: 100%; height: auto; box-shadow: 0 30px 80px rgba(17, 17, 17, .22); }
+.s42-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; z-index: 3; pointer-events: none; }
+.s42-hint { position: absolute; right: calc(var(--m) + 2px); bottom: 14px; z-index: 3; opacity: 0; transition: opacity .3s; pointer-events: none; }
+.s42-hint.is-on { opacity: .6; transition: opacity .6s .2s; }
+@media (max-width: 760px) {
+  .s42-line { font-size: 9vw; white-space: normal; }
+  .s42-line.is-l, .s42-line.is-r { margin-left: 0; margin-right: 0; }
+  .s42-line.is-r { margin-left: auto; text-align: right; }
+  .s42-nplate { width: 70vw; top: 74%; }
+}
+/* the page turn fades through paper, not white: the gap between stories is the colour the next one opens on */
+html.is-story, html.is-story body { background: #f2f2f2; }
