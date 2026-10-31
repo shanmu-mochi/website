@@ -928,6 +928,33 @@ function Home({ cat, go }) {
   )
 }
 
+// iteration 51: the site's words, for search engines, AI crawlers and screen readers. The carousel is drawn in 3D, so
+// none of its text is in the HTML; this is the same content it shows (the bio, every piece with its first line and
+// its link), kept out of sight. The prerender bakes it into index.html.
+const ABOUT = [
+  'I write fiction, essays, and the occasional poem.',
+  'I have a master\u2019s from UCSF in healthcare economics and health policy. My thesis looked at access deserts in Medi-Cal. My research lives in clinical medicine and surgery.',
+  'My fiction has been recognized by The New Yorker, the Paul Kalanithi Writing Competition, and the Massachusetts Undergraduate Poetry Festival. My research has appeared in The Journal of Thoracic and Cardiovascular Surgery and Journal of Vascular Surgery.',
+]
+function SrIndex() {
+  const link = (x) => x.href || (x.doi ? `https://doi.org/${x.doi}` : null)
+  const list = (id, heading) => (
+    <section>
+      <h2>{heading}</h2>
+      <ul>{(catOf0(id).items || []).map((x) => { const u = link(x), line = x.line && x.line !== x.title ? x.line : ''; return (
+        <li key={x.slug}>{u ? <a href={u} tabIndex={-1}>{x.title}</a> : x.title}{[x.kind, yearOf(x)].filter(Boolean).length ? ` (${[x.kind, yearOf(x)].filter(Boolean).join(', ')})` : ''}{line ? `. ${line}` : ''}</li>) })}</ul>
+    </section>)
+  return (
+    <div className="sr-index">
+      <h1>Shanmu Raja</h1>
+      {ABOUT.map((s) => <p key={s.slice(0, 12)}>{s}</p>)}
+      {list('prose', 'Stories')}
+      {list('publications', 'Publications')}
+      {list('luck', 'Honours')}
+      <p><a href="/papers/" tabIndex={-1}>Papers</a> · <a href="mailto:shanmur@uclawsf.edu" tabIndex={-1}>shanmur@uclawsf.edu</a></p>
+    </div>
+  )
+}
 function HomeGate(props) {
   const [ready, setReady] = useState(!!GAL.mod)
   useEffect(() => { if (!ready) { let live = true; loadGallery().then(() => live && setReady(true)); return () => { live = false } } }, [ready])
@@ -1426,5 +1453,5 @@ export default function Browser() {
   if (route.view === 'piece') return <Piece key={`${route.cat}-${route.i}`} cat={route.cat} i={route.i} via={route.via} go={go} />
   if (route.view === 'about') return <About go={go} />
   if (route.view === 'paintings') return <Paintings go={go} />
-  return <HomeGate cat={route.cat} go={go} />
+  return <><HomeGate cat={route.cat} go={go} /><SrIndex /></>
 }

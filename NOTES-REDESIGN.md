@@ -559,3 +559,9 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - Verified: on all 15 stories at 390, 375 and 1440 the row is gone and the hint is clear of both the title and the painting; the end-of-story push still turns the page.
 - Revised: the first row is back for spacing, holding only the count ("02 / 15"); the "Next story" label stays gone.
 - The push: the next painting now grows up to 15% (was 4%) and lifts up to 10% of its height (was 6%) as the push fills.
+
+## Iteration 51: readable without the canvas; the redesign becomes the main site
+- The carousel is drawn in 3D, so the prerendered home page held about 192 characters of text (the live site had 7,566): no stories, papers or bio for search engines and AI crawlers.
+- `SrIndex` adds the same content the carousel shows, out of sight (sr-only), on carousel pages only. It covers the bio (as on About), every story with kind, date, first line and its Substack/Medium link, every paper with its link or DOI, the honours, and the papers page and email. Links are `tabIndex -1`, so keyboard focus never lands somewhere invisible.
+- The baked homepage now carries 5,411 characters, 17 story links and 4 DOI links. The sitemap URLs all resolve in the build.
+- Before deploying I checked that no file on the live site would be lost (0 of 591; the new build has 733) and that the title, description, canonical, og:image and JSON-LD match the live page.
