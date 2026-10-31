@@ -528,3 +528,27 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
   - Exact landing and back; the wheel step; the contents; the story push.
   - Phone: counter contents, pick, tap in.
   - No errors.
+
+## Iteration 49: the stories are books; press and hold on touch
+- **Thickness.** Prose and home plates are 0.07 deep (were 0.024), flagged `book: true` in `shared.js`, so stories and paintings become slim books. Papers stay chapbooks and Luck stays cards.
+- **Page block.** The fore-edge, top and bottom faces carry a canvas of fine, slightly irregular page lines in a warm paper colour (`pagesTexture`), oriented to each face's UVs.
+- **Spine.** The -x face is cloth: the cover's own colour darkened ×0.58 in linear light. The cover shader (`bookCover`, via onBeforeCompile on its own UV varying) wraps a 2.2% cloth strip onto the cover with a soft crease. The back cover canvas draws the same cloth on its right edge, the spine side seen from the back.
+- **Sheen.** A soft band of light on the cover, placed by the cover normal in camera space, so it slides as the book leans, banks, tilts or turns. It is capped at 18% and narrow, and it is zero face-on, so a flight starts as an exact match for the flat copy.
+- **Shadow.** A blurred plane behind each book, in the group (so it stays behind when the book turns), narrowing with |cos(spin)|. It is drawn in the opaque pass before the books (renderOrder -1, no depth write, custom blending): drawn after them, it showed through the half of a turning book that swings behind its plane. It fades out face-on.
+- **Idle nudge.** Once per visit, after 4s with no input and the row at rest, the centred book turns 0.26 rad and back (0.8s each way).
+- **Back cover** (`bookBack`):
+  - Your name in small caps over a rule, the opening line as an italic blurb, the honour in small caps, then "Cover: {credit}".
+  - At the bottom, an SR mark in a ring and a seeded barcode with kind / venue · date under it (on two lines when needed).
+- **Flying copy.** It carries the cloth strip (`.fly-band`, colour from `clothOf`), fading it out on the way into a story and back in on the way home, so neither hand-off pops.
+- **Press and hold (touch only).**
+  - A finger landing on the centred book presses it in (3.5% smaller, pushed back) and tilts it toward the finger.
+  - Still for 350ms, it becomes a hold: moving the finger keeps tilting it (no swipe, no turn), and lifting does not open; it settles back.
+  - A quick tap opens as before. Moving before 350ms is a swipe or a turn as before.
+  - The canvas has no iOS callout or selection.
+- **No cursor change** (dropped at your request).
+- **Verified:**
+  - Phone: hold presses and tilts; a moving hold tilts; lifting doesn't open and the book settles; tap opens; swipe moves the row; an up-drag turns it.
+  - The nudge happens once, about 4s after the row settles.
+  - Flights in and out land to the pixel at 1440 and 390, with the strip at 0 on landing in a story and 1 on landing home.
+  - Turned at 7 angles with no shadow through the book; the sheen tuned after it washed out the painting at 30%.
+  - Space turns it over; the wheel step, contents, nav hover, story push and the publications row all work; no errors.

@@ -306,3 +306,6 @@ a, button, [role="button"] { -webkit-tap-highlight-color: transparent; }
   .toc-l a { grid-template-columns: 26px 1fr; row-gap: 4px; }
   .toc-m { grid-column: 2; text-align: left; white-space: normal; }
 }
+/* iteration 49: holding a finger on the books is a gesture, so no system callout or text selection on it */
+.h-gl, .h-gl canvas { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.fly-band { position: absolute; left: 0; top: 0; bottom: 0; width: 2.2%; backface-visibility: hidden; -webkit-backface-visibility: hidden; transform: translateZ(0.5px); box-shadow: 4px 0 6px -3px rgba(0, 0, 0, .25); pointer-events: none; }

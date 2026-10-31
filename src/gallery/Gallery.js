@@ -25,6 +25,8 @@ const pressure = (v) => {
   const m = Math.abs(v)
   return m < 1 ? 0 : Math.max(-CFG.mMax, Math.min(CFG.mMax, Math.sign(v) * CFG.mRef * Math.pow(m / CFG.mRef, CFG.mGamma) * CFG.mPower))
 }
+const HOLD_MS = 350   // a finger still this long on the centred book is a hold (look), not a tap (open)
+const NUDGE_MS = 4000   // after this long without input, the centred book turns a little and back, once
 // A24's disc-gallery wheel (a24.raviklaassens.com), unchanged
 const WHEEL = { noiseFloor: 0.3, stepThreshold: 6, eventCap: 24, envelopeTau: 550, riseFactor: 1.2, tickGap: 34, tickRatio: 1, pauseGap: 130, idleReset: 150, minStepTick: 90, minStepFlick: 190, sustainDelay: 480, sustainRatio: 0.8 }
 export const CFG = {
@@ -85,6 +87,52 @@ function idle(job) {
     const next = () => { const j = IDLE.shift(); if (!j) { idling = false; return } slot(() => { j(); next() }) }
     next()
   })
+}
+/* iteration 49: the stories are books. The open edges are a block of pages, the left side is cloth (a darker tone of
+   the cover's own colour) that wraps a few millimetres onto the cover, light slides across the cover as it turns,
+   and a soft shadow sits behind it. */
+let PAGES_U = null, PAGES_V = null, SHADOW = null
+function pagesTexture(alongU) {
+  // fine, slightly irregular page lines; alongU: the lines change across u (the fore-edge), else across v (top/bottom)
+  const c = document.createElement('canvas'), n = 256
+  c.width = alongU ? n : 8; c.height = alongU ? 8 : n
+  const x = c.getContext('2d'); x.fillStyle = '#f1ede4'; x.fillRect(0, 0, c.width, c.height)
+  let s = 11; const r = () => { s = (s * 9301 + 49297) % 233280; return s / 233280 }
+  for (let k = 3; k < n - 2; k += 2 + Math.floor(r() * 3)) {
+    x.fillStyle = `rgba(120, 108, 88, ${(0.16 + r() * 0.2).toFixed(3)})`
+    if (alongU) x.fillRect(k, 0, 1, c.height); else x.fillRect(0, k, c.width, 1)
+  }
+  const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx
+}
+function shadowTexture() {
+  const c = document.createElement('canvas'); c.width = c.height = 128
+  const x = c.getContext('2d'); x.shadowColor = 'rgba(0,0,0,1)'; x.shadowBlur = 22; x.fillStyle = '#000'
+  x.fillRect(26, 26, 76, 76)
+  return new THREE.CanvasTexture(c)
+}
+const SHADOW_GEO = new THREE.PlaneGeometry(1, 1)
+// the cover: its own uv, a cloth strip on the spine side with a crease, and a soft band of light
+function bookCover(mat, cloth, band) {
+  const u = { uSheen: { value: 0.5 }, uAmt: { value: 0 }, uBand: { value: band }, uCloth: { value: cloth } }
+  mat.userData.u = u
+  mat.onBeforeCompile = (s) => {
+    Object.assign(s.uniforms, u)
+    s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vSUv;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvSUv = uv;')
+    s.fragmentShader = s.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying vec2 vSUv;\nuniform float uSheen; uniform float uAmt; uniform float uBand; uniform vec3 uCloth;')
+      .replace('#include <map_fragment>', `#include <map_fragment>
+        if (uBand > 0.0) {
+          float cl = 1.0 - smoothstep(uBand, uBand + 0.003, vSUv.x);
+          diffuseColor.rgb = mix(diffuseColor.rgb, uCloth, cl);
+          float cr = exp(-pow((vSUv.x - uBand - 0.008) / 0.006, 2.0));
+          diffuseColor.rgb *= 1.0 - 0.18 * cr;
+        }
+        float sd = vSUv.x * 0.75 + (1.0 - vSUv.y) * 0.55;
+        float sb = exp(-pow((sd - uSheen) / 0.12, 2.0));
+        diffuseColor.rgb += uAmt * sb * (1.0 - diffuseColor.rgb);`)
+  }
+  mat.customProgramCacheKey = () => 'book-cover-49'
+  return u
 }
 export function texture(key, make) {
   if (!TEX.has(key)) TEX.set(key, Promise.resolve(make()).then((t) => { if (t) { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4 } return t }))
@@ -165,18 +213,36 @@ export default class Gallery {
   makePlate(it, i) {
     const sec = this.mode === 'home' ? (SECTIONS[it.cat] || this.sec) : this.sec, [w, h] = plateSize(it, sec)
     const geo = new THREE.BoxGeometry(w, h, sec.depth)
-    const edge = new THREE.MeshBasicMaterial({ color: sec.edge })
-    const spine = new THREE.MeshBasicMaterial({ color: sec.spine })
+    const book = !!sec.book
+    if (book && !PAGES_U) { PAGES_U = pagesTexture(true); PAGES_V = pagesTexture(false) }
+    const cloth = new THREE.Color(it.placeholder || '#777').multiplyScalar(0.58)
+    const edge = new THREE.MeshBasicMaterial(book ? { map: PAGES_U } : { color: sec.edge })
+    const edgeY = book ? new THREE.MeshBasicMaterial({ map: PAGES_V }) : edge
+    const spine = new THREE.MeshBasicMaterial({ color: book ? cloth : sec.spine })
     const front = new THREE.MeshBasicMaterial({ color: new THREE.Color(it.placeholder) })
     const back = new THREE.MeshBasicMaterial({ color: 0xfbfaf8 })
-    // box faces: +x, -x (the spine on a chapbook), +y, -y, front, back
-    const mesh = new THREE.Mesh(geo, [edge, spine, edge, edge, front, back])
+    const cover = book ? bookCover(front, cloth.clone(), 0.022) : null
+    // box faces: +x (the fore-edge), -x (the spine), +y, -y, front, back
+    const mesh = new THREE.Mesh(geo, [edge, spine, edgeY, edgeY, front, back])
     mesh.userData.i = i
     const spin = new THREE.Group(); spin.add(mesh)
     const group = new THREE.Group(); group.add(spin)
+    // a soft shadow behind the book: in the group, so it stays behind when the book turns over
+    let shadow = null
+    if (book) {
+      if (!SHADOW) SHADOW = shadowTexture()
+      // drawn in the opaque pass, before the books (renderOrder -1) and without writing depth, so a book always paints
+      // over its own shadow, even mid-turn when half of it swings behind the shadow's plane. Custom blending keeps the
+      // soft edge (three turns blending off for plain opaque materials).
+      shadow = new THREE.Mesh(SHADOW_GEO, new THREE.MeshBasicMaterial({ map: SHADOW, color: 0x000000, transparent: false, opacity: 0.2, depthWrite: false,
+        blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor }))
+      shadow.scale.set(w * 1.3, h * 1.26, 1); shadow.position.set(0.05, -0.07, -sec.depth / 2 - 0.06); shadow.renderOrder = -1
+      group.add(shadow)
+    }
     group.scale.setScalar(0.0001)
     this.root.add(group)
-    const p = { it, i, w, h, mesh, spin, group, front, back, mats: [edge, spine, front, back], hover: 0, spinX: 0, spinY: 0, face: 0, fresh: true, hidden: false }
+    const mats = [edge, spine, front, back]; if (edgeY !== edge) mats.push(edgeY); if (shadow) mats.push(shadow.material)
+    const p = { it, i, w, h, mesh, spin, group, front, back, cover, shadow, mats, hover: 0, pr: 0, spinX: 0, spinY: 0, face: 0, fresh: true, hidden: false }
     // iteration 19: the row is long (all paintings too), so faces load as they come near
     let res; p.ready = new Promise((r) => { res = r })
     p.load = () => {
@@ -509,6 +575,11 @@ export default class Gallery {
   onDown(e) {
     if (e.button !== 0 || this.busy()) return
     const h = this.pick(e.clientX, e.clientY)
+    clearTimeout(this.holdT); this.press = null
+    if (e.pointerType !== 'mouse' && h && h.i === this.index()) {
+      this.press = { i: h.i, held: false }; this.U = h.u; this.Ue = -h.v
+      this.holdT = setTimeout(() => { if (this.press && this.drag && !this.drag.on) { this.press.held = true; this.dirty = true } }, HOLD_MS)
+    }
     this.drag = { x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t: performance.now(), on: false, hit: h, spin: h && h.i === this.index() ? h.i : -1, pt: e.pointerType, w: this.el.clientWidth, h: this.el.clientHeight }
   }
   onMove(e) {
@@ -521,8 +592,10 @@ export default class Gallery {
       return
     }
     if (this.flight) { this.drag = null; return }
+    if (!d.on && this.press && this.press.held) { const hh = this.pick(e.clientX, e.clientY); if (hh && hh.i === this.press.i) { this.U = hh.u; this.Ue = -hh.v } return }
     if (!d.on) {
       if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < CFG.dragStart) return
+      clearTimeout(this.holdT); this.press = null
       d.ax = Math.abs(e.clientX - d.x0) >= Math.abs(e.clientY - d.y0) ? 'x' : 'y'
       if (d.pt !== 'mouse' && d.ax === 'x') d.spin = -1
       if (d.ax === 'y' && d.spin < 0 && !this.oneAxis) { d.on = true; this.setHover(-1); return }
@@ -565,6 +638,8 @@ export default class Gallery {
     const d = this.drag
     if (!d) return
     this.drag = null; this.el.classList.remove('is-dragging')
+    clearTimeout(this.holdT); const held = !!(this.press && this.press.held); this.press = null
+    if (held) { this.U = 0; this.Ue = 0; this.dirty = true; return }   // a hold was for looking, not choosing
     if (this.flight) return
     if (!d.on) {
       const h = d.hit
@@ -692,9 +767,13 @@ export default class Gallery {
         if (c > 1e-4) z -= c * CFG.flightRecede
       }
       p.group.visible = vis && s > 0.002 && !p.hidden
-      const want = +(this.hover === p.i && !(this.drag && this.drag.on))
+      // a finger held on the centred book presses it in a little and tilts it toward the finger (A24's press)
+      const pressed = !!(this.press && this.press.i === p.i) && !(this.drag && this.drag.on)
+      const want = +((this.hover === p.i || pressed) && !(this.drag && this.drag.on))
       p.hover += (want - p.hover) * Math.min(1, dt * 10)
+      p.pr += ((pressed ? 1 : 0) - p.pr) * Math.min(1, dt * 14)
       if (p.hover > 0.001) { rx += p.hover * CFG.hoverTilt * this.Ue; ry += p.hover * CFG.hoverTilt * this.U }
+      if (p.pr > 0.001) { s *= 1 - 0.035 * p.pr; z -= 0.1 * p.pr }
       if (this.q.active && g) {
         const k = 1 - clamp(this.q.rise, 0, 1)
         if (k) { _v.set(0, -CFG.preloadRise * k, -CFG.preloadDepth * k).applyQuaternion(this.qInv).divideScalar(this.scale || 1); x += _v.x; y += _v.y; z += _v.z }
@@ -728,6 +807,30 @@ export default class Gallery {
       p.fresh = false
       if (!(this.drag && this.drag.spin === p.i) && !gsap.isTweening(p)) p.spinX += (0 - p.spinX) * Math.min(1, dt * 2.5)
       p.spin.rotation.x = p.spinX; p.spin.rotation.y = p.spinY
+      if (p.cover || p.shadow) this.bookFrame(p)
+    }
+  }
+  // once a visit, after a few still seconds, the centred book turns a little and settles back: you can turn me
+  maybeNudge(now) {
+    if (this.nudged || !this.oneAxis || this.reduced) return
+    const moving = this.busy() || this.drag || this.press || Math.abs(this.L - this.T) > 0.002 || Math.abs(this.Se) > 0.001
+    if (moving || !this.calm) { this.calm = now; return }
+    if (now - this.calm < NUDGE_MS || now - lastInput < NUDGE_MS) return
+    const p = this.plates[this.index()]
+    if (!p || !p.cover || this.flipped() || gsap.isTweening(p)) return
+    this.nudged = true
+    gsap.to(p, { spinY: p.spinY + 0.26, duration: 0.8, ease: 'sine.inOut', yoyo: true, repeat: 1 })
+  }
+  // light and shadow follow the book's angle to the camera. Face-on there is no sheen and no shadow, so a flight
+  // into a story starts as an exact match for the flat copy.
+  bookFrame(p) {
+    p.group.updateMatrixWorld(true)
+    p.mesh.getWorldDirection(_v).transformDirection(this.cam.matrixWorldInverse)
+    if (p.cover) { const u = p.cover; u.uSheen.value = 0.55 + 1.1 * (_v.x * 0.8 - _v.y * 0.6); u.uAmt.value = clamp((1 - _v.z) * 0.7, 0, 0.18) * (1 - p.face) }
+    if (p.shadow) {
+      const c = Math.abs(Math.cos(p.spinY))
+      p.shadow.scale.x = p.w * 1.3 * Math.max(0.18, c); p.shadow.position.x = 0.05 + 0.06 * Math.sin(p.spinY)
+      p.shadow.material.opacity = 0.2 * (1 - p.face)
     }
   }
 
@@ -738,6 +841,7 @@ export default class Gallery {
     const t = (now - this.last) / 1000, dt = Math.min(0.05, t)
     this.last = now
     if (!this.N) return
+    this.maybeNudge(now)
     const r = Math.min(3, dt * 60)
     const dragging = this.drag && this.drag.on && this.drag.spin < 0
     if (this.oneAxis && !dragging && !this.flight && !this.q.active) {

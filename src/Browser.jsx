@@ -108,6 +108,60 @@ function fitTitle(ctx, text, maxW, maxH, from, min, lh, weight = 700) {
   return { fs, lines }
 }
 const smallCaps = (ctx, size, track = 4) => { ctx.font = `600 ${size}px ${LABEL}`; ctx.fontStretch = 'normal'; ctx.letterSpacing = `${track}px` }
+// iteration 49: the cloth colour of a book: the cover's own colour, darkened in linear light exactly as the 3D spine is
+function clothOf(css) {
+  const m = String(css || '').match(/\d+(\.\d+)?/g) || [119, 119, 119]
+  const lin = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4 }, srgb = (v) => Math.round(255 * (v <= 0.0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - 0.055))
+  return `rgb(${m.slice(0, 3).map((v) => srgb(lin(+v) * 0.58)).join(',')})`
+}
+// a story's back is a book's back cover: the author, the opening line as the blurb, the honour, the cover credit,
+// a small mark, and a barcode with the details under it. The cloth spine wraps on at the right (the spine side, seen
+// from the back).
+function bookBack(ctx, W, H, it) {
+  ctx.fillStyle = '#f5f2ea'; ctx.fillRect(0, 0, W, H)
+  grain(ctx, W, H, 5)
+  const band = Math.round(W * 0.022)
+  ctx.fillStyle = clothOf(it.placeholder || (it.src ? placeholderOf(it.src) : '')); ctx.fillRect(W - band, 0, band, H)
+  const cr = ctx.createLinearGradient(W - band - 10, 0, W - band, 0); cr.addColorStop(0, 'rgba(0,0,0,0)'); cr.addColorStop(1, 'rgba(0,0,0,0.16)')
+  ctx.fillStyle = cr; ctx.fillRect(W - band - 10, 0, 10, H)
+  const m = W * 0.1, maxW = W - 2 * m - band, ink = '#1b1a17', soft = '#6a665d'
+  ctx.fillStyle = ink; smallCaps(ctx, 17, 4); ctx.fillText('SHANMU RAJA', m, m); ctx.letterSpacing = '0px'
+  ctx.fillRect(m, m + 34, maxW, 1.2)
+  // the bottom block first, so the blurb knows its room
+  const bar = { w: Math.round(W * 0.27), h: Math.round(H * 0.07) }
+  const bx = W - band - m - bar.w, by = H - m - bar.h - 26
+  let s = (it.slug || 'x').split('').reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 233280, 7)
+  const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280 }
+  ctx.fillStyle = '#fbfaf6'; ctx.fillRect(bx - 10, by - 10, bar.w + 20, bar.h + 58)
+  ctx.fillStyle = ink
+  for (let x = 0; x < bar.w - 2;) { const bw = 1 + Math.floor(rnd() * 3.2); if (rnd() > 0.42) ctx.fillRect(bx + x, by, bw, bar.h); x += bw + 1 + Math.floor(rnd() * 2) }
+  const details = [it.kind, metaOf(it, 'Venue'), metaOf(it, 'Published')].filter(Boolean).join(' \u00b7 ').toUpperCase()
+  // the details under the bars, on two lines if they need them (kind, then venue and date)
+  smallCaps(ctx, 11, 2)
+  const dl = ctx.measureText(details).width <= bar.w + 14 ? [details] : [String(it.kind || '').toUpperCase(), [metaOf(it, 'Venue'), metaOf(it, 'Published')].filter(Boolean).join(' \u00b7 ').toUpperCase()].filter(Boolean)
+  dl.forEach((l, k) => ctx.fillText(l, bx - 4, by + bar.h + 10 + k * 16)); ctx.letterSpacing = '0px'
+  // the mark: SR in a ring
+  const r = 30, cx = m + r, cy = by + bar.h / 2 + 8
+  ctx.strokeStyle = ink; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke()
+  ctx.font = `400 24px ${BOOK}`; ctx.textAlign = 'center'; ctx.fillText('SR', cx, cy - 12); ctx.textAlign = 'left'
+  // the cover credit, above the mark
+  const credit = metaOf(it, 'Painting')
+  let y1 = by - 26
+  if (credit) {
+    ctx.font = `400 18px ${BOOK}`; ctx.fillStyle = soft
+    const ls = wrap(ctx, `Cover: ${credit}`, maxW).slice(0, 2); y1 = by - 30 - ls.length * 24
+    ls.forEach((l, k) => ctx.fillText(l, m, y1 + 4 + k * 24)); ctx.fillStyle = ink
+  }
+  // the blurb (the story's opening line) and the honour, in the room above
+  let y = m + 74
+  const honour = metaOf(it, 'Recognition'), room = y1 - y - (honour ? 90 : 30)
+  if (it.line) {
+    let fs = 44, ls = []
+    for (; fs > 26; fs -= 2) { ctx.font = `italic 400 ${fs}px ${BOOK}`; ls = wrap(ctx, `\u201c${it.line}\u201d`, maxW); if (ls.length * fs * 1.3 < room) break }
+    ls.forEach((l, k) => ctx.fillText(l, m, y + k * fs * 1.3)); y += ls.length * fs * 1.3 + 30
+  }
+  if (honour) { ctx.fillRect(m, y, 48, 1.4); y += 18; smallCaps(ctx, 14, 3); ctx.fillText(honour.toUpperCase(), m, y); ctx.letterSpacing = '0px' }
+}
 function drawFace(key, aspect, draw) {
   if (CANVAS.has(key)) return CANVAS.get(key)
   const H = 1024, W = Math.round(H * aspect)
@@ -163,6 +217,7 @@ function faceCanvas(it, side) {
     lines.forEach((l, k) => ctx.fillText(l, W / 2, y0 + k * fs))
     smallCaps(ctx, 18, 4); ctx.fillText('SHANMU RAJA', W / 2, H - 120)
   })
+  if (it.cat === 'prose' && side === 'back') return drawFace(key, aspect, (ctx, W, H) => bookBack(ctx, W, H, it))
   // iteration 12: the back of every object says something the front doesn't (never the title again).
   // Every field comes from the repo's own data; a field that isn't there is simply left off.
   return drawFace(key, aspect, (ctx, W, H) => {
@@ -254,11 +309,12 @@ function itemsFor(cat) {
    A DOM clone of the object's face(s) that rides between the WebGL plate and the page image.
    It starts exactly over the face-on plate (same image, same pixels), so the swap at either end is invisible. */
 const FLY = { node: null, dir: null, data: null }
-function flyNode(rect, it, back) {
+function flyNode(rect, it, back, band = 1) {
   flyClear()
   const n = document.createElement('div')
   n.className = 'fly'
   n.innerHTML = '<div class="fly-in"><img class="fly-f" alt=""><img class="fly-b" alt=""></div>'
+  if (it.src && (it.cat === 'prose' || it.cat === 'paintings')) { const b = document.createElement('i'); b.className = 'fly-band'; b.style.background = clothOf(it.placeholder || placeholderOf(it.src)); b.style.opacity = String(band); n.firstChild.appendChild(b) }
   n.querySelector('.fly-f').src = faceURL(it, 'front')
   n.querySelector('.fly-b').src = faceURL(it, 'back')
   Object.assign(n.style, { left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.w}px`, height: `${rect.h}px` })
@@ -281,6 +337,7 @@ function flyTo(rect, { back = false, duration = 0.85, clip = null } = {}) {
     if (reduced()) { done(); return }
     gsap.fromTo(n, { x: dx, y: dy, scaleX: sx, scaleY: sy }, { x: 0, y: 0, scaleX: 1, scaleY: 1, duration, ease: GLIDE, transformOrigin: '0 0', onComplete: done })
     gsap.to(n.firstChild, { rotateY: back ? 180 : 0, duration: duration * 0.95, ease: GLIDE })
+    const band = n.querySelector('.fly-band'); if (band) gsap.to(band, { opacity: FLY.dir === 'out' ? 1 : 0, duration: duration * 0.8, ease: GLIDE })
     if (inset) gsap.fromTo(n, { clipPath: 'inset(0px 0px 0px 0px)' }, { clipPath: `inset(${inset})`, duration, ease: GLIDE })
     else if (c0 && c0.startsWith('inset(')) gsap.fromTo(n, { clipPath: c0 }, { clipPath: 'inset(0% 0% 0% 0%)', duration, ease: GLIDE, onComplete: () => { n.style.clipPath = '' } })
   })
@@ -933,7 +990,7 @@ function Piece({ cat, i, go, via }) {
         if (!a || !img || reduced()) return fadeOutPage()
         const b = a.getBoundingClientRect()
         if (b.bottom < 0 || b.top > window.innerHeight) return fadeOutPage()
-        const n = flyNode(rectOfEl(a), it, false)
+        const n = flyNode(rectOfEl(a), it, false, 0)
         if (cat === 'prose' && a.parentElement) {
           const s = a.parentElement.getBoundingClientRect(), f = a.getBoundingClientRect(), pc = (v, d) => `${Math.max(0, (v / d) * 100).toFixed(3)}%`
           n.style.clipPath = `inset(${pc(s.top - f.top, f.height)} ${pc(f.right - s.right, f.width)} ${pc(f.bottom - s.bottom, f.height)} ${pc(s.left - f.left, f.width)})`
