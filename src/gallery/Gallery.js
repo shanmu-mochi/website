@@ -68,7 +68,8 @@ let RENDERER = null
 function renderer() {
   if (!RENDERER) {
     RENDERER = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' })
-    RENDERER.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+    // a touch screen renders at most 1.5x (A24's cap): about half the pixels of 2x on a phone, for smooth frames and a cool phone
+    RENDERER.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.matchMedia('(pointer: coarse)').matches ? 1.5 : 2))
     RENDERER.outputColorSpace = THREE.SRGBColorSpace
     RENDERER.setClearColor(0x000000, 0)
     RENDERER.domElement.className = 'gl'

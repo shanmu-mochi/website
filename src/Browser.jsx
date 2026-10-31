@@ -223,11 +223,15 @@ function backOf(it) {
   }
 }
 const canvasTexture = (c) => { const t = new THREE.CanvasTexture(c); return t }
-const frontTexture = (it) => (it.cat === 'prose' || it.cat === 'paintings') && it.src ? imageTexture(variantFor(it.src, 900)) : texture(faceKey(it, 'front'), () => fontsReady().then(() => canvasTexture(faceCanvas(it, 'front'))))
+// iteration 47: on a phone one 1200px file serves the carousel, the flight and the story page (cached once, so the
+// hand-offs stay seamless); on a desktop the sizes are unchanged
+const PHONE = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches && Math.min(window.innerWidth, window.innerHeight) <= 760
+const PLATE_CSS = PHONE ? 750 : 900, STORY_CSS = PHONE ? 750 : 2000
+const frontTexture = (it) => (it.cat === 'prose' || it.cat === 'paintings') && it.src ? imageTexture(variantFor(it.src, PLATE_CSS)) : texture(faceKey(it, 'front'), () => fontsReady().then(() => canvasTexture(faceCanvas(it, 'front'))))
 const backTexture = (it) => texture(faceKey(it, 'back'), () => fontsReady().then(() => canvasTexture(faceCanvas(it, 'back'))))
 const URLS = new Map()
 const faceURL = (it, side) => {
-  if (side === 'front' && (it.cat === 'prose' || it.cat === 'paintings') && it.src) return variantFor(it.src, 900)
+  if (side === 'front' && (it.cat === 'prose' || it.cat === 'paintings') && it.src) return variantFor(it.src, PLATE_CSS)
   const k = faceKey(it, side)
   if (!URLS.has(k)) URLS.set(k, faceCanvas(it, side).toDataURL('image/jpeg', 0.92))
   return URLS.get(k)
@@ -1201,7 +1205,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, hold }) {
       </header>
       {it.src && (
         <section className="s38-paint s38-sec" aria-label={credit || it.title} style={{ background: placeholderOf(it.src), ...(fit.n > 4 ? { gridTemplateRows: `repeat(${fit.n + 1}, 1fr)` } : {}) }}>
-          <div ref={art} className="s38-paint-f" style={{ visibility: hold ? 'hidden' : undefined }}><img className="s38-paint-img" src={variantFor(it.src, 2000)} alt={credit || it.title} decoding="async" fetchpriority="high" /></div>
+          <div ref={art} className="s38-paint-f" style={{ visibility: hold ? 'hidden' : undefined }}><img className="s38-paint-img" src={variantFor(it.src, STORY_CSS)} alt={credit || it.title} decoding="async" fetchpriority="high" /></div>
           {Array.from({ length: fit.n + 1 }, (_, k) => <div key={k} className="s38-row">{k > 0 && pull[k - 1] && <span className={`s38-w ${k % 2 ? 'is-l' : 'is-r'}`} style={fit.f ? { fontSize: `${fit.f}px` } : undefined}><span className="s42-r">{pull[k - 1]}</span></span>}</div>)}
         </section>)}
       {it.src && credit && <p className="s42-cap"><span className="s38-lab">Painting</span><span className="s42-cap-v">{credit}</span></p>}

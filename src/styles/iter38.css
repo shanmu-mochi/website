@@ -271,3 +271,38 @@ html.is-story, html.is-story body { background: #fff; }
 .toc-pop { position: fixed; right: 16px; bottom: 76px; animation: toc-in .18s ease-out both; }
 @keyframes toc-in { from { opacity: 0; transform: translate(var(--tx, 0), 6px); } to { opacity: 1; transform: translate(var(--tx, 0), 0); } }
 @media (prefers-reduced-motion: reduce) { .toc-drop, .toc-pop { animation: none; } }
+/* iteration 47: phones. Every control is at least a 44px target without changing how it looks (padding taken
+   back by negative margins), no text under 11px, no grey tap flash, no text inflation when the phone turns,
+   and the story's last screens tightened. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+a, button, [role="button"] { -webkit-tap-highlight-color: transparent; }
+@media (max-width: 760px) {
+  /* the nav: each link a full thumb target; the rows sit on those targets instead of an extra gap */
+  .h-top.sn, .pg-sn.sn { row-gap: 0 !important; }
+  .sn-nav a, .h-mark { display: inline-flex; align-items: center; min-height: 44px; padding: 0 7px; margin: 0 -7px; }
+  .s38 .pg-back, .pg-back { display: inline-flex; align-items: center; min-height: 44px; padding-top: 0; padding-bottom: 0; }
+  .toc-l a { min-height: 44px; padding-top: 11px; padding-bottom: 11px; }
+  /* small type, readable */
+  .h-under .h-umeta { font-size: 11px !important; letter-spacing: .16em; }
+  .h-card-i, .h-card-k { font-size: 11px !important; }
+  .s38 .s38-lab { font-size: 11px; letter-spacing: .16em; }
+  .pr45-facts { font-size: 12px; }
+  .s38 .s38-btn { font-size: 12.5px; }
+  .toc-i, .toc-m { font-size: 11px; }
+  /* the end of a story: less dead air, and the hint off the next painting (it sits under the count instead) */
+  .s42-again { padding: 56px var(--m) 80px; }
+  .s42-hint { bottom: auto; top: 34px; right: calc(var(--m) + 7vw); }
+}
+@media (max-width: 760px) {
+  /* the counter opens the contents on a phone, so it gets a full target; the small links get one too */
+  .h-count { min-height: 44px; min-width: 44px; padding-top: 13px !important; padding-bottom: 13px !important; margin-top: -13px; margin-bottom: -13px; }
+  .h-social a, .h-sfoot a, .ab-social a { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .h-under .h-title a { display: inline-block; padding: 14px 0; margin: -14px 0; }
+  .s42-line { padding: 5px 0; }
+  .s38 .pr45-honor .pg-honor a, .ab-links a { display: inline-block; padding: 11px 0; margin: -11px 0; }
+}
+@media (max-width: 760px) {
+  /* the contents on a phone: the details go under each title, so the title has the full width */
+  .toc-l a { grid-template-columns: 26px 1fr; row-gap: 4px; }
+  .toc-m { grid-column: 2; text-align: left; white-space: normal; }
+}

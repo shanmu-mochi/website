@@ -486,3 +486,17 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - `serve.py` is now a plain static server (no-store on HTML so a refresh shows the latest). `build:preview` still copies it into `dist/`, so `npm run live` works as before.
 - The overlay how-to section is removed from these notes. Verified: no overlay code in the built bundle and no comment UI on home, story or About.
 - "art that I love" is now "Art that I love" in the nav and the end-of-row link.
+
+## Iteration 47: phones
+- **Images.** On a phone (coarse pointer, short side ≤760px) one 1200px painting file serves the carousel texture, the flying copy and the story page (`PLATE_CSS` / `STORY_CSS` = 750 css px at the 1.6 density cap). It is cached once, so the flight and landing stay seamless; desktop sizes are unchanged. Home images went from 2.5 MB to 1.3 MB and the story page from 859 KB to 433 KB.
+- **Render resolution.** The gallery renders at most 1.5x on touch screens (A24's cap; it was 2x), about half the pixels.
+- **Thumb targets.** Every control is at least 44px: the nav (the rows now sit on the targets instead of an extra gap, with no two targets overlapping), the name, the back link, the counter (which opens the contents on a phone), the socials, the caption titles, the honour, the email and the next-story title. The padding is taken back with negative margins, so nothing moves visually.
+- **Type.** Nothing under 11px on a phone: caption details, section card, story labels, byline caps, the button and the contents numbers/details.
+- **Contents on a phone.** The details sit under each title, so titles get the full width: one line each, 62px rows (they were up to 85px, with 3-line titles).
+- **End of a story.** On a phone the room after the second link is tighter (56 + 80px), and "Keep scrolling" sits under the count instead of on the next painting.
+- **iOS.** No grey tap flash, and no text inflation in landscape.
+- **Verified:**
+  - All 10 pages at 375x667, 390x844 and 430x932: no sideways overflow, every target ≥44px, no text under 11px, the hint clear of the painting.
+  - Phone interactions: tap opens with an exact landing, the same 1200px file for copy and page, touch push at the end, the counter contents on screen with ≥44px rows and a pick turns the row, a swipe moves the row, dragging up turns the painting over. No errors; desktop still gets 1800px.
+- **Throttled phone** (4x CPU, Fast 4G): home is usable in about 0.4 to 1.5s; 6 frames over 50ms across 4 swipes (was 7 across 3). The rest likely comes from the caption re-rendering on each new painting, not images; worth a look next.
+- **Not done:** three.js isn't split out of non-home routes. The main bundle is 199 KB gzipped and home needs it anyway.
