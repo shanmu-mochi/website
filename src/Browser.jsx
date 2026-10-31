@@ -260,17 +260,21 @@ function flyNode(rect, it, back) {
   return n
 }
 function flyClear() { if (FLY.node) { gsap.killTweensOf(FLY.node); gsap.killTweensOf(FLY.node.firstChild); FLY.node.remove() } FLY.node = null; FLY.dir = null; FLY.data = null }
-function flyTo(rect, { back = false, duration = 0.85 } = {}) {
+function flyTo(rect, { back = false, duration = 0.85, clip = null } = {}) {
   const n = FLY.node
   if (!n) return Promise.resolve()
-  const r0 = n.getBoundingClientRect()
+  const r0 = n.getBoundingClientRect(), c0 = n.style.clipPath
   Object.assign(n.style, { left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.w}px`, height: `${rect.h}px` })
+  // landing inside a clip box: the parts of the copy outside the slot are trimmed away as it arrives
+  const inset = clip && [Math.max(0, clip.y - rect.y), Math.max(0, rect.x + rect.w - clip.x - clip.w), Math.max(0, rect.y + rect.h - clip.y - clip.h), Math.max(0, clip.x - rect.x)].map((v) => `${v.toFixed(1)}px`).join(' ')
   // FLIP: animate transform from the old box to the new one, then flatten
   const sx = r0.width / rect.w, sy = r0.height / rect.h, dx = r0.left - rect.x, dy = r0.top - rect.y
   return new Promise((done) => {
     if (reduced()) { done(); return }
     gsap.fromTo(n, { x: dx, y: dy, scaleX: sx, scaleY: sy }, { x: 0, y: 0, scaleX: 1, scaleY: 1, duration, ease: GLIDE, transformOrigin: '0 0', onComplete: done })
     gsap.to(n.firstChild, { rotateY: back ? 180 : 0, duration: duration * 0.95, ease: GLIDE })
+    if (inset) gsap.fromTo(n, { clipPath: 'inset(0px 0px 0px 0px)' }, { clipPath: `inset(${inset})`, duration, ease: GLIDE })
+    else if (c0 && c0.startsWith('inset(')) gsap.fromTo(n, { clipPath: c0 }, { clipPath: 'inset(0% 0% 0% 0%)', duration, ease: GLIDE, onComplete: () => { n.style.clipPath = '' } })
   })
 }
 const rectOfEl = (el) => { const b = el.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height } }
@@ -353,15 +357,15 @@ function useJitter(on, redraw) {
   }, [on])
   return [seed, pass]
 }
-function Scribble({ w, h, on, pad = 0.14, redraw }) {
+function Scribble({ w, h, on, pad = 0.14, padY = pad, redraw }) {
   const [seed, pass] = useJitter(on, redraw)
   if (!w || !h) return null
-  const W = w * (1 + pad * 2), H = h * (1 + pad * 2)
+  const W = w * (1 + pad * 2), H = h * (1 + padY * 2)
   const base = 17 + pass * 13
   const pts = ringPts(W, H, base, seed)
   // the second pass: same hand, a touch smaller and rotated, only over part of the loop
   const pts2 = ringPts(W * 0.985, H * 0.98, base, seed + 1).slice(8, 50).map(([x, y]) => [x + W * 0.006, y + H * 0.008])
-  return <Pen W={W} H={H} pts={pts} pts2={pts2} wmax={Math.max(2.6, Math.min(5, Math.min(W, H) / 110))} on={on} pass={pass} className="pen-ring" style={{ left: -w * pad, top: -h * pad }} />
+  return <Pen W={W} H={H} pts={pts} pts2={pts2} wmax={Math.max(2.6, Math.min(5, Math.min(W, H) / 110))} on={on} pass={pass} className="pen-ring" style={{ left: -w * pad, top: -h * padY }} />
 }
 function PenLine({ w, on, redraw }) {
   const [seed, pass] = useJitter(on, redraw)
@@ -371,28 +375,28 @@ function PenLine({ w, on, redraw }) {
   const pts2 = linePts(W, H, base, seed + 1).slice(4, 24).map(([x, y]) => [x + 1.5, y + 1.1])
   return <Pen W={W} H={H} pts={pts} pts2={pts2} wmax={2.3} on={on} pass={pass} className="scr-line" style={{ left: -w * 0.05, bottom: -10 }} />
 }
-function CatRing({ on, redraw }) {
+function CatRing({ on, redraw, ring }) {
   const ref = useRef(null)
   const [s, setS] = useState(null)
   useLayoutEffect(() => { const p = ref.current && ref.current.parentElement; if (p) setS({ w: p.offsetWidth, h: p.offsetHeight }) }, [])
-  return <span ref={ref} className="h-cat-ring">{s && <PenLine w={s.w} on={on} redraw={redraw} />}</span>
+  return <span ref={ref} className="h-cat-ring">{s && (ring ? <Scribble w={s.w} h={s.h} on={on} pad={0.16} padY={0.62} redraw={redraw} /> : <PenLine w={s.w} on={on} redraw={redraw} />)}</span>
 }
 /* One top bar everywhere: name left, the three wheel sections + the two pages right, contact quiet at the end */
 function SiteNav({ go, active, className = '', onHover, onJump }) {
   const [hov, setHov] = useState(null)
   const h = (id) => { setHov(id); if (onHover) onHover(id) }
   const jump = (id) => { if (id === 'paintings') { go({ view: 'paintings' }); return } if (onJump && SEC_START[id] >= 0) { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); onJump(id) } else { if (SEC_START[id] >= 0) ROWPOS.jumpTo = id; go(id === 'about' ? { view: 'about' } : { view: 'browse', cat: id }) } }
-  const item = (id, label) => (
+  const item = (id, label, ring = false) => (
     <a key={id} href={id === 'about' ? '#/about' : id === 'paintings' ? '#/art' : `#/${id}`} className={id === active ? 'is-on' : ''} aria-current={id === active ? 'true' : undefined}
       onMouseEnter={() => h(id)} onMouseLeave={() => h(null)} onFocus={() => h(id)} onBlur={() => h(null)}
       onClick={(e) => { e.preventDefault(); if (e.detail) e.currentTarget.blur(); jump(id) }}>
-      <span className="h-cat-l">{label}<CatRing on={hov === id} redraw={active} /></span>
+      <span className="h-cat-l">{label}<CatRing on={hov === id} redraw={active} ring={ring} /></span>
     </a>
   )
   return (
     <header className={`sn ${className}`}>
       <nav className="sn-nav sn-l h-nav" aria-label="Sections">
-        {['prose', 'publications', 'luck'].map((c) => item(c, catOf(c).label))}
+        {['prose', 'publications', 'luck'].map((c) => item(c, catOf(c).label, true))}
       </nav>
       <a className="h-mark" href="#/" aria-label="Shanmu Raja, home" onClick={(e) => { e.preventDefault(); if (e.detail) e.currentTarget.blur(); if (onJump) onJump('prose'); else go({ view: 'browse', cat: 'home' }) }}>Shanmu Raja</a>
       <nav className="sn-nav sn-r h-nav" aria-label="Pages">
@@ -433,6 +437,7 @@ function startLenis() {
 function stopLenis() { if (!SCROLL.lenis) return; gsap.ticker.remove(SCROLL.tick); SCROLL.lenis.destroy(); SCROLL.lenis = null }
 function toTop() { if (SCROLL.lenis) SCROLL.lenis.scrollTo(0, { immediate: true, force: true }); window.scrollTo(0, 0) }
 // A24's "Next production" push (their scroll-next constants, unchanged)
+const SIDE = 120   // px of sideways travel that counts as a swipe back
 const NEXT = { wheel: 620, touch: 380, key: 0.34, hold: 180, drain: 0.9, settle: 350, gap: 140, surge: 1.6, surgeMin: 6, clamp: 140, ease: 10, arrive: 0.3, grow: 1.04, exitGo: 0.48 }
 // A24's production hero reveal timings
 const RISE = { dur: 0.7, shift: 120, titleStagger: 0.08, text: 0.12, textStagger: 0.03, cta: 0.38, pop: 0.5 }
@@ -841,7 +846,8 @@ function Piece({ cat, i, go, via }) {
     if (!flying) return
     let live = true
     const back = FLY.data.back
-    NAV.hold = flyTo(rectOfEl(art.current), { back: false, duration: back ? 0.95 : 0.85 })
+    const slot = cat === 'prose' && art.current.parentElement ? rectOfEl(art.current.parentElement) : null
+    NAV.hold = flyTo(rectOfEl(art.current), { back: false, duration: back ? 0.95 : 0.85, clip: slot })
       .then(() => decoded(art.current && art.current.querySelector('img')))
       .then(() => { if (!live) return; setHold(false); return frames(2) })
       .then(() => { if (FLY.dir === 'in') flyClear() })
@@ -859,6 +865,10 @@ function Piece({ cat, i, go, via }) {
         const b = a.getBoundingClientRect()
         if (b.bottom < 0 || b.top > window.innerHeight) return fadeOutPage()
         const n = flyNode(rectOfEl(a), it, false)
+        if (cat === 'prose' && a.parentElement) {
+          const s = a.parentElement.getBoundingClientRect(), f = a.getBoundingClientRect(), pc = (v, d) => `${Math.max(0, (v / d) * 100).toFixed(3)}%`
+          n.style.clipPath = `inset(${pc(s.top - f.top, f.height)} ${pc(f.right - s.right, f.width)} ${pc(f.bottom - s.bottom, f.height)} ${pc(s.left - f.left, f.width)})`
+        }
         await Promise.all([...n.querySelectorAll('img')].map(decoded))
         a.style.visibility = 'hidden'
         FLY.dir = 'out'; FLY.data = { cat, i, back: false, mode: 'home' }
@@ -901,7 +911,7 @@ function Piece({ cat, i, go, via }) {
       />
     )
   }
-  if (cat === 'prose') return <Story key={it.slug} {...{ it, cat, i, items, go, art, meta, honors, credit }} />
+  if (cat === 'prose') return <Story key={it.slug} {...{ it, cat, i, items, go, art, meta, honors, credit, hold }} />
   return (
     <article className={`pg pg-piece pg-c-${cat}${flying ? ' is-flown' : ' is-direct'}${dir ? ` is-step is-step-${dir > 0 ? 'n' : 'p'}` : ''}`}>
       <PageTop back={() => go(home)} backLabel={catOf(home.cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(items.length)}`} />
@@ -982,9 +992,16 @@ function restOf(line, paras) {
   return ps
 }
 const factsOf = (x) => { const v = (k) => ((x.meta || []).find(([y]) => y === k) || [])[1]; return [x.kind || v('Kind'), v('Venue'), v('Published')].filter(Boolean).join(' · ') }
-function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
+function Story({ it, cat, i, items, go, art, meta, honors, credit, hold }) {
   const t = TEASERS[it.slug] || {}
   const root = useRef(null), zone = useRef(null), pillRef = useRef(null)
+  const flown = useRef(hold)
+  // the painting's parallax, on its frame: the frame's box is then exactly where the image shows
+  const parallax = () => {
+    const f = art.current, sec = f && f.parentElement; if (!f || !sec || reduced()) return
+    const b = sec.getBoundingClientRect(), H = window.innerHeight, p = clamp01((H - b.top) / (H + b.height))
+    f.style.transform = `translate3d(0,${((p - 1) * (f.offsetHeight - b.height)).toFixed(1)}px,0)`
+  }
   const N = items.length, next = (i + 1) % N
   const nx = items[next]
   const mobile = typeof window !== 'undefined' && window.innerWidth <= 760
@@ -993,6 +1010,8 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
     toTop()
     const el = root.current; if (!el || reduced()) return
     const q = (s) => [...el.querySelectorAll(s)]
+    parallax()
+    if (flown.current) gsap.set(q('.s38-paint .s38-w > .s42-r'), { yPercent: RISE.shift })
     const tl = gsap.timeline()
     tl.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5 }, 0)
     tl.fromTo(q('.s42-head .s38-title .s42-r'), { yPercent: RISE.shift }, { yPercent: 0, duration: RISE.dur, ease: 'energy', stagger: RISE.titleStagger }, 0.05)
@@ -1000,23 +1019,38 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
     tl.fromTo(q('.s42-head .s42-open > :not(.s42-btns)'), { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: RISE.dur, ease: 'energy', stagger: RISE.textStagger }, RISE.text + 0.08)
     tl.fromTo(q('.s42-head .s42-btns'), { autoAlpha: 0, scale: 0.94 }, { autoAlpha: 1, scale: 1, duration: RISE.pop, ease: 'energy' }, RISE.cta)
     return () => { tl.kill() }
-  }, [it.slug])
+  }, [it.slug]) // eslint-disable-line react-hooks/exhaustive-deps
+  // arriving from the gallery: the copy has landed exactly on the real painting, so nothing moves at the hand-off;
+  // once it is gone, the words rise in, as the title did
+  useEffect(() => {
+    const el = root.current
+    if (!el || hold || !flown.current) return
+    flown.current = false
+    const ws = el.querySelectorAll('.s38-paint .s38-w > .s42-r')
+    if (reduced()) { gsap.set(ws, { yPercent: 0 }); return }
+    let live = true, tw = null
+    Promise.race([Promise.resolve(NAV.hold), wait(1500)]).then(() => { if (live) tw = gsap.to(ws, { yPercent: 0, duration: RISE.dur, ease: 'energy', stagger: RISE.titleStagger, delay: 0.05 }) })
+    return () => { live = false; if (tw) tw.kill() }
+  }, [hold])
   // THE scroll driver. Its listeners are all passive and never cancel anything; Lenis does the scrolling. At the end of the
   // page a deliberate push fills the bar and turns to the next story, with A24's rules for what counts as one.
   useEffect(() => {
     const el = root.current; if (!el) return
     const red = reduced()
-    let raf = 0, lastY = window.scrollY, P = 0, D = 0, lastPush = 0, loopRaf = 0, loopT = 0, leaving = false, armed = false, endSince = 0, lastT = 0, lastAbs = 0, arrived = false, ty = null
+    let ruled = false, raf = 0, lastY = window.scrollY, P = 0, D = 0, lastPush = 0, loopRaf = 0, loopT = 0, leaving = false, armed = false, endSince = 0, lastT = 0, lastAbs = 0, arrived = false, ty = null
     const q$ = (s) => el.querySelectorAll(s)
     const hero = el.querySelector('.s38-paint'), img = el.querySelector('.s38-paint-img'), words = q$('.s38-paint .s38-w')
     const nx$ = zone.current, nlines = q$('.s42-nx .s42-r'), nrules = q$('.s42-nx .s38-rule'), fill = el.querySelector('.s42-nx .s38-fill'), plate = el.querySelector('.s42-nplate'), plateIn = el.querySelector('.s42-nplate-in'), hint = el.querySelector('.s42-nx .s42-hint')
     const prog = (node) => { const b = node.getBoundingClientRect(), H = window.innerHeight; return { p: clamp01((H - b.top) / (H + b.height)), h: b.height } }
     const atEnd = () => { const l = SCROLL.lenis; if (l && typeof l.limit === 'number') return (typeof l.targetScroll === 'number' ? l.targetScroll : l.scroll) >= l.limit - 2; return window.scrollY >= document.documentElement.scrollHeight - window.innerHeight - 2 }
     if (!red) { gsap.set(nrules, { scaleX: 0, transformOrigin: 'left center' }); gsap.set(nlines, { yPercent: RISE.shift }); if (plate) gsap.set(plate, { scale: 0.35, autoAlpha: 0 }) }
-    const arrive = () => {   // the footer comes in: rules draw, the next title rises, the plate pops (A24 arriveStart .3)
+    // the footer comes in: its rules draw as soon as it is on screen, so it is never an empty band; then the next
+    // title rises and the plate pops once it is 30% in (A24 arriveStart .3)
+    const rule = () => { ruled = true; if (!red) gsap.to(nrules, { scaleX: 1, duration: 0.9, ease: 'energy', stagger: 0.06 }) }
+    const arrive = () => {
       arrived = true
+      if (!ruled) rule()
       if (red) return
-      gsap.to(nrules, { scaleX: 1, duration: 0.9, ease: 'energy', stagger: 0.06 })
       gsap.to(nlines, { yPercent: 0, duration: RISE.dur, ease: 'energy', stagger: 0.05, delay: 0.08 })
       if (plate) gsap.to(plate, { scale: 1, autoAlpha: 1, duration: 1.05, ease: 'energy', delay: 0.12 })
     }
@@ -1026,12 +1060,14 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
       const pl = pillRef.current
       if (pl) { if (y < window.innerHeight * 0.6 || dy > 1 || (nx$ && nx$.getBoundingClientRect().top < window.innerHeight - 40)) pl.classList.remove('is-on'); else if (dy < -1) pl.classList.add('is-on') }
       if (!red && hero && img) {
-        const { p, h } = prog(hero), extra = img.offsetHeight - h
-        img.style.transform = `translate3d(0,${((p - 1) * extra).toFixed(1)}px,0)`
+        const { p } = prog(hero)
+        parallax()
         words.forEach((w, k) => { const s = k % 2 ? -1 : 1; w.style.transform = `translate3d(${(s * (p - 0.5) * (window.innerWidth <= 760 ? 3 : 8)).toFixed(2)}vw,0,0)` })
       }
       if (nx$) {
-        const { p } = prog(nx$)
+        // A24's range for the footer: from its top at the bottom of the screen to its bottom there
+        const nb = nx$.getBoundingClientRect(), p = clamp01((window.innerHeight - nb.top) / Math.max(1, nb.height))
+        if (!ruled && p > 0.02) rule()
         if (!arrived && p >= NEXT.arrive) arrive()
         if (fill) fill.style.transform = `scaleX(${D.toFixed(4)})`
         if (plateIn && !red) plateIn.style.transform = `translate3d(0,${(-D * 6).toFixed(2)}%,0) scale(${(1 + D * (NEXT.grow - 1)).toFixed(4)})`
@@ -1070,6 +1106,8 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
     }
     const wh = (e) => {
       if (e.ctrlKey) return
+      const k = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerWidth : 1, dx = e.deltaX * k
+      if (Math.abs(dx) > Math.abs(e.deltaY * k) * 1.25) { side(dx, e.timeStamp || performance.now()); return }
       const d = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1)
       if (!d) return
       const now = e.timeStamp || performance.now(), prev = lastT; lastT = now
@@ -1078,6 +1116,16 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
       if (!endSince) endSince = now
       if (!armed) { if (now - endSince < NEXT.settle || !(now - prev >= NEXT.gap || surge)) return; armed = true }
       push(Math.max(-NEXT.clamp, Math.min(NEXT.clamp, d)) / NEXT.wheel)
+    }
+    // sideways: a gesture that travels SIDE px to the right (fingers left to right) goes back to the carousel.
+    // A pause of 140ms starts a new gesture; one gesture goes back at most once.
+    let sAcc = 0, sT = 0, sSpent = false
+    const side = (dx, now) => {
+      if (now - sT > NEXT.gap) { sAcc = 0; sSpent = false }
+      sT = now
+      if (sSpent || leaving) return
+      sAcc = dx < 0 ? sAcc - dx : 0
+      if (sAcc >= SIDE) { sSpent = true; leaving = true; go({ view: 'browse', cat }) }
     }
     const ts = (e) => { ty = e.touches[0] ? e.touches[0].clientY : null }
     const tmv = (e) => { const yy = e.touches[0] && e.touches[0].clientY; if (ty == null || yy == null) return; const dy = ty - yy; ty = yy; push(dy / NEXT.touch) }
@@ -1123,11 +1171,12 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
         </div>
       </header>
       {it.src && (
-        <section className="s38-paint s38-sec" aria-label={credit || it.title} style={fit.n > 4 ? { gridTemplateRows: `repeat(${fit.n + 1}, 1fr)` } : undefined}>
-          <div ref={art} className="s38-paint-f"><img className="s38-paint-img" src={variantFor(it.src, 2000)} alt={credit || it.title} decoding="async" fetchpriority="high" /></div>
-          {Array.from({ length: fit.n + 1 }, (_, k) => <div key={k} className="s38-row">{k > 0 && pull[k - 1] && <span className={`s38-w ${k % 2 ? 'is-l' : 'is-r'}`} style={fit.f ? { fontSize: `${fit.f}px` } : undefined}>{pull[k - 1]}</span>}</div>)}
+        <section className="s38-paint s38-sec" aria-label={credit || it.title} style={{ background: placeholderOf(it.src), ...(fit.n > 4 ? { gridTemplateRows: `repeat(${fit.n + 1}, 1fr)` } : {}) }}>
+          <div ref={art} className="s38-paint-f" style={{ visibility: hold ? 'hidden' : undefined }}><img className="s38-paint-img" src={variantFor(it.src, 2000)} alt={credit || it.title} decoding="async" fetchpriority="high" /></div>
+          {Array.from({ length: fit.n + 1 }, (_, k) => <div key={k} className="s38-row">{k > 0 && pull[k - 1] && <span className={`s38-w ${k % 2 ? 'is-l' : 'is-r'}`} style={fit.f ? { fontSize: `${fit.f}px` } : undefined}><span className="s42-r">{pull[k - 1]}</span></span>}</div>)}
         </section>)}
       {it.src && credit && <p className="s42-cap"><span className="s38-lab">Painting</span><span className="s42-cap-v">{credit}</span></p>}
+      <div className="s42-again">{it.href && <a className="s38-btn" href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()} <b aria-hidden="true">↗</b></a>}</div>
       <section className="s38-next s42-nx" ref={zone} aria-label={`Next story: ${nx.title}`}>
         {[0, 1, 2, 3, 4].map((k) => (
           <div key={k} className="s38-row"><i className="s38-rule" aria-hidden="true" />

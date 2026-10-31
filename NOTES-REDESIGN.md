@@ -452,3 +452,18 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
   - Headless can't reproduce a real Mac trackpad; the constants are A24's, so it should feel the same, but that is unconfirmed by hand.
   - Touch now follows A24: any drag at the end pushes. Iteration 42's "drag must start at the edge" gate is gone.
   - Lint is down to 1 pre-existing problem (`from`, unused, in Home).
+
+## Iteration 44: no jump at either end of the painting's flight, nav circles, a second link, sideways back
+- **Landing (gallery to story).** The flown copy was sized to the painting's frame (the whole oversized image, top-aligned), but the real painting shows through its section with the parallax offset, about 600px further down at the opening scroll position. So at the hand-off the picture jumped, and the words were already sitting on the real painting under the flight.
+  - Now the parallax is applied to the frame, so the frame's box is where the image really shows. It is set in a layout effect before Piece measures it.
+  - The copy flies to that box and is trimmed to the section as it lands (`flyTo({ clip })`).
+  - The real frame stays hidden under the flight; its slot is the painting's own colour, not black.
+  - The words rise out of their masks only after the copy is gone.
+  - Measured: the copy's visible top equals the slot top to the pixel on three paintings.
+- **Return (story to gallery).** The returning copy appeared unclipped over the story text (the blip). It now starts clipped to what the slot showed, in % of its box so the clip holds as the box changes, and the clip opens as it flies home. Measured: its first frame matches the slot to the pixel.
+- **Nav.** Prose / Publications / Luck are circled on hover with the hand-drawn ring (`Scribble`, now with its own vertical padding). Deep Dives / art that I love / About keep the underline.
+- **After the painting.** There's a band of room (120 + 168px; 72 + 112 on phone) with the story's link once more ("Read on Substack/Medium"), then Next story. Fugue State gets the room without a button.
+- **Footer arrival.** The rules draw as soon as the footer is on screen, so it's never an empty band; the title rises and the plate pops at 30%. Footer progress now uses A24's range (top at the bottom of the screen to bottom at the bottom). Before, our range made "30%" mean 60% on screen.
+- **Sideways swipe.** On a story, a left-to-right two-finger swipe (120px of travel, one per gesture, a 140ms pause starts a new one) goes back to the carousel with the fly-home. `overscroll-behavior-x: none` on story pages stops Mac's own swipe-back firing as well. A slightly diagonal vertical scroll still just scrolls.
+- **Name.** SHANMU RAJA at the top already goes back to the carousel from any story (verified).
+- **Verified:** landing and return on three paintings, the story push, the side swipe both ways, the home wheel, all 15 stories at 1440/390, and no errors.

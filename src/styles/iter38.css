@@ -212,3 +212,9 @@
 }
 /* the page turn fades through paper, not white: the gap between stories is the colour the next one opens on */
 html.is-story, html.is-story body { background: #f2f2f2; }
+/* iteration 44: the nav sections are circled, not underlined; the painting is followed by room and the story's
+   link once more before the push to the next story; story pages own the sideways swipe (back to the carousel) */
+.sn-nav .pen-ring { position: absolute; }
+.s42-again { display: flex; justify-content: center; align-items: center; padding: 120px 0 168px; }
+@media (max-width: 760px) { .s42-again { padding: 72px var(--m) 112px; } .s42-again .s38-btn { width: 100%; } }
+html.is-story, html.is-story body { overscroll-behavior-x: none; }
