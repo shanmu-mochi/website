@@ -390,3 +390,8 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - The next-story zone now previews the next story's real title, credit, info rows, first line, buttons and painting, so the crossing never shows an empty screen.
 - Checked on the production build (vite build + static server) at 1024x640@2, 1280x720, 1440x900, 1728x1117 and 390x844: all 15 stories top to bottom, plus home, prose, publications, luck, deep, about and art, and the pill.
 - Caveats: the next zone loads a second painting; at low pull only the prev kicker is visible; a gesture that continues after a commit keeps scrolling; Mac GPU timing is untested.
+
+## Iteration 40
+- Removed "More to read" from the story page (markup, the `others` data and all .s38-more CSS). The flow is now: description/teaser (or the painting, when there's no teaser) leading straight into the Next story push zone. The top and bottom resistant push zones are unchanged.
+- Removed the torn edge: deleted torn()/seedOf() and the clipPath on .s38-paint and .s38-npaint. The story painting and the next-zone preview are now clean, straight-edged and full-width. Painting behaviour is unchanged.
+- Verified on the production build at 1024x640@2, 1280x720, 1440x900, 1728x1117 and 390x844: fugue-state (no teaser), to-get-the-face-right, a-boring-call and publications/same-result-different-price (separate paper template, unaffected). Wheel and touch crossings (commit and spring back both ways, first-story-up to #/prose) pass at all five sizes. 1728 down-commit only passes with frame capture off, because the screenshots are slower than the 180ms hold.

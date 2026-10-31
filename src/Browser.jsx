@@ -936,16 +936,6 @@ function chunks(text, max) {
   if (cur) out.push(cur)
   return out
 }
-function torn(seed) {   // a torn paper top edge (a low ridge, like A24's), the same for a story every time
-  const r = prng(seed), a = [r(), r(), r()].map((v) => v * 6.28), pts = ['0% 100%']
-  for (let k = 0; k <= 80; k += 1) {
-    const x = k / 80, hill = 0.5 + 0.22 * Math.sin(x * 5.1 + a[0]) + 0.16 * Math.sin(x * 11.3 + a[1]) + 0.07 * Math.sin(x * 29 + a[2])
-    const y = 1 + 12 * clamp01(hill) + 4 * Math.pow(Math.abs(x - 0.5) * 2, 3) + (r() - 0.5) * 0.5
-    pts.push(`${(x * 100).toFixed(2)}% ${y.toFixed(2)}%`)
-  }
-  pts.push('100% 100%'); return `polygon(${pts.join(',')})`
-}
-const seedOf = (s) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 9973, 7)
 function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
   const t = TEASERS[it.slug] || {}
   const root = useRef(null), zone = useRef(null), pillRef = useRef(null)
@@ -1049,7 +1039,6 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
   const rows = [['Kind', mv('Kind')], ['Published', mv('Published')], ['Venue', venue], ['Painting', credit]].filter(([, v]) => v)
   const op = t.opening || []
   const pull = chunks(t.pull, mobile ? 12 : 16).slice(0, 4)
-  const others = [...items.slice(i + 1), ...items.slice(0, i)].map((x) => ({ x, c: cat, k: items.indexOf(x) }))
   const nxHref = `#/${cat}/${nx.slug}`, toNext = (e) => { e.preventDefault(); goPiece(cat, next) }
   const pvWords = chunks(i === 0 ? catOf(cat).label : pv.title, mobile ? 40 : 14).slice(0, 3)
   const nxWords = chunks(nx.title, mobile ? 40 : 14).slice(0, 4)
@@ -1080,7 +1069,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
         </div>
       </header>
       {it.src && (
-        <section className="s38-paint s38-sec" style={{ clipPath: torn(seedOf(it.slug)) }} aria-label={credit || it.title}>
+        <section className="s38-paint s38-sec" aria-label={credit || it.title}>
           <div ref={art} className="s38-paint-f"><img className="s38-paint-img" src={variantFor(it.src, 2000)} alt={credit || it.title} decoding="async" fetchpriority="high" /></div>
           {[0, 1, 2, 3, 4].map((k) => <div key={k} className="s38-row">{k > 0 && pull[k - 1] && <span className={`s38-w ${k % 2 ? 'is-l' : 'is-r'}`}>{pull[k - 1]}</span>}</div>)}
         </section>)}
@@ -1088,12 +1077,6 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
         <section className="s38-desc">
           {op.map((p, k) => <p key={k}>{p}</p>)}
         </section>)}
-      <section className="s38-more">
-        <h2 className="s38-lab">More to read</h2>
-        <ul>{others.slice(0, 6).map(({ x, c, k }) => (
-          <li key={`${c}-${x.slug}`}><a href={`#/${c}/${x.slug}`} onClick={(e) => { e.preventDefault(); goPiece(c, k) }}><span className="s38-lab">{catOf(c).label}</span><span className="s38-val">{x.title}</span></a></li>))}
-        </ul>
-      </section>
       <section className="s38-next" ref={zone} aria-label={`Next story: ${nx.title}`}>
         <div className="s38-nbar"><span className="s38-lab s38-next-k">Next story</span><i className="s38-fill" aria-hidden="true" /><span className="s38-lab s38-hint">Keep scrolling</span></div>
         <a className="s38-nhead" href={nxHref} onClick={toNext}>
@@ -1102,7 +1085,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
           <dl className="s38-rows">{['Kind', 'Published', 'Venue', 'Painting'].map((k) => [k, ((nx.meta || []).find(([x]) => x === k) || [])[1]]).filter(([, v]) => v).map(([k, v]) => <div key={k}><dt className="s38-lab">{k}</dt><dd className="s38-val">{v}</dd></div>)}</dl>
           <div className="s38-cta">{nx.line && <p className="s38-first">{nx.line}</p>}<div className="s38-btns" aria-hidden="true"><span className="s38-btn">{nx.href ? `Read on ${((nx.meta || []).find(([x]) => x === 'Venue') || [])[1] || ''}`.trim() : 'Not yet published'} <b>{nx.href ? '↗' : ''}</b></span><span className="s38-btn">Next story <b>→</b></span></div></div>
         </a>
-        {nx.src && <div className="s38-npaint" style={{ clipPath: torn(seedOf(nx.slug)) }}><img src={variantFor(nx.src, 1200)} alt="" loading="lazy" decoding="async" /></div>}
+        {nx.src && <div className="s38-npaint"><img src={variantFor(nx.src, 1200)} alt="" loading="lazy" decoding="async" /></div>}
       </section>
     </article>
   )

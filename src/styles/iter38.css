@@ -64,13 +64,6 @@
 .s38-desc p + p { font-size: 17px; line-height: 1.5; letter-spacing: 0; max-width: 34em; }
 
 /* 4 more to read: ruled rows like the info rows */
-.s38-more { padding-bottom: 96px; }
-.s38-more h2 { padding-bottom: 8px; }
-.s38-more ul { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--hair); }
-.s38-more a { display: flex; justify-content: space-between; align-items: center; gap: 24px; min-height: var(--row); border-top: 1px solid var(--hair); color: var(--ink); text-decoration: none; transition: opacity .2s; }
-.s38-more a:hover { opacity: .55; }
-.s38-more a .s38-val { text-align: right; }
-@media (max-width: 760px) { .s38-more a .s38-lab { flex: 0 0 auto; } }
 
 /* 5 the next story, on the rules of a greyer section */
 .s38-next { background: var(--grey38); }
@@ -115,13 +108,6 @@
 .s38-btn { border: 1px solid var(--ink) !important; border-image: none !important; }
 @media (max-width: 760px) { .s38-next .s38-row { padding: 0 calc(var(--m) + 7vw); } }
 /* iteration 39: More to read is a short row of up to six pieces from the same section, titles wrap */
-.s38-more { padding: 64px 0 96px; }
-.s38-more ul { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 var(--m); border-bottom: 0; }
-.s38-more li { border-top: 1px solid var(--hair); }
-.s38-more a { display: block; min-height: 0; border-top: 0; padding: 10px 0 18px; }
-.s38-more a .s38-lab { display: block; margin-bottom: 6px; }
-.s38-more a .s38-val { display: block; text-align: left; white-space: normal; overflow: visible; text-overflow: clip; font-size: 18px; line-height: 1.25; }
-@media (max-width: 760px) { .s38-more ul { grid-template-columns: 1fr 1fr; } .s38-more a .s38-val { font-size: 15px; } }
 /* iteration 39: the next zone is the incoming story's own head on paper (title, credit, rows, first line),
    so the screen after the crossing matches what was already on screen: no empty grey stretch */
 .s38-next { height: auto !important; display: block !important; background: #f2f2f2; margin: 0 calc(-1 * var(--m)); padding: 0 var(--m) 48px; min-height: 0; }
