@@ -29,10 +29,8 @@
 .h-quote.h-quote-hw { font-size: clamp(19px, 1.5vw, 23px) !important; line-height: 1.3 !important; letter-spacing: 0; max-height: 2.7em; }
 @media (max-width: 760px) { .h-quote.h-quote-hw { font-size: 17px !important; } }
 .st-first { font-size: clamp(25px, 2.5vw, 35px) !important; line-height: 1.35 !important; letter-spacing: 0; }
-.ab-epi-1 { font-size: clamp(26px, 2.7vw, 38px) !important; line-height: 1.35 !important; letter-spacing: 0; }
 .h-epi-1 { font-size: clamp(24px, 2.2vw, 32px); line-height: 1.35; letter-spacing: 0; }
 .h-first { font-size: 20px; line-height: 1.4; }
-.hw { clip-path: inset(-40% 100% -45% -4%); }
 
 /* 7) the same pen: ink #1a1a1a, a hairline close to the font's own stroke, round ends, a little uneven */
 .scr path { stroke: #1a1a1a; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; opacity: .9; }
@@ -47,6 +45,4 @@
 .scr.is-on path { animation-duration: .5s; }
 .pen.is-on .pen-m { animation-duration: .56s; }
 .h-card.is-draw .h-card-u path { animation-duration: .56s; animation-delay: .14s; }
-.ab-epi-2 { animation-delay: 2.32s; }
-.ab-epi footer { animation-delay: 2.64s; }
 @media (max-width: 760px) { .sn-nav.sn-r { margin-top: 7px; } }

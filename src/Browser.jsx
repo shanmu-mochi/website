@@ -9,7 +9,6 @@ import gsap from 'gsap'
 import { CATS, META, PAINTINGS, SOCIALS, SELECTED_ITEMS, variantFor, aspectOf, placeholderOf, tintOf, creditText } from './pieces'
 import NOTES from './pieceNotes'
 import PaperPage from './PaperPage'
-import OPENING from './opening'
 import TEASERS from './storyTeasers'
 import Gallery, { GLIDE, imageTexture, texture, plateSize, SECTIONS } from './gallery/Gallery'
 import './styles/globals.css'
@@ -374,18 +373,6 @@ function CatRing({ on, redraw }) {
   const [s, setS] = useState(null)
   useLayoutEffect(() => { const p = ref.current && ref.current.parentElement; if (p) setS({ w: p.offsetWidth, h: p.offsetHeight }) }, [])
   return <span ref={ref} className="h-cat-ring">{s && <PenLine w={s.w} on={on} redraw={redraw} />}</span>
-}
-/* iteration 18: handwriting. Words are written in one after another, left to right, at pen speed */
-function Hand({ text, className = '', delay = 0, speed = 0.05 }) {
-  // iteration 24: every handwritten reveal runs 20% faster
-  delay *= 0.8; speed *= 0.8
-  let c = 0
-  const words = String(text || '').split(/\s+/).filter(Boolean)
-  return (
-    <span className={`hand ${className}`} aria-label={text}>
-      {words.map((w, k) => { const d = delay + c * speed; c += w.length + 1; return <React.Fragment key={k}>{k ? ' ' : ''}<span className="hw" aria-hidden="true" style={{ '--d': `${d.toFixed(2)}s`, '--t': `${Math.max(0.13, w.length * speed).toFixed(2)}s` }}>{w}</span></React.Fragment> })}
-    </span>
-  )
 }
 /* One top bar everywhere: name left, the three wheel sections + the two pages right, contact quiet at the end */
 function SiteNav({ go, active, className = '', onHover, onJump }) {
@@ -762,7 +749,7 @@ function Home({ cat, go }) {
       {/* iteration 21 (t81): under the front painting, in reading order: its title, then its first line written in by hand, then the details */}
       <div ref={qRef} className={`h-under${show ? ' is-on' : ''}`} key={`u-${shown}-${cur}`} aria-live="polite">
         <h1 className="h-title"><a href={`#/${it.cat}/${it.slug}`} onClick={(e) => { e.preventDefault(); go(pieceRoute('home', cur)) }}>{it.title}</a></h1>
-        {it.line && it.cat === 'prose' && <blockquote className="h-quote h-quote-hw is-on">{show ? <Hand text={it.line} delay={0.35} speed={Math.min(0.045, 0.75 / Math.max(1, it.line.length))} /> : <span style={{ visibility: 'hidden' }}>{it.line}</span>}</blockquote>}
+        {it.line && it.cat === 'prose' && <blockquote className="h-quote h-quote-hw is-on">{it.line}</blockquote>}
         <p className="h-umeta">{(it.cat === 'paintings' ? meta.map(([, v]) => v) : [it.kind || (it.meta.find(([k]) => k === 'Kind' || k === 'Recognition') || [])[1], (it.meta.find(([k]) => k === 'Published' || k === 'Date') || [])[1] || it.date]).filter(Boolean).join(' \u00b7 ')}</p>
       </div>
 
@@ -969,8 +956,8 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
   // land where the seam says: down = at the top; up = on this story's last screen
   useLayoutEffect(() => {
     if (SEAM.to !== it.slug) return
-    const dir = SEAM.dir
-    SEAM.to = null; SEAM.dir = 0
+    const dir = SEAM.dir, off = SEAM.off
+    SEAM.to = null; SEAM.dir = 0; SEAM.off = 0
     if (dir < 0) {
       SEAM.skipTop = true
       const pin = () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' })
@@ -982,21 +969,27 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
       const tm = setTimeout(stop, 2500)
       window.addEventListener('wheel', stopIn, { passive: true }); window.addEventListener('touchstart', stop, { passive: true }); window.addEventListener('keydown', stop)
     }
-    else window.scrollTo({ top: 0, behavior: 'instant' })
+    else { const tt = root.current && root.current.querySelector('.s38-head .s38-title'); const y = tt && off ? Math.max(0, tt.getBoundingClientRect().top + window.scrollY - off) : 0; if (y) SEAM.skipTop = true; window.scrollTo({ top: y, behavior: 'instant' }) }
   }, [it.slug])
   // THE scroll driver: one rAF-coalesced function reads scroll (and q) and writes every transform on the page
   useEffect(() => {
     const el = root.current; if (!el) return
     const red = reduced()
-    let raf = 0, q = 0, lastY = window.scrollY, drainT = 0, done = false, ty = null, upAcc = 0
+    let raf = 0, q = 0, pq = 0, pqT = 0, lastY = window.scrollY, drainT = 0, done = false, ty = null, upAcc = 0
     const q$ = (s) => el.querySelectorAll(s)
-    const hero = el.querySelector('.s38-paint'), img = el.querySelector('.s38-paint-img'), words = q$('.s38-paint .s38-w'), nwords = q$('.s38-next .s38-w'), rules = q$('.s38-next .s38-rule'), fill = el.querySelector('.s38-fill'), kick = el.querySelector('.s38-next-k')
+    const hero = el.querySelector('.s38-paint'), img = el.querySelector('.s38-paint-img'), words = q$('.s38-paint .s38-w'), nwords = q$('.s38-next .s38-w'), rules = q$('.s38-next .s38-rule'), fill = el.querySelector('.s38-next .s38-fill'), kick = el.querySelector('.s38-next .s38-next-k'), nhead = el.querySelector('.s38-nhead'), pz = el.querySelector('.s38-prev'), pwords = q$('.s38-prev .s38-w'), prules = q$('.s38-prev .s38-rule'), pfill = el.querySelector('.s38-prev .s38-fill')
     const prog = (node) => { const b = node.getBoundingClientRect(), H = window.innerHeight; return { p: clamp01((H - b.top) / (H + b.height)), h: b.height } }
     const paint = () => {
       raf = 0
       const y = window.scrollY, dy = y - lastY; lastY = y
       const pl = pillRef.current
-      if (pl) { if (y < window.innerHeight * 0.6 || dy > 1) pl.classList.remove('is-on'); else if (dy < -1) pl.classList.add('is-on') }   // the back link is on screen near the top
+      if (pl) { if (y < window.innerHeight * 0.6 || dy > 1 || (zone.current && zone.current.getBoundingClientRect().top < window.innerHeight - 40)) pl.classList.remove('is-on'); else if (dy < -1) pl.classList.add('is-on') }   // the back link is on screen near the top
+      el.style.setProperty('--pq', pq.toFixed(4)); el.classList.toggle('is-pq', pq > 0)
+      if (pz) {
+        pwords.forEach((w, k) => { const s2 = k % 2 ? 1 : -1; w.style.transform = `translate3d(${(s2 * (1 - clamp01(pq * 2)) * 6).toFixed(2)}vw,${((1 - pq) * -24).toFixed(1)}px,0)` })
+        prules.forEach((r, k) => { r.style.transform = `scaleX(${clamp01(pq * 1.6 - (4 - k) * 0.12).toFixed(4)})` })
+        if (pfill) pfill.style.transform = `scaleX(${pq.toFixed(4)})`
+      }
       if (red) { if (zone.current) zone.current.style.setProperty('--q', q.toFixed(3)); return }
       if (hero && img) {
         const { p, h } = prog(hero), extra = img.offsetHeight - h
@@ -1009,6 +1002,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
         rules.forEach((r, k) => { r.style.transform = `scaleX(${clamp01(1 - clamp01(q * 1.6 - k * 0.12)).toFixed(4)})` })
         if (fill) fill.style.transform = `scaleX(${q.toFixed(4)})`
         if (kick) kick.style.opacity = (1 - q).toFixed(3)
+        if (nhead) nhead.style.transform = `translate3d(0,${(-q * 24).toFixed(1)}px,0)`
       }
     }
     const kickP = () => { if (!raf) raf = requestAnimationFrame(paint) }
@@ -1018,11 +1012,13 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
     const commit = (d) => {
       done = true; clearTimeout(drainT)
       GEST.s = 1; GEST.t = performance.now(); GEST.m = Math.abs(d); GEST.touch = ty != null
-      SEAM.to = nx.slug; SEAM.dir = 1; SEAM.off = 0
+      SEAM.to = nx.slug; SEAM.dir = 1; { const nt = el.querySelector('.s38-nhead .s38-title'); SEAM.off = nt ? nt.getBoundingClientRect().top : 0 }
       go({ view: 'piece', cat, i: next }, { seam: true })
     }
     const push = (d, per) => { q = clamp01(q + d / per); kickP(); if (q >= 1) commit(d); else drain() }
-    const goUp = (d, now) => { done = true; GEST.touch = ty != null; GEST.s = -1; GEST.t = now; GEST.m = Math.abs(d); SEAM.to = pv.slug; SEAM.dir = -1; SEAM.off = 0; go({ view: 'piece', cat, i: prev }, { seam: true }) }
+    const drainP = () => { clearTimeout(pqT); pqT = setTimeout(function d() { if (done || pq <= 0) return; pq = pq * PUSH38.drain - 0.002; if (pq < 0.002) pq = 0; kickP(); if (pq > 0) pqT = setTimeout(d, 16) }, PUSH38.hold) }
+    const pushUp = (d, per, now) => { pq = clamp01(pq + d / per); kickP(); if (pq >= 1) goUp(d, now); else drainP() }
+    const goUp = (d, now) => { clearTimeout(pqT); if (i === 0) { done = true; GEST.touch = ty != null; GEST.s = -1; GEST.t = now; GEST.m = Math.abs(d); go({ view: 'browse', cat }); return } done = true; GEST.touch = ty != null; GEST.s = -1; GEST.t = now; GEST.m = Math.abs(d); SEAM.to = pv.slug; SEAM.dir = -1; SEAM.off = 0; go({ view: 'piece', cat, i: prev }, { seam: true }) }
     const wh = (e) => {
       if (e.ctrlKey) return
       if (done) { e.preventDefault(); return }
@@ -1031,8 +1027,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
       if (!d) return
       if (gestTail(d, now)) { e.preventDefault(); return }
       if ((d > 0 && atBottom()) || (d < 0 && q > 0)) { e.preventDefault(); push(d, PUSH38.wheel); return }
-      if (d < 0 && window.scrollY <= 0 && !NAV.busy) { upAcc += -d; if (e.deltaMode === 1 || upAcc > 40) goUp(d, now); return }
-      upAcc = 0
+      if ((d < 0 && window.scrollY <= 0 && !NAV.busy) || (d > 0 && pq > 0)) { e.preventDefault(); pushUp(-d, PUSH38.wheel, now); return }
     }
     const ts = (e) => { ty = e.touches[0].clientY; upAcc = 0; GEST.touch = false }
     const tmv = (e) => {
@@ -1040,14 +1035,14 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
       if (done) { e.preventDefault(); return }
       const yy = e.touches[0].clientY, dy = ty - yy; ty = yy
       if ((dy > 0 && atBottom()) || (dy < 0 && q > 0)) { e.preventDefault(); push(dy, PUSH38.touch); return }
-      if (dy < 0 && window.scrollY <= 0 && !NAV.busy) { upAcc += -dy; if (upAcc > 70) { e.preventDefault(); goUp(dy, performance.now()) } }
+      if ((dy < 0 && window.scrollY <= 0 && !NAV.busy) || (dy > 0 && pq > 0)) { e.preventDefault(); pushUp(-dy, PUSH38.touch, performance.now()) }
     }
     const te = () => { ty = null }
     const key = (e) => { if (done || !atBottom()) return; if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); push(PUSH38.wheel / 2, PUSH38.wheel) } }
     paint()
     window.addEventListener('scroll', kickP, { passive: true }); window.addEventListener('resize', kickP)
     window.addEventListener('wheel', wh, { passive: false }); window.addEventListener('touchstart', ts, { passive: true }); window.addEventListener('touchmove', tmv, { passive: false }); window.addEventListener('touchend', te, { passive: true }); window.addEventListener('keydown', key)
-    return () => { clearTimeout(drainT); cancelAnimationFrame(raf); window.removeEventListener('scroll', kickP); window.removeEventListener('resize', kickP); window.removeEventListener('wheel', wh); window.removeEventListener('touchstart', ts); window.removeEventListener('touchmove', tmv); window.removeEventListener('touchend', te); window.removeEventListener('keydown', key) }
+    return () => { clearTimeout(drainT); clearTimeout(pqT); cancelAnimationFrame(raf); window.removeEventListener('scroll', kickP); window.removeEventListener('resize', kickP); window.removeEventListener('wheel', wh); window.removeEventListener('touchstart', ts); window.removeEventListener('touchmove', tmv); window.removeEventListener('touchend', te); window.removeEventListener('keydown', key) }
   }, [it.slug]) // eslint-disable-line react-hooks/exhaustive-deps
   const mv = (k) => (meta.find(([x]) => x === k) || [])[1]
   const venue = mv('Venue')
@@ -1055,8 +1050,8 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
   const op = t.opening || []
   const pull = chunks(t.pull, mobile ? 12 : 16).slice(0, 4)
   const others = [...items.slice(i + 1), ...items.slice(0, i)].map((x) => ({ x, c: cat, k: items.indexOf(x) }))
-  const pubs = (catOf0('publications').items || []).map((x, k) => ({ x, c: 'publications', k }))
   const nxHref = `#/${cat}/${nx.slug}`, toNext = (e) => { e.preventDefault(); goPiece(cat, next) }
+  const pvWords = chunks(i === 0 ? catOf(cat).label : pv.title, mobile ? 40 : 14).slice(0, 3)
   const nxWords = chunks(nx.title, mobile ? 40 : 14).slice(0, 4)
   const read = it.href
     ? <a className="s38-btn" href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()} <b aria-hidden="true">↗</b></a>
@@ -1064,6 +1059,14 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
   return (
     <article ref={root} className={`pg pg-piece pg-story s38 pg-c-${cat} is-direct`}>
       <PageTop back={() => go({ view: 'browse', cat })} backLabel={catOf(cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(N)}`} />
+      <section className="s38-prev s38-sec" aria-label={i === 0 ? catOf(cat).label : `Previous story: ${pv.title}`} aria-hidden="true">
+        {[0, 1, 2, 3, 4].map((k) => (
+          <div key={k} className="s38-row"><i className="s38-rule" aria-hidden="true" />
+            {k === 0 && <><i className="s38-fill" aria-hidden="true" /><span className="s38-lab s38-hint">Keep scrolling</span></>}
+            {k >= 1 && k <= 3 && pvWords[k - 1] && <span className={`s38-w ${k % 2 ? 'is-l' : 'is-r'}`}>{pvWords[k - 1]}</span>}
+            {k === 4 && <span className="s38-lab s38-next-k">{i === 0 ? `Back to ${catOf(cat).label}` : 'Previous story'}</span>}
+          </div>))}
+      </section>
       <a ref={pillRef} className="mp35" href={`#/${cat}`} onClick={(e) => { e.preventDefault(); go({ view: 'browse', cat }) }}><span aria-hidden="true">←</span> Menu</a>
       <header className="s38-head">
         <h1 className="s38-title">{it.title}</h1>
@@ -1087,17 +1090,19 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
         </section>)}
       <section className="s38-more">
         <h2 className="s38-lab">More to read</h2>
-        <ul>{[...others, ...pubs].map(({ x, c, k }) => (
+        <ul>{others.slice(0, 6).map(({ x, c, k }) => (
           <li key={`${c}-${x.slug}`}><a href={`#/${c}/${x.slug}`} onClick={(e) => { e.preventDefault(); goPiece(c, k) }}><span className="s38-lab">{catOf(c).label}</span><span className="s38-val">{x.title}</span></a></li>))}
         </ul>
       </section>
-      <section className="s38-next s38-sec" ref={zone} aria-label={`Next story: ${nx.title}`}>
-        {[0, 1, 2, 3, 4].map((k) => (
-          <div key={k} className="s38-row"><i className="s38-rule" aria-hidden="true" />
-            {k === 0 && <span className="s38-lab s38-next-k">Next story</span>}
-            {k >= 1 && nxWords[k - 1] && <a className={`s38-w ${k % 2 ? 'is-l' : 'is-r'}`} href={nxHref} onClick={toNext}>{nxWords[k - 1]}</a>}
-            {k === 4 && <><i className="s38-fill" aria-hidden="true" /><span className="s38-lab s38-hint">Keep scrolling</span></>}
-          </div>))}
+      <section className="s38-next" ref={zone} aria-label={`Next story: ${nx.title}`}>
+        <div className="s38-nbar"><span className="s38-lab s38-next-k">Next story</span><i className="s38-fill" aria-hidden="true" /><span className="s38-lab s38-hint">Keep scrolling</span></div>
+        <a className="s38-nhead" href={nxHref} onClick={toNext}>
+          <h2 className="s38-title">{nx.title}</h2>
+          <div className="s38-credit"><span className="s38-lab">Written by</span> <span className="s38-val">Shanmu Raja</span></div>
+          <dl className="s38-rows">{['Kind', 'Published', 'Venue', 'Painting'].map((k) => [k, ((nx.meta || []).find(([x]) => x === k) || [])[1]]).filter(([, v]) => v).map(([k, v]) => <div key={k}><dt className="s38-lab">{k}</dt><dd className="s38-val">{v}</dd></div>)}</dl>
+          <div className="s38-cta">{nx.line && <p className="s38-first">{nx.line}</p>}<div className="s38-btns" aria-hidden="true"><span className="s38-btn">{nx.href ? `Read on ${((nx.meta || []).find(([x]) => x === 'Venue') || [])[1] || ''}`.trim() : 'Not yet published'} <b>{nx.href ? '↗' : ''}</b></span><span className="s38-btn">Next story <b>→</b></span></div></div>
+        </a>
+        {nx.src && <div className="s38-npaint" style={{ clipPath: torn(seedOf(nx.slug)) }}><img src={variantFor(nx.src, 1200)} alt="" loading="lazy" decoding="async" /></div>}
       </section>
     </article>
   )
@@ -1109,12 +1114,6 @@ function About({ go }) {
     <article className="pg pg-about">
       <PageTop back={() => go({ view: 'browse', cat: lastCat.current })} backLabel="Back" go={go} active="about" right="" />
       <div className="pg-head"><h1 className="pg-title"><span>About</span></h1><hr className="pg-rule" /></div>
-      {/* iteration 19: the Chekhov line lives here, off the stage; its first sentence is written by hand */}
-      <blockquote className="ab-epi">
-        <p className="ab-epi-1"><Hand text={OPENING.lines[0]} delay={0.5} speed={0.045} /></p>
-        <p className="ab-epi-2">{OPENING.lines[1]}</p>
-        <footer>{OPENING.by}</footer>
-      </blockquote>
       <div className="ab">
         <img src="/headshot-700.webp" alt="Shanmu Raja" width="700" height="1049" />
         <div>

@@ -380,3 +380,13 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - The painting is cover-cropped.
 - On mobile the buttons stay in the CTA.
 - No Mac-GPU timing this iteration.
+
+## Iteration 39
+- Handwritten first lines are now static. Removed the Hand component, src/opening.js and the .hw/hw-write/ab-epi CSS. Tyrowo Inked is kept for Prose only.
+- About: the Chekhov quote is gone; the bio is unchanged.
+- Top resistant push: a fixed "Previous story" zone (40vh) with the previous title and a fill line. It springs back if you stop short and commits when the line fills. One story per gesture. From the first story it goes back to the section carousel. The Menu pill and the mouse back button still work.
+- Overlap regression causes: .s38-paint had margin-top -26vh (painting over the buttons); the CTA had a fixed min-height of 411px plus a margin (the gap); the pull words were 72px with ±4vw drift (cut off at the left); A24-style double borders; + marks. All fixed.
+- More to read: at most 6 items from the same section, excluding the current story, with wrapping titles in a grid.
+- The next-story zone now previews the next story's real title, credit, info rows, first line, buttons and painting, so the crossing never shows an empty screen.
+- Checked on the production build (vite build + static server) at 1024x640@2, 1280x720, 1440x900, 1728x1117 and 390x844: all 15 stories top to bottom, plus home, prose, publications, luck, deep, about and art, and the pill.
+- Caveats: the next zone loads a second painting; at low pull only the prev kicker is visible; a gesture that continues after a commit keeps scrolling; Mac GPU timing is untested.

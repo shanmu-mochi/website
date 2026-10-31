@@ -15,7 +15,6 @@
 @media (max-width: 760px) { .h-end { right: 16px; bottom: 64px; } }
 
 /* E) handwriting: Caveat, written in word by word with a pen-speed clip sweep */
-.ab-epi-1 { font: 500 clamp(30px, 3vw, 42px)/1.2 'Tyrowo Inked', var(--book) !important; }
 
 /* F) the pen */
 .scr.pen path { stroke: none; animation: none; transition: none; stroke-dasharray: none; }
