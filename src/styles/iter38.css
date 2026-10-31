@@ -218,3 +218,56 @@ html.is-story, html.is-story body { background: #f2f2f2; }
 .s42-again { display: flex; justify-content: center; align-items: center; padding: 120px 0 168px; }
 @media (max-width: 760px) { .s42-again { padding: 72px var(--m) 112px; } .s42-again .s38-btn { width: 100%; } }
 html.is-story, html.is-story body { overscroll-behavior-x: none; }
+/* iteration 45: the story page is a Paris Review fiction page (measured on theparisreview.org at 1440): white;
+   title 48/1.08 regular in #414141; byline row 34px between a dark and a light rule, the author in their olive
+   (#5c5932) and the details in 11.2px bold spaced caps; body 20/1.5 in a 754px column, paragraphs tight, the
+   first flush and the rest indented 1.8em. Lora stands in for Heldane, Archivo for Founders Grotesk. */
+.pg.s38 { background: #fff !important; --pr-ink: #414141; --pr-olive: #5c5932; }
+html.is-story, html.is-story body { background: #fff; }
+.s38 .pg-sn, .s38 .pg-top, .s38-head { border-image: none !important; }
+.s38-next, .s42-nx { background: #fff !important; }
+.pr45 { max-width: 754px; margin: 0 0 0 max(0px, calc(5.2vw - var(--m))); padding-top: 56px; text-align: left; color: var(--pr-ink); }
+.s38 .pr45-title { font: 400 48px/1.08 'Lora', Georgia, serif; letter-spacing: -.005em; text-transform: none; text-align: left; max-width: none; margin: 0; padding: 0 0 16.8px; color: var(--pr-ink); text-wrap: balance; }
+.pr45-deck { font: italic 400 20px/1.4 'Lora', Georgia, serif; margin: -4px 0 16px; color: var(--pr-ink); }
+.pr45-by { border-top: 1px solid var(--pr-ink); border-bottom: 1px solid #dcdcdc; }
+.pr45-by-in { display: flex !important; justify-content: space-between; align-items: baseline; gap: 16px; min-height: 34px; line-height: 34px; }
+.pr45-author { font: 400 16.8px/34px 'Lora', Georgia, serif; color: var(--pr-olive); }
+.pr45-facts { font: 700 11.2px/34px 'Archivo', 'Helvetica Neue', Arial, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--pr-olive); text-align: right; }
+.s38 .pr45-honor { text-align: left; margin-top: 14px; }
+.s38 .pr45-honor .pg-honor { font: italic 400 16.8px/1.4 'Lora', Georgia, serif; }
+.s38 .pr45-honor .pg-honor a { color: var(--pr-olive); text-decoration-color: rgba(92, 89, 50, .4); }
+.s38 .pr45 .s42-open { max-width: none; margin: 40px 0 0; padding: 0 0 96px; }
+.s38 .pr45 .s42-p { font: 400 20px/1.5 'Lora', Georgia, serif; color: var(--pr-ink); margin: 0; text-indent: 0; }
+.s38 .pr45 .s42-p + .s42-p { text-indent: 1.8em; }
+.s38 .pr45 .s42-btns { margin-top: 36px; justify-content: flex-start; }
+.s38 .pr45 .is-bare .s42-btns { margin-top: 0; }
+/* the button, here and after the painting: Paris Review's olive, white type (their black on olive is too faint) */
+.s38 .s38-btn { background: var(--pr-olive); color: #fff; border: 0 !important; border-image: none !important; height: 46px; min-width: 0; padding: 0 22px; font: 600 11.2px/1 'Archivo', 'Helvetica Neue', Arial, sans-serif; letter-spacing: .1em; text-transform: uppercase; transition: background .2s; }
+.s38 .s38-btn:hover { background: #45421f; }
+.s38 .s38-btn.is-muted { background: transparent; color: var(--pr-ink); opacity: .55; padding-left: 0; }
+.s38 .s42-cap { color: #6b6b6b; }
+@media (max-width: 760px) {
+  .pr45 { margin: 0 calc(var(--m) + 8px); padding-top: 32px; }
+  .s38 .pr45-title { font-size: 34px; }
+  .pr45-by-in { flex-wrap: wrap; line-height: 1.4; padding: 8px 0; gap: 2px 12px; }
+  .pr45-author, .pr45-facts { line-height: 1.6; }
+  .pr45-facts { text-align: left; }
+  .s38 .pr45 .s42-p { font-size: 18px; line-height: 1.55; }
+  .s38 .pr45 .s42-btns .s38-btn { width: 100%; }
+}
+/* iteration 45: the table of contents. Hangs under a nav section on hover, or above the counter on click */
+.sn-it { position: relative; display: inline-flex; }
+.toc { z-index: 90; background: #fbfaf7; border-top: 1px solid #111; box-shadow: 0 18px 50px rgba(17, 17, 17, .12); padding: 0 0 6px; width: min(440px, calc(100vw - 24px)); text-align: left; }
+.toc-h { display: flex; justify-content: space-between; padding: 12px 16px 10px; font: 600 10px/1 'Archivo', 'Helvetica Neue', Arial, sans-serif; letter-spacing: .18em; text-transform: uppercase; color: rgba(17, 17, 17, .55); border-bottom: 1px solid rgba(17, 17, 17, .12); }
+.toc-l { list-style: none; margin: 0; padding: 0; max-height: min(60vh, 520px); overflow-y: auto; overscroll-behavior: contain; }
+.toc-l a { display: grid; grid-template-columns: 26px 1fr auto; gap: 12px; align-items: baseline; padding: 9px 16px; color: #111; text-decoration: none; border-bottom: 1px solid rgba(17, 17, 17, .07); transition: background .15s; }
+.toc-l a:hover, .toc-l a:focus-visible { background: rgba(17, 17, 17, .045); outline: none; }
+.toc-l a.is-cur .toc-t { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.toc-i { font: 500 10px/1 'Archivo', 'Helvetica Neue', Arial, sans-serif; letter-spacing: .1em; color: rgba(17, 17, 17, .45); }
+.toc-t { font: 400 16px/1.3 'Lora', Georgia, serif; }
+.toc-m { font: 500 9.5px/1.3 'Archivo', 'Helvetica Neue', Arial, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: rgba(17, 17, 17, .5); text-align: right; white-space: nowrap; }
+.toc-drop { position: fixed; animation: toc-in .18s ease-out both; }
+.toc-drop::before { content: ''; position: absolute; left: 0; right: 0; top: -14px; height: 14px; }   /* a bridge, so the pointer can cross the gap */
+.toc-pop { position: fixed; right: 16px; bottom: 76px; animation: toc-in .18s ease-out both; }
+@keyframes toc-in { from { opacity: 0; transform: translate(var(--tx, 0), 6px); } to { opacity: 1; transform: translate(var(--tx, 0), 0); } }
+@media (prefers-reduced-motion: reduce) { .toc-drop, .toc-pop { animation: none; } }

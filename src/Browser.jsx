@@ -4,6 +4,7 @@
    Routes are hash-based so a plain static server works:
    #/prose  #/publications  #/luck  #/<cat>/<slug>  #/about  #/paintings */
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import * as THREE from 'three'
 import gsap from 'gsap'
 import { CustomEase } from 'gsap/CustomEase'
@@ -381,22 +382,58 @@ function CatRing({ on, redraw, ring }) {
   useLayoutEffect(() => { const p = ref.current && ref.current.parentElement; if (p) setS({ w: p.offsetWidth, h: p.offsetHeight }) }, [])
   return <span ref={ref} className="h-cat-ring">{s && (ring ? <Scribble w={s.w} h={s.h} on={on} pad={0.16} padY={0.62} redraw={redraw} /> : <PenLine w={s.w} on={on} redraw={redraw} />)}</span>
 }
+// iteration 45: a section's table of contents. One list, two doors: hovering a section in the nav, and the counter.
+const TOC_CATS = ['prose', 'publications', 'luck', 'deep']
+const yearOf = (x) => ((x.meta || []).find(([k]) => k === 'Published' || k === 'Date') || [])[1] || x.date || ''
+function Toc({ cat, current = -1, onPick, className = '', style, onMouseEnter, onMouseLeave }) {
+  const items = catOf0(cat).items || []
+  return (
+    <div className={`toc ${className}`} style={style} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+      <div className="toc-h"><span>{catOf0(cat).label}</span><span>{pad2(items.length)}</span></div>
+      <ol className="toc-l">
+        {items.map((x, k) => (
+          <li key={x.slug}>
+            <a href={`#/${cat}/${x.slug}`} className={k === current ? 'is-cur' : undefined} aria-current={k === current ? 'true' : undefined} onClick={(e) => { e.preventDefault(); onPick(k) }}>
+              <span className="toc-i">{pad2(k + 1)}</span><span className="toc-t">{x.title}</span><span className="toc-m">{[x.kind, yearOf(x)].filter(Boolean).join(' · ')}</span>
+            </a>
+          </li>))}
+      </ol>
+    </div>
+  )
+}
 /* One top bar everywhere: name left, the three wheel sections + the two pages right, contact quiet at the end */
 function SiteNav({ go, active, className = '', onHover, onJump }) {
   const [hov, setHov] = useState(null)
   const h = (id) => { setHov(id); if (onHover) onHover(id) }
+  // the hover table of contents: opens on a section, stays while the pointer moves into it, closes a beat after it leaves
+  const [menu, setMenu] = useState(null), shut = useRef(0)
+  const fine = typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches
+  const [at, setAt] = useState(null)
+  const openMenu = (id, el) => {
+    clearTimeout(shut.current)
+    if (!fine || !TOC_CATS.includes(id)) { setMenu(null); return }
+    if (el) { const r = el.getBoundingClientRect(), w = Math.min(440, window.innerWidth - 24); setAt({ left: Math.round(Math.max(12, Math.min(window.innerWidth - w - 12, r.left + r.width / 2 - w / 2))), top: Math.round(r.bottom + 12) }) }
+    setMenu(id)
+  }
+  const closeMenu = () => { clearTimeout(shut.current); shut.current = setTimeout(() => setMenu(null), 160) }
+  useEffect(() => () => clearTimeout(shut.current), [])
+  useEffect(() => { if (!menu) return; const k = (e) => { if (e.key === 'Escape') setMenu(null) }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k) }, [menu])
+  const pick = (cat, k) => { setMenu(null); go({ view: 'piece', cat, i: k }, { direct: true, fade: true }) }
   const jump = (id) => { if (id === 'paintings') { go({ view: 'paintings' }); return } if (onJump && SEC_START[id] >= 0) { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); onJump(id) } else { if (SEC_START[id] >= 0) ROWPOS.jumpTo = id; go(id === 'about' ? { view: 'about' } : { view: 'browse', cat: id }) } }
-  const item = (id, label, ring = false) => (
-    <a key={id} href={id === 'about' ? '#/about' : id === 'paintings' ? '#/art' : `#/${id}`} className={id === active ? 'is-on' : ''} aria-current={id === active ? 'true' : undefined}
+  const item = (id, label) => (
+    <span key={id} className="sn-it" onMouseEnter={(e) => openMenu(id, e.currentTarget)} onMouseLeave={closeMenu}>
+    <a href={id === 'about' ? '#/about' : id === 'paintings' ? '#/art' : `#/${id}`} className={id === active ? 'is-on' : ''} aria-current={id === active ? 'true' : undefined}
       onMouseEnter={() => h(id)} onMouseLeave={() => h(null)} onFocus={() => h(id)} onBlur={() => h(null)}
       onClick={(e) => { e.preventDefault(); if (e.detail) e.currentTarget.blur(); jump(id) }}>
-      <span className="h-cat-l">{label}<CatRing on={hov === id} redraw={active} ring={ring} /></span>
+      <span className="h-cat-l">{label}<CatRing on={hov === id || menu === id} redraw={active} ring /></span>
     </a>
+    {menu === id && at && createPortal(<Toc cat={id} current={-1} onPick={(k) => pick(id, k)} className="toc-drop" style={at} onMouseEnter={() => openMenu(id)} onMouseLeave={closeMenu} />, document.body)}
+    </span>
   )
   return (
     <header className={`sn ${className}`}>
       <nav className="sn-nav sn-l h-nav" aria-label="Sections">
-        {['prose', 'publications', 'luck'].map((c) => item(c, catOf(c).label, true))}
+        {['prose', 'publications', 'luck'].map((c) => item(c, catOf(c).label))}
       </nav>
       <a className="h-mark" href="#/" aria-label="Shanmu Raja, home" onClick={(e) => { e.preventDefault(); if (e.detail) e.currentTarget.blur(); if (onJump) onJump('prose'); else go({ view: 'browse', cat: 'home' }) }}>Shanmu Raja</a>
       <nav className="sn-nav sn-r h-nav" aria-label="Pages">
@@ -483,6 +520,13 @@ function Home({ cat, go }) {
     return () => ev.forEach((e) => window.removeEventListener(e, off))
   }, [hintGone])
   const [nameOn, setNameOn] = useState(() => !session.introDone && !reduced() && !returning)
+  const [tocOn, setTocOn] = useState(false)
+  useEffect(() => {   // the counter's contents close on Escape or a click anywhere else
+    if (!tocOn) return
+    const k = (e) => { if (e.key === 'Escape') setTocOn(false) }, c = (e) => { if (!e.target.closest || !e.target.closest('.toc-pop, .h-count')) setTocOn(false) }
+    window.addEventListener('keydown', k); window.addEventListener('pointerdown', c, true)
+    return () => { window.removeEventListener('keydown', k); window.removeEventListener('pointerdown', c, true) }
+  }, [tocOn])
   const [fontOk, setFontOk] = useState(false)
   const nameRef = useRef(null)
   const goRef = useRef(go); goRef.current = go
@@ -786,14 +830,11 @@ function Home({ cat, go }) {
       {sec === SEC_ORDER[SEC_ORDER.length - 1] && cur === ROW.length - 1 && (
         <a className={`h-end${show ? ' is-on' : ''}`} href="#/art" onClick={(e) => { e.preventDefault(); go({ view: 'paintings' }) }}>art that I love <span aria-hidden="true">→</span></a>)}
       <div className={`h-foot${foot ? ' is-on' : ''}`}>
-        <button type="button" className="h-flip" aria-label="Flip the card over" onClick={() => { const g = gal.current; if (g && !g.busy()) g.flip() }}>
-          <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M3.5 8.5a6.5 6.5 0 0 1 11.6-3.2M16.5 11.5a6.5 6.5 0 0 1-11.6 3.2" fill="none" stroke="currentColor" strokeWidth="1.2" /><path d="M15.6 2.2v3.6H12M4.4 17.8v-3.6H8" fill="none" stroke="currentColor" strokeWidth="1.2" /></svg>
-          <span>Flip</span>
-        </button>
-        <button type="button" className="h-count" aria-label="Next piece" onClick={() => { const g = gal.current; if (g && !g.busy()) g.to((g.settled() + 1) % g.N, 'click') }}>
+        <button type="button" className={`h-count${tocOn ? ' is-open' : ''}`} aria-label={`${catOf(sec).label}, contents`} aria-expanded={tocOn} onClick={() => setTocOn((v) => !v)}>
           {pad2(cur - SEC_START[sec] + 1)} <i>/</i> {pad2(catOf0(sec).items.length)}
         </button>
       </div>
+      {tocOn && foot && <Toc cat={sec} current={cur - SEC_START[sec]} className="toc-pop" onPick={(k) => { setTocOn(false); const g = gal.current; if (g && !g.busy()) g.to(SEC_START[sec] + k - base.current, 'click') }} />}
       {/* iteration 10: socials live bottom-left, away from the counter and the screen corner */}
       <div ref={cardRef} className="h-card" aria-hidden="true">
         <small className="h-card-i" />
@@ -979,18 +1020,6 @@ function fitPull(text, mobile) {
   }
   return { rows: chunks(text, Math.floor(W / (12 * 0.64))), n: most, f: 12 }
 }
-// the handwritten line is the excerpt's first sentence; the excerpt picks up after it so nothing is said twice
-function restOf(line, paras) {
-  const ps = [...(paras || [])]
-  if (!line || !ps.length) return ps
-  const L = norm(line), sents = ps[0].split(/(?<=[.!?…][”"’)]*)\s+/)
-  for (let k = 1; k <= sents.length; k++) {
-    if (norm(sents.slice(0, k).join(' ')) !== L) continue
-    const rest = sents.slice(k).join(' ').trim()
-    return rest ? [rest, ...ps.slice(1)] : ps.slice(1)
-  }
-  return ps
-}
 const factsOf = (x) => { const v = (k) => ((x.meta || []).find(([y]) => y === k) || [])[1]; return [x.kind || v('Kind'), v('Venue'), v('Published')].filter(Boolean).join(' · ') }
 function Story({ it, cat, i, items, go, art, meta, honors, credit, hold }) {
   const t = TEASERS[it.slug] || {}
@@ -1148,7 +1177,6 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, hold }) {
   const venue = mv('Venue')
   const facts = factsOf(it)
   const op = t.opening || []
-  const body = restOf(it.line, op)
   const fit = fitPull(t.pull, mobile), pull = fit.rows
   const nxHref = `#/${cat}/${nx.slug}`, toNext = (e) => { e.preventDefault(); go({ view: 'piece', cat, i: next }, { fade: true }) }
   const nxLines = (() => { const c = chunks(nx.title, mobile ? 14 : 16); return c.length > 3 ? [c[0], c[1], c.slice(2).join(' ')] : c })()
@@ -1159,14 +1187,15 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, hold }) {
     <article ref={root} className={`pg pg-piece pg-story s38 pg-c-${cat} is-direct`}>
       <PageTop back={() => go({ view: 'browse', cat })} backLabel={catOf(cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(N)}`} />
       <a ref={pillRef} className="mp35" href={`#/${cat}`} onClick={(e) => { e.preventDefault(); go({ view: 'browse', cat }) }}><span aria-hidden="true">←</span> Menu</a>
-      <header className="s38-head s42-head">
-        <h1 className="s38-title"><span className="s42-m"><span className="s42-r">{it.title}</span></span></h1>
-        {it.subject && <p className="s42-deck"><span className="s42-m"><span className="s42-r">{it.subject}</span></span></p>}
-        {facts && <p className="s42-facts"><span className="s42-m"><span className="s42-r">{facts}</span></span></p>}
-        {honors && <div className="s42-honors"><div className="s42-m"><div className="s42-r">{honors}</div></div></div>}
-        <div className={`s42-open${it.line || body.length ? '' : ' is-bare'}`}>
-          {it.line && <p className="s38-first s42-first">{it.line}</p>}
-          {body.map((x, k) => <p key={k} className="s42-p">{x}</p>)}
+      {/* iteration 45: a Paris Review fiction page (theparisreview.org, measured): title, a byline row between two rules,
+          the opening set like a book (first paragraph flush, the rest indented), then the link */}
+      <header className="s38-head s42-head pr45">
+        <h1 className="s38-title pr45-title"><span className="s42-m"><span className="s42-r">{it.title}</span></span></h1>
+        {it.subject && <p className="pr45-deck"><span className="s42-m"><span className="s42-r">{it.subject}</span></span></p>}
+        <div className="pr45-by"><span className="s42-m"><span className="s42-r pr45-by-in"><span className="pr45-author">Shanmu Raja</span>{facts && <span className="pr45-facts">{facts}</span>}</span></span></div>
+        {honors && <div className="s42-honors pr45-honor"><div className="s42-m"><div className="s42-r">{honors}</div></div></div>}
+        <div className={`s42-open pr45-text${op.length ? '' : ' is-bare'}`}>
+          {op.map((x, k) => <p key={k} className="s42-p">{x}</p>)}
           <div className="s38-btns s42-btns">{read}</div>
         </div>
       </header>
@@ -1251,7 +1280,7 @@ export default function Browser() {
     try {
       if (NAV.hold && !(from.view === 'browse' && r.view === 'browse')) { await Promise.race([NAV.hold, wait(2500)]); NAV.hold = null }
       if (from.view === 'browse') {
-        if (r.view === 'piece' && HOME.api) {
+        if (r.view === 'piece' && HOME.api && !opts.direct) {
           const now = pieceRoute('home', HOME.api.index())
           if (!same(now, r)) r = now
           if (!reduced()) await HOME.api.open()

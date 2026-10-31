@@ -467,3 +467,27 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - **Sideways swipe.** On a story, a left-to-right two-finger swipe (120px of travel, one per gesture, a 140ms pause starts a new one) goes back to the carousel with the fly-home. `overscroll-behavior-x: none` on story pages stops Mac's own swipe-back firing as well. A slightly diagonal vertical scroll still just scrolls.
 - **Name.** SHANMU RAJA at the top already goes back to the carousel from any story (verified).
 - **Verified:** landing and return on three paintings, the story push, the side swipe both ways, the home wheel, all 15 stories at 1440/390, and no errors.
+
+## Iteration 45: Paris Review story page, contents (nav hover + counter), turn a painting over by hand
+- **Story page = a Paris Review fiction page**, measured on theparisreview.org (a real browser passes their Cloudflare; a plain fetch gets 403):
+  - White page. Title 48/1.08, regular, #414141, title case, left in a 754px column.
+  - Essays get an italic subject line.
+  - A byline row between a dark and a light rule: "Shanmu Raja" in their olive #5c5932, and kind · venue · date in 11.2px bold spaced caps.
+  - The honour as a quiet italic olive line.
+  - The opening set like a book: 20/1.5, paragraphs tight, the first flush and the rest indented 1.8em.
+  - Then the olive button (white type; their black on olive is about 3:1).
+  - Lora stands in for Heldane, Archivo for Founders Grotesk.
+  - The handwritten first line is off the story page (still on the home caption); the opening now starts with that sentence in type. `restOf()` is gone.
+  - The painting band, the second link and the footer are unchanged, now on white.
+- **Contents (TOC).** One list (`Toc`), two doors:
+  - Hovering a section in the nav (Prose, Publications, Luck, Deep Dives; fine pointers only) opens its contents under it. It's drawn in the page body, so the nav's nowrap link styles don't clip long titles, and it's clamped inside the screen. A 160ms close delay and a hover bridge let the pointer move into it; Esc closes it. A pick opens the piece directly (`go(..., { direct, fade })`, which skips the flight from the centred plate).
+  - On home, the counter opens the current section's contents above it, with the current piece marked. A pick turns the carousel to it. Esc or a click elsewhere closes it.
+- **Nav.** Every item is circled on hover (iteration 44 only circled the sections).
+- **No Flip button.** The counter stays. A painting is turned over by hand, as on A24:
+  - With a mouse, dragging the centred painting turns it; past half a turn it stays on its back, a short drag springs back, and dragging beside it still moves the row.
+  - With a finger, a sideways swipe moves the row (A24's rule) and an up/down drag on the centred painting turns it.
+  - A click without dragging still opens the story. Space still turns it over from the keyboard.
+- **Verified:**
+  - TOC: nav hover opens, stays as the pointer moves in, closes on leave, nothing clipped at 1440 and 1024; the counter marks the current piece and a pick turns the row; a nav pick opens the story.
+  - Turning over: mouse long, short and back again, the row unmoved, dragging beside moves the row; touch sideways moves the row, up/down turns.
+  - Landing and return exact; the story push and sideways back still work; all 15 stories at 1440/390 have the Paris Review head on white with no overflow; no errors.

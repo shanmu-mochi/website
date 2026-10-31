@@ -500,7 +500,7 @@ export default class Gallery {
   onDown(e) {
     if (e.button !== 0 || this.busy()) return
     const h = this.pick(e.clientX, e.clientY)
-    this.drag = { x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t: performance.now(), on: false, hit: h, spin: h && h.i === this.index() && !this.touch && !this.oneAxis ? h.i : -1, w: this.el.clientWidth, h: this.el.clientHeight }
+    this.drag = { x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t: performance.now(), on: false, hit: h, spin: h && h.i === this.index() ? h.i : -1, pt: e.pointerType, w: this.el.clientWidth, h: this.el.clientHeight }
   }
   onMove(e) {
     const d = this.drag
@@ -515,6 +515,7 @@ export default class Gallery {
     if (!d.on) {
       if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < CFG.dragStart) return
       d.ax = Math.abs(e.clientX - d.x0) >= Math.abs(e.clientY - d.y0) ? 'x' : 'y'
+      if (d.pt !== 'mouse' && d.ax === 'x') d.spin = -1
       if (d.ax === 'y' && d.spin < 0 && !this.oneAxis) { d.on = true; this.setHover(-1); return }
       d.on = true; gsap.killTweensOf(this.tw); this.tweening = false; this.target = -1; this.Te = 0
       this.setHover(-1); this.el.classList.add('is-dragging')
@@ -538,6 +539,7 @@ export default class Gallery {
     if (d.spin >= 0) {
       const p = this.plates[d.spin], k = CFG.dragSens * 0.0045
       gsap.killTweensOf(p)
+      if (d.pt !== 'mouse') { p.spinY = clamp(p.spinY - dy * k * 1.6, -Math.PI * 2, Math.PI * 2); return }
       p.spinY = clamp(p.spinY + dx * k, -Math.PI * 2, Math.PI * 2); p.spinX = clamp(p.spinX + dy * k, -Math.PI, Math.PI)
       return
     }
