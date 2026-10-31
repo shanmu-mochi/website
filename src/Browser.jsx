@@ -420,7 +420,7 @@ const NAV = { busy: false, pending: null, hold: null, dir: 0 }
 // swap is invisible; GEST marks the wheel gesture that already crossed, so its momentum tail is spent.
 const SEAM = { to: null, dir: 0, off: 0, skipTop: false }
 const GEST = { s: 0, t: 0, m: 0 }
-const gestTail = (d, now) => { if (GEST.s && Math.sign(d) === GEST.s && now - GEST.t < 120 && Math.abs(d) <= GEST.m * 1.3 + 2) { GEST.t = now; GEST.m = Math.abs(d); return true } GEST.s = 0; return false }
+const gestTail = (d, now) => { if (GEST.s && Math.sign(d) === GEST.s && now - GEST.t < 150 && Math.abs(d) <= GEST.m * 1.5 + 4) { GEST.t = now; GEST.m = Math.abs(d); return true } GEST.s = 0; return false }
 const HOME = { api: null }
 const PAGE = { api: null }
 function fadeOutPage() {
@@ -936,6 +936,34 @@ function chunks(text, max) {
   if (cur) out.push(cur)
   return out
 }
+// the sentence over the painting is shown whole: as many rows as it needs, the type only as small as it must be.
+// Mirrors the painting rows in iter38.css (side padding 9vw / 4vw, section 124vh / 88vh, display size 5.2vw / 8.4vw).
+function fitPull(text, mobile) {
+  const vw = window.innerWidth, vh = window.innerHeight
+  const base = mobile ? Math.min(35.8, vw * 0.084) : Math.min(72, vw * 0.052)
+  const keep = chunks(text, mobile ? 12 : 16)
+  if (!text || keep.length <= 4) return { rows: keep, n: 4, f: null }
+  const W = vw - 2 * (mobile ? 7 + vw * 0.04 : 6 + vw * 0.09), Hs = (mobile ? 0.88 : 1.24) * vh, most = mobile ? 7 : 6
+  for (let f = base; f >= 12; f -= 1) {
+    const rows = chunks(text, Math.floor(W / (f * 0.64)))
+    const n = Math.max(4, rows.length)
+    if (rows.length <= most && f <= (Hs / (n + 1)) * 0.62) return { rows, n, f }
+  }
+  return { rows: chunks(text, Math.floor(W / (12 * 0.64))), n: most, f: 12 }
+}
+// the handwritten line is the excerpt's first sentence; the excerpt picks up after it so nothing is said twice
+function restOf(line, paras) {
+  const ps = [...(paras || [])]
+  if (!line || !ps.length) return ps
+  const L = norm(line), sents = ps[0].split(/(?<=[.!?…][”"’)]*)\s+/)
+  for (let k = 1; k <= sents.length; k++) {
+    if (norm(sents.slice(0, k).join(' ')) !== L) continue
+    const rest = sents.slice(k).join(' ').trim()
+    return rest ? [rest, ...ps.slice(1)] : ps.slice(1)
+  }
+  return ps
+}
+const factsOf = (x) => { const v = (k) => ((x.meta || []).find(([y]) => y === k) || [])[1]; return [x.kind || v('Kind'), v('Venue'), v('Published')].filter(Boolean).join(' · ') }
 function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
   const t = TEASERS[it.slug] || {}
   const root = useRef(null), zone = useRef(null), pillRef = useRef(null)
@@ -954,10 +982,10 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
       pin()
       const ro = new ResizeObserver(pin); ro.observe(document.body)
       window.addEventListener('scroll', pin, { passive: true })
-      const stop = () => { ro.disconnect(); clearTimeout(tm); window.removeEventListener('scroll', pin); window.removeEventListener('wheel', stopIn); window.removeEventListener('touchstart', stop); window.removeEventListener('keydown', stop) }
+      const stop = () => { ro.disconnect(); clearTimeout(tm); window.removeEventListener('scroll', pin); window.removeEventListener('wheel', stopIn); window.removeEventListener('touchstart', stop); window.removeEventListener('keydown', stop); window.removeEventListener('pointerdown', stop) }
       const stopIn = (e) => { if (!gestTail(e.deltaY, performance.now()) || e.deltaY > 0) stop() }
       const tm = setTimeout(stop, 2500)
-      window.addEventListener('wheel', stopIn, { passive: true }); window.addEventListener('touchstart', stop, { passive: true }); window.addEventListener('keydown', stop)
+      window.addEventListener('wheel', stopIn, { passive: true }); window.addEventListener('touchstart', stop, { passive: true }); window.addEventListener('keydown', stop); window.addEventListener('pointerdown', stop)
     }
     else { const tt = root.current && root.current.querySelector('.s38-head .s38-title'); const y = tt && off ? Math.max(0, tt.getBoundingClientRect().top + window.scrollY - off) : 0; if (y) SEAM.skipTop = true; window.scrollTo({ top: y, behavior: 'instant' }) }
   }, [it.slug])
@@ -966,6 +994,10 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
     const el = root.current; if (!el) return
     const red = reduced()
     let raf = 0, q = 0, pq = 0, pqT = 0, lastY = window.scrollY, drainT = 0, done = false, ty = null, upAcc = 0
+    // iteration 42: the end zones only take a fresh gesture. Momentum that carried you to the end of a story
+    // stops there; a new scroll after a pause (or a sharp new swipe) is what turns the page.
+    let lastWT = 0, lastWD = 0, armD = false, armU = false, armK = false, tBot = false, tTop = false
+    const fresh = (d, now) => { const f = now - lastWT > 180 || Math.sign(d) !== Math.sign(lastWD) || Math.abs(d) > Math.abs(lastWD) * 1.6 + 8; lastWT = now; lastWD = d; return f }
     const q$ = (s) => el.querySelectorAll(s)
     const hero = el.querySelector('.s38-paint'), img = el.querySelector('.s38-paint-img'), words = q$('.s38-paint .s38-w'), nwords = q$('.s38-next .s38-w'), rules = q$('.s38-next .s38-rule'), fill = el.querySelector('.s38-next .s38-fill'), kick = el.querySelector('.s38-next .s38-next-k'), nhead = el.querySelector('.s38-reveal'), pz = el.querySelector('.s38-prev'), pwords = q$('.s38-prev .s38-w'), prules = q$('.s38-prev .s38-rule'), pfill = el.querySelector('.s38-prev .s38-fill')
     const prog = (node) => { const b = node.getBoundingClientRect(), H = window.innerHeight; return { p: clamp01((H - b.top) / (H + b.height)), h: b.height } }
@@ -996,6 +1028,9 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
       }
     }
     const kickP = () => { if (!raf) raf = requestAnimationFrame(paint) }
+    // the incoming story's title is wiped in exactly where its page will put it, so the seam has no jump
+    const setT0 = () => { const tt = el.querySelector('.s38-head .s38-title'); if (tt && !pq) el.style.setProperty('--t0', `${(tt.getBoundingClientRect().top + window.scrollY).toFixed(1)}px`) }
+    const onResize = () => { setT0(); kickP() }
     const H = () => window.innerHeight
     const atBottom = () => window.scrollY >= document.documentElement.scrollHeight - H() - 2
     const drain = () => { clearTimeout(drainT); drainT = setTimeout(function d() { if (done || q <= 0) return; q = q * PUSH38.drain - 0.002; if (q < 0.002) q = 0; kickP(); if (q > 0) drainT = setTimeout(d, 16) }, PUSH38.hold) }
@@ -1015,30 +1050,37 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
       const now = performance.now()
       const d = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H() : 1)
       if (!d) return
+      const f = fresh(d, now)
       if (gestTail(d, now)) { e.preventDefault(); return }
+      const bot = atBottom(), top = window.scrollY <= 0
+      if (!bot) armD = false
+      if (!top) armU = false
+      if (d > 0 && bot && !armD && q === 0) { if (f) armD = true; else return }
+      if (d < 0 && top && !armU && pq === 0) { if (f) armU = true; else return }
       if ((d > 0 && atBottom()) || (d < 0 && q > 0)) { e.preventDefault(); push(d, PUSH38.wheel); return }
       if ((d < 0 && window.scrollY <= 0 && !NAV.busy) || (d > 0 && pq > 0)) { e.preventDefault(); pushUp(-d, PUSH38.wheel, now); return }
     }
-    const ts = (e) => { ty = e.touches[0].clientY; upAcc = 0; GEST.touch = false }
+    const ts = (e) => { ty = e.touches[0].clientY; upAcc = 0; GEST.touch = false; tBot = atBottom(); tTop = window.scrollY <= 0 }
     const tmv = (e) => {
       if (ty == null) { if (GEST.touch) e.preventDefault(); return }
       if (done) { e.preventDefault(); return }
       const yy = e.touches[0].clientY, dy = ty - yy; ty = yy
-      if ((dy > 0 && atBottom()) || (dy < 0 && q > 0)) { e.preventDefault(); push(dy, PUSH38.touch); return }
-      if ((dy < 0 && window.scrollY <= 0 && !NAV.busy) || (dy > 0 && pq > 0)) { e.preventDefault(); pushUp(-dy, PUSH38.touch, performance.now()) }
+      if ((dy > 0 && atBottom() && (tBot || q > 0)) || (dy < 0 && q > 0)) { e.preventDefault(); push(dy, PUSH38.touch); return }
+      if ((dy < 0 && window.scrollY <= 0 && !NAV.busy && (tTop || pq > 0)) || (dy > 0 && pq > 0)) { e.preventDefault(); pushUp(-dy, PUSH38.touch, performance.now()) }
     }
     const te = () => { ty = null }
-    const key = (e) => { if (done || !atBottom()) return; if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); push(PUSH38.wheel / 2, PUSH38.wheel) } }
-    paint()
-    window.addEventListener('scroll', kickP, { passive: true }); window.addEventListener('resize', kickP)
+    const key = (e) => { if (done) return; if (!atBottom()) { armK = false; return } if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { if (e.repeat && !armK) return; armK = true; e.preventDefault(); push(PUSH38.wheel / 2, PUSH38.wheel) } }
+    setT0(); paint()
+    window.addEventListener('scroll', kickP, { passive: true }); window.addEventListener('resize', onResize)
     window.addEventListener('wheel', wh, { passive: false }); window.addEventListener('touchstart', ts, { passive: true }); window.addEventListener('touchmove', tmv, { passive: false }); window.addEventListener('touchend', te, { passive: true }); window.addEventListener('keydown', key)
-    return () => { clearTimeout(drainT); clearTimeout(pqT); cancelAnimationFrame(raf); window.removeEventListener('scroll', kickP); window.removeEventListener('resize', kickP); window.removeEventListener('wheel', wh); window.removeEventListener('touchstart', ts); window.removeEventListener('touchmove', tmv); window.removeEventListener('touchend', te); window.removeEventListener('keydown', key) }
+    return () => { clearTimeout(drainT); clearTimeout(pqT); cancelAnimationFrame(raf); window.removeEventListener('scroll', kickP); window.removeEventListener('resize', onResize); window.removeEventListener('wheel', wh); window.removeEventListener('touchstart', ts); window.removeEventListener('touchmove', tmv); window.removeEventListener('touchend', te); window.removeEventListener('keydown', key) }
   }, [it.slug]) // eslint-disable-line react-hooks/exhaustive-deps
   const mv = (k) => (meta.find(([x]) => x === k) || [])[1]
   const venue = mv('Venue')
-  const rows = [['Kind', mv('Kind')], ['Published', mv('Published')], ['Venue', venue], ['Painting', credit]].filter(([, v]) => v)
+  const facts = factsOf(it)
   const op = t.opening || []
-  const pull = chunks(t.pull, mobile ? 12 : 16).slice(0, 4)
+  const body = restOf(it.line, op)
+  const fit = fitPull(t.pull, mobile), pull = fit.rows
   const nxHref = `#/${cat}/${nx.slug}`, toNext = (e) => { e.preventDefault(); goPiece(cat, next) }
   const pvWords = chunks(i === 0 ? catOf(cat).label : pv.title, mobile ? 40 : 14).slice(0, 3)
   const nxWords = chunks(nx.title, mobile ? 40 : 14).slice(0, 4)
@@ -1057,25 +1099,23 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
           </div>))}
       </section>
       <a ref={pillRef} className="mp35" href={`#/${cat}`} onClick={(e) => { e.preventDefault(); go({ view: 'browse', cat }) }}><span aria-hidden="true">←</span> Menu</a>
-      <header className="s38-head">
+      <header className="s38-head s42-head">
         <h1 className="s38-title">{it.title}</h1>
-        <div className="s38-credit"><span className="s38-lab">Written by</span> <span className="s38-val">Shanmu Raja</span></div>
-        <dl className="s38-rows">{rows.map(([k, v]) => <div key={k}><dt className="s38-lab">{k}</dt><dd className="s38-val">{v}</dd></div>)}</dl>
-        {honors && <div className="s38-honors">{honors}</div>}
-        <div className={`s38-cta${op.length > 0 ? ' has-desc' : ''}`}>
-          <i className="s38-plus is-tl" aria-hidden="true" /><i className="s38-plus is-tr" aria-hidden="true" /><i className="s38-plus is-bl" aria-hidden="true" /><i className="s38-plus is-br" aria-hidden="true" />
-          <div className="s38-lead">
-            {it.line && <p className="s38-first">{it.line}</p>}
-            <div className="s38-btns">{read}</div>
-          </div>
-          {op.length > 0 && <div className="s38-desc">{op.map((p, k) => <p key={k}>{p}</p>)}</div>}
+        {it.subject && <p className="s42-deck">{it.subject}</p>}
+        {facts && <p className="s42-facts">{facts}</p>}
+        {honors && <div className="s42-honors">{honors}</div>}
+        <div className={`s42-open${it.line || body.length ? '' : ' is-bare'}`}>
+          {it.line && <p className="s38-first s42-first">{it.line}</p>}
+          {body.map((x, k) => <p key={k} className="s42-p">{x}</p>)}
+          <div className="s38-btns s42-btns">{read}</div>
         </div>
       </header>
       {it.src && (
-        <section className="s38-paint s38-sec" aria-label={credit || it.title}>
+        <section className="s38-paint s38-sec" aria-label={credit || it.title} style={fit.n > 4 ? { gridTemplateRows: `repeat(${fit.n + 1}, 1fr)` } : undefined}>
           <div ref={art} className="s38-paint-f"><img className="s38-paint-img" src={variantFor(it.src, 2000)} alt={credit || it.title} decoding="async" fetchpriority="high" /></div>
-          {[0, 1, 2, 3, 4].map((k) => <div key={k} className="s38-row">{k > 0 && pull[k - 1] && <span className={`s38-w ${k % 2 ? 'is-l' : 'is-r'}`}>{pull[k - 1]}</span>}</div>)}
+          {Array.from({ length: fit.n + 1 }, (_, k) => <div key={k} className="s38-row">{k > 0 && pull[k - 1] && <span className={`s38-w ${k % 2 ? 'is-l' : 'is-r'}`} style={fit.f ? { fontSize: `${fit.f}px` } : undefined}>{pull[k - 1]}</span>}</div>)}
         </section>)}
+      {it.src && credit && <p className="s42-cap"><span className="s38-lab">Painting</span><span className="s42-cap-v">{credit}</span></p>}
       <section className="s38-next" ref={zone} aria-label={`Next story: ${nx.title}`}>
         <div className="s38-gate" aria-hidden="true">
           <div className="s38-nbar"><span className="s38-lab s38-next-k">End of {it.title}</span><i className="s38-fill" /><span className="s38-lab s38-hint">Keep scrolling</span></div>
@@ -1090,9 +1130,10 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
         <div className="s38-reveal">
           <a className="s38-nhead" href={nxHref} onClick={toNext}>
           <h2 className="s38-title">{nx.title}</h2>
-          <div className="s38-credit"><span className="s38-lab">Written by</span> <span className="s38-val">Shanmu Raja</span></div>
-          <dl className="s38-rows">{['Kind', 'Published', 'Venue', 'Painting'].map((k) => [k, ((nx.meta || []).find(([x]) => x === k) || [])[1]]).filter(([, v]) => v).map(([k, v]) => <div key={k}><dt className="s38-lab">{k}</dt><dd className="s38-val">{v}</dd></div>)}</dl>
-          <div className="s38-cta">{nx.line && <p className="s38-first">{nx.line}</p>}<div className="s38-btns" aria-hidden="true"><span className="s38-btn">{nx.href ? `Read on ${((nx.meta || []).find(([x]) => x === 'Venue') || [])[1] || ''}`.trim() : 'Not yet published'} <b>{nx.href ? '↗' : ''}</b></span></div></div>
+          {nx.subject && <p className="s42-deck">{nx.subject}</p>}
+          {factsOf(nx) && <p className="s42-facts">{factsOf(nx)}</p>}
+          {nx.honors && <div className="s42-honors">{nx.honors.map((h) => <p key={h.href} className="pg-honor"><span>{h.text}</span></p>)}</div>}
+          {nx.line && <div className="s42-open"><p className="s38-first s42-first">{nx.line}</p></div>}
         </a>
           {nx.src && <div className="s38-npaint"><img src={variantFor(nx.src, 1200)} alt="" loading="lazy" decoding="async" /></div>}
         </div>

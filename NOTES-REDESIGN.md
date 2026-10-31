@@ -406,3 +406,19 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
   - **Top boundary:** the previous-story overlay is now 100svh, so the page is pushed a full viewport down. Going up lands on the previous story's painting end (scrollHeight − 2·vh) instead of its grey gate.
   - **Info rows:** labels don't shrink, values wrap (min-width 0), and the page has overflow-x: clip. Measured at 1024: scrollWidth 1024 and no clipped dt/dd on any of the 15 stories.
   - **Checks:** scripts in /workspace/v41b.cjs, shots in /workspace/redesign-shots-v41b. All 15 stories pass at 1024/1280/1440/390: reveal hidden at the bottom with q=0, teaser to the right on desktop, one button each, Fugue State shows "Not yet published" with no teaser.
+
+## Iteration 42
+- **Scroll: the end zones only take a fresh gesture.** Before this, the reading scroll's own momentum ran straight into the bottom push zone. One ordinary flick filled it in about 7 wheel events and turned the page, so Burnt Red Tongues went to Fugue State and then to A Pound of Flesh. `gestTail` only guarded the page after a commit; nothing guarded the page before it. Now the momentum that carries you to the end stops there, and a scroll after a pause of 180ms or more, or a sharp new swipe, turns the page. The same rule applies at the top zone. On touch, a drag only pushes if it started at the edge. For keys, a held key that started mid-page doesn't carry over. The post-commit tail swallow was widened to 150ms and 1.5x. A scrollbar drag now releases the up-landing pin.
+- **Seam alignment.** The incoming story's title was wiped in about 5px below where its page puts it. Since the page can't scroll above 0, every desktop landing jumped up 5px, and at 1024 the page landed slightly scrolled. The preview title is now placed at the measured title position (`--t0`), so every landing is exact at scrollY 0.
+- **Story page order:** title, an italic deck for essays (the subject), one facts line (kind · venue · date), the honour as a visible italic line, then one reading column. That column is the handwritten line, the opening in Lora 19/1.62 (17 on phone), then the Read button. After it come the painting and its credit as a caption under the image, then the commit zone.
+- **Removed:** "Written by Shanmu Raja", the full-width label/value rows, and the two-column CTA/teaser grid.
+- **The handwritten line is said once.** In all 13 published stories it is the excerpt's own first sentence (identical in 2, a prefix in 11). `restOf()` strips it off the front, so the Lora text continues from the next sentence.
+- **The painting sentence is shown whole.** Before, `chunks(...).slice(0, 4)` cut it off in 14 of 14 stories on phone and 10 of 14 on desktop (A Pound of Flesh showed 4 of 9 lines). `fitPull()` keeps today's 16/12-character lines when they fit in 4 rows. Otherwise it adds rows (up to 6 on desktop, 7 on phone) and shrinks the type only as far as needed. Desktop stays at 72px for every story; phone goes to 27-30px only on the three longest sentences.
+- **Verified on the preview build:**
+  - Wheel: a long flick stops at the end; pause then scroll turns the page; momentum doesn't scroll the new story; the same both ways at the top; up from the first story goes to #/prose.
+  - Touch: a drag past the end stays; a fresh drag turns.
+  - Layout: all 15 stories at 1440/1024/390 (no duplicate, Lora, order, no x-overflow, one button, caption).
+  - Painting sentence: whole, unclipped and uncrowded on 14 stories at 1440/1280/1024/390.
+  - Seam: under 0.5px at 1440/1728/1280/1024/390.
+  - No console errors on 22 routes.
+- **Caveat:** headless Chrome can't reproduce real Mac trackpad momentum or GPU timing. The 180ms pause threshold is the setting to tune by feel.

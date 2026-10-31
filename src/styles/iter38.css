@@ -160,3 +160,30 @@
 .s38-prev { height: 100vh !important; height: 100svh !important; display: flex; flex-direction: column; }
 .s38-prev .s38-row { flex: 1 1 0; align-items: center; }
 .s38.is-pq > :not(.s38-prev):not(.mp35) { transform: translateY(calc(var(--pq, 0) * 100svh)); }
+/* iteration 42: the story page reads top to bottom. Title, one line of facts, the honour, then the opening as
+   prose in Lora (the handwritten line is its first sentence, said once), then the Read button, then the
+   painting with its credit as a caption. No full-width label/value rows, no byline on my own site. */
+.s42-head .s38-title, .s38-nhead .s38-title { padding-bottom: 22px; }
+.s42-facts { font: 500 11px/1.4 'Archivo', 'Helvetica Neue', Arial, sans-serif; letter-spacing: .18em; text-transform: uppercase; color: rgba(17, 17, 17, .62); text-align: center; margin: 0; }
+.s42-honors { text-align: center; margin-top: 14px; }
+.s42-honors .pg-honor { margin: 0; font: italic 400 18px/1.4 'Lora', Georgia, serif; }
+.s42-honors .pg-honor a { color: var(--ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; text-decoration-color: rgba(17, 17, 17, .35); transition: text-decoration-color .2s; }
+.s42-honors .pg-honor a:hover { text-decoration-color: var(--ink); }
+.s42-open { max-width: 34em; margin: 64px auto 0; padding: 0 0 72px; font-size: 19px; }
+.s38 .s42-first { text-align: left; max-width: none; margin: 0 0 18px; }
+.s42-p { font: 400 19px/1.62 'Lora', Georgia, serif; letter-spacing: 0; color: var(--ink); margin: 0 0 1em; text-wrap: pretty; }
+.s42-btns { margin-top: 32px; justify-content: flex-start; }
+.s42-open.is-bare { text-align: center; } .s42-open.is-bare .s42-btns { justify-content: center; margin-top: 0; }
+.s42-cap { display: flex; align-items: baseline; gap: 12px; margin: 0; padding: 12px 0 14px; font: 400 13px/1.45 'Inter', 'Helvetica Neue', Arial, sans-serif; color: rgba(17, 17, 17, .72); }
+.s42-cap .s38-lab { flex: 0 0 auto; }
+.s38-nhead .s42-open { margin-top: 40px; padding-bottom: 0; }
+@media (max-width: 760px) {
+  .s42-open { margin-top: 44px; padding: 0 var(--m) 56px; font-size: 17px; }
+  .s42-p { font-size: 17px; line-height: 1.6; }
+  .s42-honors .pg-honor { font-size: 16px; }
+  .s42-btns .s38-btn { width: 100%; }
+  .s42-cap { padding: 10px var(--m) 12px; font-size: 12.5px; }
+}
+.s42-deck { font: italic 400 20px/1.35 'Lora', Georgia, serif; text-align: center; margin: -8px auto 14px; max-width: 30ch; text-wrap: balance; }
+@media (max-width: 760px) { .s42-deck { font-size: 17px; margin-top: -10px; } }
+.s38-reveal .s38-nhead { padding-top: var(--t0, calc(var(--h1-top) + 24px)); }
