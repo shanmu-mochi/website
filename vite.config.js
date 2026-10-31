@@ -33,8 +33,6 @@ const cleanUrls = {
 }
 
 export default defineConfig({
-  // eslint-disable-next-line no-undef
-  define: { __FEEDBACK__: JSON.stringify(process.env.VITE_FEEDBACK === '1') },
   plugins: [react(), glsl(), cleanUrls, prerender],
   server: {
     port: 3001,

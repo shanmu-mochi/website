@@ -438,7 +438,7 @@ function SiteNav({ go, active, className = '', onHover, onJump }) {
       <a className="h-mark" href="#/" aria-label="Shanmu Raja, home" onClick={(e) => { e.preventDefault(); if (e.detail) e.currentTarget.blur(); if (onJump) onJump('prose'); else go({ view: 'browse', cat: 'home' }) }}>Shanmu Raja</a>
       <nav className="sn-nav sn-r h-nav" aria-label="Pages">
         {item('deep', catOf('deep').label)}
-        {item('paintings', 'art that I love')}
+        {item('paintings', 'Art that I love')}
         {item('about', 'About')}
       </nav>
     </header>
@@ -828,7 +828,7 @@ function Home({ cat, go }) {
 
       {/* iteration 20: the vertical run stops at the end of Luck; the art page is one clear click away */}
       {sec === SEC_ORDER[SEC_ORDER.length - 1] && cur === ROW.length - 1 && (
-        <a className={`h-end${show ? ' is-on' : ''}`} href="#/art" onClick={(e) => { e.preventDefault(); go({ view: 'paintings' }) }}>art that I love <span aria-hidden="true">→</span></a>)}
+        <a className={`h-end${show ? ' is-on' : ''}`} href="#/art" onClick={(e) => { e.preventDefault(); go({ view: 'paintings' }) }}>Art that I love <span aria-hidden="true">→</span></a>)}
       <div className={`h-foot${foot ? ' is-on' : ''}`}>
         <button type="button" className={`h-count${tocOn ? ' is-open' : ''}`} aria-label={`${catOf(sec).label}, contents`} aria-expanded={tocOn} onClick={() => setTocOn((v) => !v)}>
           {pad2(cur - SEC_START[sec] + 1)} <i>/</i> {pad2(catOf0(sec).items.length)}

@@ -38,21 +38,6 @@ Feedback: "too busy". Kept the wheel and the phone; removed almost everything el
 - The phone is gone from the whole site.
 - Screenshots are in /workspace/redesign-shots-v4/.
 
-## Feedback overlay (preview builds only)
-
-- `npm run build:preview` builds with `VITE_FEEDBACK=1` and copies `scripts/serve.py` into `dist/`. A plain `npm run build` has none of it: the `__FEEDBACK__` define folds to `false`, so the dynamic import is dropped. You can check with `grep -r GROK_FEEDBACK dist`, which should find nothing.
-- Shanmu unzips the preview, runs `python3 serve.py`, and opens http://localhost:8000. To change the port, pass it as an argument: `python3 serve.py 8001`.
-- To comment:
-  - Press **C** (or click the "Comment · C" pill at top centre; on phones it sits low in the centre).
-  - Click anything to drop a numbered pin, type, then press Enter to save. Shift+Enter adds a new line; Esc cancels.
-  - **L** opens the list, where comments can be edited, resolved or deleted. The list also has a general note, Copy feedback for Grok, Download .md and Clear resolved.
-- Comments live in localStorage. They also auto-POST to `/__feedback`, and serve.py writes `feedback.json` and `feedback.md` next to itself. If the browser has no comments yet, the page reloads them from the server with a GET.
-- Reading the block: each line is `N. [route · category · piece (index/total) · viewport] "text" — on: <css path> aria/text, at x% y%`.
-  - The route and the piece say which page or wheel item the comment is about.
-  - The css path names the element: `b-*` is the browser, `pg-*` the piece and About pages, `cv-*` the type covers, `t-*` the phone track.
-  - x% and y% are positions in the viewport.
-
-
 ## Iteration 6 — the real A24 motion, with the paintings
 - Home is now a three.js gallery (src/gallery/Gallery.js) using the A24 browser's geometry, follow rates, lean/bank, discGlide easing, spring snap, intro (rolling counter → rise → fan), click-through flight and inbound return. Paintings are the plates; publications are white-paper sheets. Space turns a plate over to its credit.
 - Chrome: top-left Bodoni title + hairline meta table, top-centre wordmark/Paintings/About, bottom-centre first line, bottom-left Prose/Publications/Luck with pen-scribble hover, counter + socials bottom-right.
@@ -491,3 +476,13 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
   - TOC: nav hover opens, stays as the pointer moves in, closes on leave, nothing clipped at 1440 and 1024; the counter marks the current piece and a pick turns the row; a nav pick opens the story.
   - Turning over: mouse long, short and back again, the row unmoved, dragging beside moves the row; touch sideways moves the row, up/down turns.
   - Landing and return exact; the story push and sideways back still work; all 15 stories at 1440/390 have the Paris Review head on white with no overflow; no errors.
+
+## Iteration 46: the comment overlay is gone
+- Deleted the preview comment overlay completely:
+  - `src/feedback/` (Feedback.jsx, mount.jsx, feedback.css)
+  - its import in `main.jsx` and the `__FEEDBACK__` define in `vite.config.js`
+  - `VITE_FEEDBACK=1` from `build:preview`
+  - the `/__feedback` save endpoint in `scripts/serve.py`
+- `serve.py` is now a plain static server (no-store on HTML so a refresh shows the latest). `build:preview` still copies it into `dist/`, so `npm run live` works as before.
+- The overlay how-to section is removed from these notes. Verified: no overlay code in the built bundle and no comment UI on home, story or About.
+- "art that I love" is now "Art that I love" in the nav and the end-of-row link.
