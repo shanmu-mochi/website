@@ -131,3 +131,32 @@
 .s38-nhead .s38-first { margin: 0 auto; }
 .s38-npaint { flex: 1 0 140px; margin: 0 calc(-1 * var(--m)); overflow: hidden; background: #111; position: relative; }
 .s38-npaint img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* iteration 41: Read CTA only; the teaser sits to the right of the first line; then the painting and its lines;
+   ONLY THEN the commit zone: a full-viewport grey segment (rules, "Next story", destination, fill). The next
+   story's head is hidden and is wiped in from the bottom as the commit fills (clip-path driven by q). */
+.s38-rows > div > dt { flex: 0 0 auto; white-space: nowrap; }
+.s38-rows > div > dd { flex: 0 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.pg.s38 { max-width: 100vw; overflow-x: clip; box-sizing: border-box; }
+.s38-lead { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+.s38-cta > .s38-desc { padding: 0; max-width: 34em; }
+.s38-cta > .s38-desc p, .s38-cta > .s38-desc p + p { font: 400 16px/1.5 'Inter', 'Helvetica Neue', Arial, sans-serif; letter-spacing: -.01em; margin: 0 0 .8em; max-width: none; }
+.s38-cta > .s38-desc p:last-child { margin-bottom: 0; }
+@media (min-width: 761px) {
+  .s38-cta.has-desc { display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; column-gap: 64px !important; padding-left: calc(var(--m) + 4vw) !important; padding-right: calc(var(--m) + 4vw) !important; }
+  .s38-cta.has-desc .s38-first { max-width: 22ch; }
+}
+@media (max-width: 760px) { .s38-cta > .s38-desc { padding: 8px var(--m) 0; } .s38-cta > .s38-desc p, .s38-cta > .s38-desc p + p { font-size: 15px; } .s38-cta { padding-bottom: 56px !important; } }
+.s38-next { position: relative; height: 100vh !important; height: 100svh !important; min-height: 0 !important; display: block !important; background: var(--grey38) !important; padding: 0 var(--m) !important; overflow: hidden; }
+.s38-gate { height: 100%; display: flex; flex-direction: column; }
+.s38-gate .s38-nbar { flex: 0 0 auto; }
+.s38-gate .s38-row { flex: 1 1 0; align-items: center; }
+.s38-gate .s38-w { font: 400 min(calc(var(--t-h1) * 1.6), 9vw)/1 'Lora', Georgia, serif; letter-spacing: -.04em; text-transform: uppercase; }
+.s38-gate .s38-w.is-l { margin-left: 12%; } .s38-gate .s38-w.is-r { margin-left: 40%; }
+.s38-gate-n { margin-left: 12%; } .s38-gate-h { margin-left: auto; margin-right: 12%; }
+@media (max-width: 760px) { .s38-gate .s38-w { font-size: 17vw; } .s38-gate .s38-w.is-l { margin-left: 0; } .s38-gate .s38-w.is-r { margin-left: 22%; } .s38-gate-n { margin-left: 0; } .s38-gate-h { margin-right: 0; } }
+.s38-reveal { position: absolute; inset: 0; background: var(--paper38); display: flex; flex-direction: column; padding: 0 var(--m); clip-path: inset(100% 0 0 0); visibility: hidden; z-index: 2; }
+.s38-reveal .s38-nhead { padding-top: calc(var(--h1-top) + 24px); flex: 0 0 auto; }
+.s38-reveal .s38-npaint { flex: 1 0 120px; margin: 24px calc(-1 * var(--m)) 0; }
+.s38-prev { height: 100vh !important; height: 100svh !important; display: flex; flex-direction: column; }
+.s38-prev .s38-row { flex: 1 1 0; align-items: center; }
+.s38.is-pq > :not(.s38-prev):not(.mp35) { transform: translateY(calc(var(--pq, 0) * 100svh)); }

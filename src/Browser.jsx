@@ -950,7 +950,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
     SEAM.to = null; SEAM.dir = 0; SEAM.off = 0
     if (dir < 0) {
       SEAM.skipTop = true
-      const pin = () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' })
+      const pin = () => window.scrollTo({ top: Math.max(0, document.documentElement.scrollHeight - 2 * window.innerHeight), behavior: 'instant' })
       pin()
       const ro = new ResizeObserver(pin); ro.observe(document.body)
       window.addEventListener('scroll', pin, { passive: true })
@@ -967,7 +967,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
     const red = reduced()
     let raf = 0, q = 0, pq = 0, pqT = 0, lastY = window.scrollY, drainT = 0, done = false, ty = null, upAcc = 0
     const q$ = (s) => el.querySelectorAll(s)
-    const hero = el.querySelector('.s38-paint'), img = el.querySelector('.s38-paint-img'), words = q$('.s38-paint .s38-w'), nwords = q$('.s38-next .s38-w'), rules = q$('.s38-next .s38-rule'), fill = el.querySelector('.s38-next .s38-fill'), kick = el.querySelector('.s38-next .s38-next-k'), nhead = el.querySelector('.s38-nhead'), pz = el.querySelector('.s38-prev'), pwords = q$('.s38-prev .s38-w'), prules = q$('.s38-prev .s38-rule'), pfill = el.querySelector('.s38-prev .s38-fill')
+    const hero = el.querySelector('.s38-paint'), img = el.querySelector('.s38-paint-img'), words = q$('.s38-paint .s38-w'), nwords = q$('.s38-next .s38-w'), rules = q$('.s38-next .s38-rule'), fill = el.querySelector('.s38-next .s38-fill'), kick = el.querySelector('.s38-next .s38-next-k'), nhead = el.querySelector('.s38-reveal'), pz = el.querySelector('.s38-prev'), pwords = q$('.s38-prev .s38-w'), prules = q$('.s38-prev .s38-rule'), pfill = el.querySelector('.s38-prev .s38-fill')
     const prog = (node) => { const b = node.getBoundingClientRect(), H = window.innerHeight; return { p: clamp01((H - b.top) / (H + b.height)), h: b.height } }
     const paint = () => {
       raf = 0
@@ -992,7 +992,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
         rules.forEach((r, k) => { r.style.transform = `scaleX(${clamp01(1 - clamp01(q * 1.6 - k * 0.12)).toFixed(4)})` })
         if (fill) fill.style.transform = `scaleX(${q.toFixed(4)})`
         if (kick) kick.style.opacity = (1 - q).toFixed(3)
-        if (nhead) nhead.style.transform = `translate3d(0,${(-q * 24).toFixed(1)}px,0)`
+        if (nhead) { nhead.style.clipPath = `inset(${((1 - q) * 100).toFixed(2)}% 0 0 0)`; nhead.style.visibility = q > 0 ? 'visible' : 'hidden' }
       }
     }
     const kickP = () => { if (!raf) raf = requestAnimationFrame(paint) }
@@ -1062,10 +1062,13 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
         <div className="s38-credit"><span className="s38-lab">Written by</span> <span className="s38-val">Shanmu Raja</span></div>
         <dl className="s38-rows">{rows.map(([k, v]) => <div key={k}><dt className="s38-lab">{k}</dt><dd className="s38-val">{v}</dd></div>)}</dl>
         {honors && <div className="s38-honors">{honors}</div>}
-        <div className="s38-cta">
+        <div className={`s38-cta${op.length > 0 ? ' has-desc' : ''}`}>
           <i className="s38-plus is-tl" aria-hidden="true" /><i className="s38-plus is-tr" aria-hidden="true" /><i className="s38-plus is-bl" aria-hidden="true" /><i className="s38-plus is-br" aria-hidden="true" />
-          {it.line && <p className="s38-first">{it.line}</p>}
-          <div className="s38-btns">{read}</div>
+          <div className="s38-lead">
+            {it.line && <p className="s38-first">{it.line}</p>}
+            <div className="s38-btns">{read}</div>
+          </div>
+          {op.length > 0 && <div className="s38-desc">{op.map((p, k) => <p key={k}>{p}</p>)}</div>}
         </div>
       </header>
       {it.src && (
@@ -1073,19 +1076,26 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
           <div ref={art} className="s38-paint-f"><img className="s38-paint-img" src={variantFor(it.src, 2000)} alt={credit || it.title} decoding="async" fetchpriority="high" /></div>
           {[0, 1, 2, 3, 4].map((k) => <div key={k} className="s38-row">{k > 0 && pull[k - 1] && <span className={`s38-w ${k % 2 ? 'is-l' : 'is-r'}`}>{pull[k - 1]}</span>}</div>)}
         </section>)}
-      {op.length > 0 && (
-        <section className="s38-desc">
-          {op.map((p, k) => <p key={k}>{p}</p>)}
-        </section>)}
       <section className="s38-next" ref={zone} aria-label={`Next story: ${nx.title}`}>
-        <div className="s38-nbar"><span className="s38-lab s38-next-k">Next story</span><i className="s38-fill" aria-hidden="true" /><span className="s38-lab s38-hint">Keep scrolling</span></div>
-        <a className="s38-nhead" href={nxHref} onClick={toNext}>
+        <div className="s38-gate" aria-hidden="true">
+          <div className="s38-nbar"><span className="s38-lab s38-next-k">End of {it.title}</span><i className="s38-fill" /><span className="s38-lab s38-hint">Keep scrolling</span></div>
+          {[0, 1, 2, 3].map((k) => (
+            <div key={k} className="s38-row"><i className="s38-rule" />
+              {k === 0 && <span className="s38-w is-l">Next</span>}
+              {k === 1 && <span className="s38-w is-r">story</span>}
+              {k === 2 && <span className="s38-lab s38-gate-n">{pad2(next + 1)} / {pad2(N)} · {catOf(cat).label}</span>}
+              {k === 3 && <span className="s38-lab s38-gate-h">Hold the scroll to turn the page</span>}
+            </div>))}
+        </div>
+        <div className="s38-reveal">
+          <a className="s38-nhead" href={nxHref} onClick={toNext}>
           <h2 className="s38-title">{nx.title}</h2>
           <div className="s38-credit"><span className="s38-lab">Written by</span> <span className="s38-val">Shanmu Raja</span></div>
           <dl className="s38-rows">{['Kind', 'Published', 'Venue', 'Painting'].map((k) => [k, ((nx.meta || []).find(([x]) => x === k) || [])[1]]).filter(([, v]) => v).map(([k, v]) => <div key={k}><dt className="s38-lab">{k}</dt><dd className="s38-val">{v}</dd></div>)}</dl>
           <div className="s38-cta">{nx.line && <p className="s38-first">{nx.line}</p>}<div className="s38-btns" aria-hidden="true"><span className="s38-btn">{nx.href ? `Read on ${((nx.meta || []).find(([x]) => x === 'Venue') || [])[1] || ''}`.trim() : 'Not yet published'} <b>{nx.href ? '↗' : ''}</b></span></div></div>
         </a>
-        {nx.src && <div className="s38-npaint"><img src={variantFor(nx.src, 1200)} alt="" loading="lazy" decoding="async" /></div>}
+          {nx.src && <div className="s38-npaint"><img src={variantFor(nx.src, 1200)} alt="" loading="lazy" decoding="async" /></div>}
+        </div>
       </section>
     </article>
   )
