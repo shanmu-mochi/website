@@ -557,3 +557,5 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - The footer's first row ("NEXT STORY" on the left, "02 / 15" on the right, and its empty band) is removed. The footer opens straight onto the next title over four rows; the section's aria-label still says "Next story: {title}".
 - On a phone "Keep scrolling" used to sit under the count. With the count gone it collided with the first title line, so it now sits centred just above the next painting.
 - Verified: on all 15 stories at 390, 375 and 1440 the row is gone and the hint is clear of both the title and the painting; the end-of-story push still turns the page.
+- Revised: the first row is back for spacing, holding only the count ("02 / 15"); the "Next story" label stays gone.
+- The push: the next painting now grows up to 15% (was 4%) and lifts up to 10% of its height (was 6%) as the push fills.

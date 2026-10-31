@@ -539,7 +539,7 @@ function stopLenis() { if (!SCROLL.lenis) return; gsap.ticker.remove(SCROLL.tick
 function toTop() { if (SCROLL.lenis) SCROLL.lenis.scrollTo(0, { immediate: true, force: true }); window.scrollTo(0, 0) }
 // A24's "Next production" push (their scroll-next constants, unchanged)
 const SIDE = 120   // px of sideways travel that counts as a swipe back
-const NEXT = { wheel: 620, touch: 380, key: 0.34, hold: 180, drain: 0.9, settle: 350, gap: 140, surge: 1.6, surgeMin: 6, clamp: 140, ease: 10, arrive: 0.3, grow: 1.04, exitGo: 0.48 }
+const NEXT = { wheel: 620, touch: 380, key: 0.34, hold: 180, drain: 0.9, settle: 350, gap: 140, surge: 1.6, surgeMin: 6, clamp: 140, ease: 10, arrive: 0.3, grow: 1.15, exitGo: 0.48 }
 // A24's production hero reveal timings
 const RISE = { dur: 0.7, shift: 120, titleStagger: 0.08, text: 0.12, textStagger: 0.03, cta: 0.38, pop: 0.5 }
 const NAV = { busy: false, pending: null, hold: null, dir: 0 }
@@ -1184,7 +1184,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, hold }) {
         if (!ruled && p > 0.02) rule()
         if (!arrived && p >= NEXT.arrive) arrive()
         if (fill) fill.style.transform = `scaleX(${D.toFixed(4)})`
-        if (plateIn && !red) plateIn.style.transform = `translate3d(0,${(-D * 6).toFixed(2)}%,0) scale(${(1 + D * (NEXT.grow - 1)).toFixed(4)})`
+        if (plateIn && !red) plateIn.style.transform = `translate3d(0,${(-D * 10).toFixed(2)}%,0) scale(${(1 + D * (NEXT.grow - 1)).toFixed(4)})`
       }
       const end = atEnd()
       if (end) { if (!endSince) endSince = performance.now() } else { endSince = 0; armed = false; if (P > 0) P = 0 }
@@ -1292,9 +1292,10 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, hold }) {
       {it.src && credit && <p className="s42-cap"><span className="s38-lab">Painting</span><span className="s42-cap-v">{credit}</span></p>}
       <div className="s42-again">{it.href && <a className="s38-btn" href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()} <b aria-hidden="true">↗</b></a>}</div>
       <section className="s38-next s42-nx" ref={zone} aria-label={`Next story: ${nx.title}`}>
-        {[1, 2, 3, 4].map((k) => (
+        {[0, 1, 2, 3, 4].map((k) => (
           <div key={k} className="s38-row"><i className="s38-rule" aria-hidden="true" />
-            {k <= 3 && nxLines[k - 1] && <a className={`s42-m s42-line ${k % 2 ? 'is-l' : 'is-r'}`} href={nxHref} onClick={toNext}><span className="s42-r">{nxLines[k - 1]}</span></a>}
+            {k === 0 && <span className="s42-m s42-dest"><span className="s42-r s38-lab">{pad2(next + 1)} / {pad2(N)}</span></span>}
+            {k >= 1 && k <= 3 && nxLines[k - 1] && <a className={`s42-m s42-line ${k % 2 ? 'is-l' : 'is-r'}`} href={nxHref} onClick={toNext}><span className="s42-r">{nxLines[k - 1]}</span></a>}
           </div>))}
         {nx.src && <a className="s42-nplate" href={nxHref} onClick={toNext} aria-hidden="true" tabIndex={-1}><span className="s42-nplate-in"><img src={variantFor(nx.src, 1200)} alt="" loading="lazy" decoding="async" /></span></a>}
         <div className="s42-bar" aria-hidden="true"><i className="s38-fill" /></div>
