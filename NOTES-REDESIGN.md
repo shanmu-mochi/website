@@ -500,3 +500,31 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
   - Phone interactions: tap opens with an exact landing, the same 1200px file for copy and page, touch push at the end, the counter contents on screen with ≥44px rows and a pick turns the row, a swipe moves the row, dragging up turns the painting over. No errors; desktop still gets 1800px.
 - **Throttled phone** (4x CPU, Fast 4G): home is usable in about 0.4 to 1.5s; 6 frames over 50ms across 4 swipes (was 7 across 3). The rest likely comes from the caption re-rendering on each new painting, not images; worth a look next.
 - **Not done:** three.js isn't split out of non-home routes. The main bundle is 199 KB gzipped and home needs it anyway.
+
+## Iteration 48: swipe stutter, and the 3D code only where it is used
+- **Stutter, profiled** (4x CPU, phone). My guess, the caption, was wrong. The time went to three things:
+  - Texture uploads: `texSubImage2D`, 26% of busy CPU.
+  - Back faces painted with per-pixel grain the moment a plate came into range: `grain`, 15%.
+  - A per-frame layout read after a write in `placeQ`: `getBoundingClientRect`, 9%.
+- **Fixes:**
+  - On a phone the GPU gets a 512px-wide copy of each painting (`shrink()` in `imageTexture`). The 1200px file still serves the flight and the story page.
+  - Back faces wait for stillness: `idle()` runs one job at a time once there has been no input for 180ms. iPhone Safari has no requestIdleCallback, so the stillness check is what keeps it off a swipe.
+  - `placeQ` only reads and then writes. The page box, the footer boxes and the socials' line are measured once per layout (key: viewport, phase, piece, section, contents open), and the gallery caches its canvas box on resize.
+- **Result:**
+  - Slow frames: 6 per 4 swipes → 2 (worst about 60ms).
+  - Share of busy CPU: `texSubImage2D` 26% → 7%, `grain` 15% → 0% during swipes, `getBoundingClientRect` 9% → 0.1%.
+  - Verified: the caption is centred on each painting to within 0.4px, backs are drawn, and rotation re-places the caption.
+- **Split.** The gallery and three.js are their own chunk (473 KB, 123 KB gzipped). The plain parts (GLIDE, TILT, SECTIONS, plateSize) live in `src/gallery/shared.js`, and `Browser.jsx` loads the gallery on demand (`loadGallery`). Home waits for it in `HomeGate`, which shows the opening name if the intro plays.
+  - A build plugin (`gallery-preload`) writes a tiny script into `index.html`. On carousel addresses it modulepreloads the chunk in parallel with the main bundle.
+  - Other pages fetch it after `load` (their painting included), in idle time.
+  - Main bundle: 199 KB → 81 KB gzipped.
+- **A/B under identical conditions** (both builds gzip-served, 4x CPU, Fast 4G, median of 3):
+  - A story opened directly: 772 → 681ms.
+  - Home: 781 → 798ms (+17ms, about 2%).
+  - Verified: on home the chunk is requested alongside main; on a story it is requested only after the painting has arrived.
+- **Verified:**
+  - Bare address: the name, then the carousel.
+  - Story → carousel, including before the chunk had loaded (cache off).
+  - Exact landing and back; the wheel step; the contents; the story push.
+  - Phone: counter contents, pick, tap in.
+  - No errors.

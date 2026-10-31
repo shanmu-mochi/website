@@ -13,12 +13,12 @@
 import * as THREE from 'three'
 import gsap from 'gsap'
 import { CustomEase } from 'gsap/CustomEase'
+import { GLIDE, TILT, SECTIONS, plateSize } from './shared'
+export { GLIDE, TILT, SECTIONS, plateSize }
+export { CanvasTexture } from 'three'
 
 gsap.registerPlugin(CustomEase)
-export const GLIDE = CustomEase.create('discGlide', '0.32, 0.72, 0, 1')
 
-/* The diagonal. A24 uses -30° on both axes; Shanmu found that a tad steep (iteration 7). */
-export const TILT = -19
 
 const pressure = (v) => {
   // soft swipe stays soft, a hard one gains more than proportionally (main site, App.jsx)
@@ -48,16 +48,6 @@ export const CFG = {
 }
 
 /* per-section staging: group tilt, object proportions, arrangement */
-export const SECTIONS = {
-  prose: { tiltX: TILT, tiltY: TILT, area: 2.9, maxSide: 2.1, depth: 0.024, edge: 0xffffff, spine: 0xffffff },
-  publications: { tiltX: TILT * 0.55, tiltY: TILT * 0.7, aspect: 0.72, area: 2.2, maxSide: 2, depth: 0.075, edge: 0xf3f0e8, spine: 0xe6e1d6 },
-  // iteration 12: the home "Selected" row stages like prose; each plate keeps its own section's shape
-  // iteration 19: the one row of everything, staged exactly like A24 (-30° on both axes)
-  home: { tiltX: -30, tiltY: -30, area: 2.35, maxSide: 1.85, depth: 0.024, edge: 0xffffff, spine: 0xffffff },
-  get deep() { return this.publications },
-  get paintings() { return this.prose },
-  luck: { tiltX: TILT * 0.45, tiltY: TILT * 0.85, aspect: 1, area: 1.9, maxSide: 1.5, depth: 0.04, edge: 0xefe6d2, spine: 0xefe6d2 },
-}
 
 const rad = THREE.MathUtils.degToRad
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v))
@@ -80,19 +70,37 @@ function renderer() {
 /* ---- textures live as long as the page: a section you come back to is instant ---- */
 const TEX = new Map()
 const loader = new THREE.TextureLoader()
+// work that can wait: one job at a time, only once the hand has been still for 180ms (and, where the browser has
+// it, in an idle slot). iPhone Safari has no requestIdleCallback, so the stillness check is what keeps it off a swipe.
+const IDLE = []
+let idling = false, lastInput = 0
+if (typeof window !== 'undefined') ['wheel', 'touchstart', 'touchmove', 'pointerdown', 'pointermove'].forEach((n) => window.addEventListener(n, () => { lastInput = performance.now() }, { passive: true, capture: true }))
+const still = (f) => { const tick = () => (performance.now() - lastInput > 180 ? f() : setTimeout(tick, 90)); setTimeout(tick, 40) }
+const slot = (f) => still(() => (window.requestIdleCallback ? window.requestIdleCallback(f, { timeout: 600 }) : f()))
+function idle(job) {
+  return new Promise((done) => {
+    IDLE.push(() => Promise.resolve(job()).then(done, () => done(null)))
+    if (idling) return
+    idling = true
+    const next = () => { const j = IDLE.shift(); if (!j) { idling = false; return } slot(() => { j(); next() }) }
+    next()
+  })
+}
 export function texture(key, make) {
   if (!TEX.has(key)) TEX.set(key, Promise.resolve(make()).then((t) => { if (t) { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4 } return t }))
   return TEX.get(key)
 }
-export const imageTexture = (url) => texture(url, () => new Promise((res) => loader.load(url, res, undefined, () => res(null))))
-
-export function plateSize(it, sec) {
-  const a = sec.aspect || it.aspect
-  let h = Math.sqrt(sec.area / a), w = a * h
-  const m = Math.max(w, h)
-  if (m > sec.maxSide) { w *= sec.maxSide / m; h *= sec.maxSide / m }
-  return [w, h]
+// iteration 48: on a phone the graphics card gets a 512px-wide copy of each painting (a plate there is about 240 css
+// px wide), so each upload is about a fifth of the 1200px file's; that file still serves the flight and the story page
+const SMALL_GPU = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches && Math.min(window.innerWidth, window.innerHeight) <= 760
+function shrink(t, w) {
+  const img = t && t.image; if (!img || !img.width || img.width <= w) return t
+  const c = document.createElement('canvas'); c.width = w; c.height = Math.round((img.height * w) / img.width)
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height)
+  t.dispose(); return new THREE.CanvasTexture(c)
 }
+export const imageTexture = (url) => texture(url, () => new Promise((res) => loader.load(url, (t) => res(SMALL_GPU ? shrink(t, 512) : t), undefined, () => res(null))))
+
 
 const _v = new THREE.Vector3(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _qi = new THREE.Quaternion()
 
@@ -175,7 +183,7 @@ export default class Gallery {
       if (p.loaded) return
       p.loaded = true
       Promise.resolve(this.o.frontTexture(it, this.mode, w / h)).then((t) => { if (t && this.plates[i] === p) { front.map = t; front.color.set(0xffffff); front.needsUpdate = true; this.dirty = true } res() })
-      Promise.resolve(this.o.backTexture(it, this.mode, w / h)).then((t) => { if (t && this.plates[i] === p) { back.map = t; back.needsUpdate = true; this.dirty = true } })
+      idle(() => this.o.backTexture(it, this.mode, w / h)).then((t) => { if (t && this.plates[i] === p) { back.map = t; back.needsUpdate = true; this.dirty = true } })
     }
     if (Math.abs(i - this.L) <= CFG.renderRadius + 2) p.load()
     return p
@@ -595,6 +603,7 @@ export default class Gallery {
 
   resize() {
     const w = Math.max(1, this.el.clientWidth), h = Math.max(1, this.el.clientHeight)
+    this._b = this.el.getBoundingClientRect(); this._W = w; this._H = h
     this.renderer.setSize(w, h, false)
     this.cam.aspect = w / h
     this.cam.updateProjectionMatrix()
@@ -782,7 +791,7 @@ export default class Gallery {
   rectOf(i) {
     const p = this.plates[i]; if (!p) return null
     p.group.updateMatrixWorld(true)
-    const W = this.el.clientWidth, H = this.el.clientHeight
+    const W = this._W || this.el.clientWidth, H = this._H || this.el.clientHeight
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
     for (let k = 0; k < 4; k += 1) {
       const sx = k === 1 || k === 2 ? 1 : -1, sy = k >= 2 ? 1 : -1
@@ -790,7 +799,7 @@ export default class Gallery {
       const X = (_v.x + 1) * 0.5 * W, Y = (1 - _v.y) * 0.5 * H
       if (X < x0) x0 = X; if (X > x1) x1 = X; if (Y < y0) y0 = Y; if (Y > y1) y1 = Y
     }
-    const b = this.el.getBoundingClientRect()
+    const b = this._b || (this._b = this.el.getBoundingClientRect())
     return { x: x0 + b.left, y: y0 + b.top, w: x1 - x0, h: y1 - y0 }
   }
 

@@ -16,6 +16,23 @@ const prerender = {
   },
 }
 
+/* iteration 48: the 3D gallery is its own chunk. When the page opens on a carousel address, start fetching it right
+   away, in parallel with the main bundle, instead of after it has run; story and other pages skip this and fetch it
+   later in idle time. The chunk's hashed name is only known after bundling, so it is written in here. */
+const galleryPreload = {
+  name: 'gallery-preload',
+  apply: 'build',
+  transformIndexHtml: {
+    order: 'post',
+    handler(html, ctx) {
+      const chunk = ctx.bundle && Object.values(ctx.bundle).find((c) => c.type === 'chunk' && c.name === 'Gallery')
+      if (!chunk) return html
+      const tag = `<script>if (/^(#\\/?|#\\/(prose|publications|luck|deep|home)\\/?)?$/.test(location.hash)) { var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = '/${chunk.fileName}'; document.head.appendChild(l) }</script>`
+      return html.replace('</head>', `    ${tag}\n  </head>`)
+    },
+  },
+}
+
 /* dev-only: serve /papers and /papers/x the way Cloudflare serves them in production */
 const cleanUrls = {
   name: 'clean-urls',
@@ -33,7 +50,7 @@ const cleanUrls = {
 }
 
 export default defineConfig({
-  plugins: [react(), glsl(), cleanUrls, prerender],
+  plugins: [react(), glsl(), cleanUrls, galleryPreload, prerender],
   server: {
     port: 3001,
     open: true

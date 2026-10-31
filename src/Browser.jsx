@@ -5,7 +5,6 @@
    #/prose  #/publications  #/luck  #/<cat>/<slug>  #/about  #/paintings */
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import * as THREE from 'three'
 import gsap from 'gsap'
 import { CustomEase } from 'gsap/CustomEase'
 import Lenis from 'lenis'
@@ -14,7 +13,7 @@ import { CATS, META, PAINTINGS, SOCIALS, SELECTED_ITEMS, variantFor, aspectOf, p
 import NOTES from './pieceNotes'
 import PaperPage from './PaperPage'
 import TEASERS from './storyTeasers'
-import Gallery, { GLIDE, imageTexture, texture, plateSize, SECTIONS } from './gallery/Gallery'
+import { GLIDE, plateSize, SECTIONS } from './gallery/shared'
 import './styles/globals.css'
 import './styles/a24.css'
 import './styles/iter18.css'
@@ -222,13 +221,17 @@ function backOf(it) {
     rows: [['Event', it.event], ['Related', it.related ? it.related.title : ''], ['Painting', metaOf(it, 'Painting')]],
   }
 }
-const canvasTexture = (c) => { const t = new THREE.CanvasTexture(c); return t }
+// iteration 48: the 3D gallery and three.js are their own chunk. Home fetches it at start-up (alongside the first
+// render); every other page fetches it in idle time after it has shown, so going back to the row never waits.
+const GAL = { mod: null, p: null }
+const loadGallery = () => GAL.p || (GAL.p = import('./gallery/Gallery').then((m) => { GAL.mod = m; return m }))
+const canvasTexture = (c) => new GAL.mod.CanvasTexture(c)
 // iteration 47: on a phone one 1200px file serves the carousel, the flight and the story page (cached once, so the
 // hand-offs stay seamless); on a desktop the sizes are unchanged
 const PHONE = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches && Math.min(window.innerWidth, window.innerHeight) <= 760
 const PLATE_CSS = PHONE ? 750 : 900, STORY_CSS = PHONE ? 750 : 2000
-const frontTexture = (it) => (it.cat === 'prose' || it.cat === 'paintings') && it.src ? imageTexture(variantFor(it.src, PLATE_CSS)) : texture(faceKey(it, 'front'), () => fontsReady().then(() => canvasTexture(faceCanvas(it, 'front'))))
-const backTexture = (it) => texture(faceKey(it, 'back'), () => fontsReady().then(() => canvasTexture(faceCanvas(it, 'back'))))
+const frontTexture = (it) => (it.cat === 'prose' || it.cat === 'paintings') && it.src ? GAL.mod.imageTexture(variantFor(it.src, PLATE_CSS)) : GAL.mod.texture(faceKey(it, 'front'), () => fontsReady().then(() => canvasTexture(faceCanvas(it, 'front'))))
+const backTexture = (it) => GAL.mod.texture(faceKey(it, 'back'), () => fontsReady().then(() => canvasTexture(faceCanvas(it, 'back'))))
 const URLS = new Map()
 const faceURL = (it, side) => {
   if (side === 'front' && (it.cat === 'prose' || it.cat === 'paintings') && it.src) return variantFor(it.src, PLATE_CSS)
@@ -649,30 +652,40 @@ function Home({ cat, go }) {
     window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k)
   }, [])
   /* keep the line under the front plate's bottom edge, centred on it, plate-wide, never over the foot */
+  // iteration 48: every frame this only reads (the plate's box is projected maths, the rest is measured once per
+  // layout) and then writes; it used to write the caption and then read the nav, forcing a layout every frame
+  const lay = useRef({ key: '' })
   const placeQ = () => {
     const q = qRef.current, g = gal.current, m = mainRef.current
     if (!q || !g || !m) return
     const r = g.rectOf(g.index()); if (!r) return
-    const mb = m.getBoundingClientRect(), W = mb.width, H = mb.height
+    const L = lay.current, key = `${window.innerWidth}x${window.innerHeight}|${phase}|${cur}|${sec}|${tocOn}`
+    if (L.key !== key) {
+      L.key = key; L.mb = m.getBoundingClientRect()
+      L.feet = [...m.querySelectorAll('.h-flip, .h-count, .h-end')].map((e) => e.getBoundingClientRect()).filter((b) => b.width)
+      const mk = m.querySelector('.h-mark'), hd = m.querySelector('.sn')
+      L.sfY = mk ? (hd ? Math.max(mk.getBoundingClientRect().bottom, hd.getBoundingClientRect().bottom) : mk.getBoundingClientRect().bottom) : null
+      L.sfSet = false
+    }
+    const mb = L.mb, W = mb.width, H = mb.height, qh = q.offsetHeight
     const mob = W <= 760, w = Math.max(mob ? 240 : 260, Math.min(r.w * (mob ? 1.05 : 1), 560, W - 24))
     const cx = Math.min(W - w / 2 - 12, Math.max(w / 2 + 12, r.x - mb.left + r.w / 2))
     let floor = H - 8
-    m.querySelectorAll('.h-flip, .h-count, .h-end').forEach((e) => {
-      const b = e.getBoundingClientRect(); if (!b.width) return
+    L.feet.forEach((b) => {
       const l = b.left - mb.left, rr = b.right - mb.left
       if (rr > cx - w / 2 - 8 && l < cx + w / 2 + 8) floor = Math.min(floor, b.top - mb.top - 8)
     })
-    const top = Math.max(0, Math.min(r.y - mb.top + r.h + (mob ? 10 : 14), floor - q.offsetHeight))
+    const top = Math.max(0, Math.min(r.y - mb.top + r.h + (mob ? 10 : 14), floor - qh))
     q.style.left = `${cx.toFixed(1)}px`; q.style.top = `${top.toFixed(1)}px`; q.style.width = `${w.toFixed(0)}px`
     // the socials sit centred right under the name (on a phone, under the stacked nav so they never touch it)
-    const sf = m.querySelector('.h-sfoot'), mk = m.querySelector('.h-mark'), hd = m.querySelector('.sn')
-    if (sf && mk) { const mr = mk.getBoundingClientRect(), y = hd ? Math.max(mr.bottom, hd.getBoundingClientRect().bottom) : mr.bottom; sf.style.top = `${(y - mb.top + (mob ? 8 : 10)).toFixed(1)}px` }
+    const sf = m.querySelector('.h-sfoot')
+    if (sf && L.sfY != null && !L.sfSet) { L.sfSet = true; sf.style.top = `${(L.sfY - mb.top + (mob ? 8 : 10)).toFixed(1)}px` }
   }
   const placeRef = useRef(placeQ); placeRef.current = placeQ
 
   useLayoutEffect(() => {
     const el = host.current
-    const g = gal.current = new Gallery(el, {
+    const g = gal.current = new GAL.mod.default(el, {
       touch: isTouch, frontTexture, backTexture,
       onChange: (i) => { const n = base.current + i; lastIdx.home = n; ROWPOS.set = true; setCur(n) },
       onHover: (i) => setHv(isTouch() ? -1 : i),
@@ -858,6 +871,17 @@ function Home({ cat, go }) {
   )
 }
 
+function HomeGate(props) {
+  const [ready, setReady] = useState(!!GAL.mod)
+  useEffect(() => { if (!ready) { let live = true; loadGallery().then(() => live && setReady(true)); return () => { live = false } } }, [ready])
+  if (ready) return <Home {...props} />
+  const intro = !session.introDone && !reduced()
+  return (
+    <main className="h h-loading h-naming" style={{ background: '#f2f2f2' }} aria-busy="true">
+      {intro && <div className="h-iname is-f" aria-hidden="true"><span className="h-iname-m"><span>Shanmu Raja</span></span></div>}
+    </main>
+  )
+}
 function PageTop({ back, backLabel, go, right, active }) {
   return (
     <>
@@ -1262,6 +1286,15 @@ function Paintings({ go }) {
 const same = (a, b) => hashOf(a) === hashOf(b)
 export default function Browser() {
   useEffect(() => { document.documentElement.classList.remove('pre') }, [])
+  useEffect(() => {
+    if (parse(window.location.hash).view === 'browse') { loadGallery(); return }
+    // after the page has fully loaded (its painting included), in idle time, so it never competes with what is on screen
+    let id = 0
+    const later = () => loadGallery()
+    const kick = () => { id = window.requestIdleCallback ? window.requestIdleCallback(later, { timeout: 4000 }) : setTimeout(later, 1500) }
+    if (document.readyState === 'complete') kick(); else window.addEventListener('load', kick, { once: true })
+    return () => { window.removeEventListener('load', kick); if (window.cancelIdleCallback) window.cancelIdleCallback(id); clearTimeout(id) }
+  }, [])
   // iteration 24: a page opened straight from a link still has somewhere to go Back to: seed the section
   // underneath it (at that very plate) so the mouse back button / swipe / Alt+Left land in the gallery
   useEffect(() => {
@@ -1336,5 +1369,5 @@ export default function Browser() {
   if (route.view === 'piece') return <Piece key={`${route.cat}-${route.i}`} cat={route.cat} i={route.i} via={route.via} go={go} />
   if (route.view === 'about') return <About go={go} />
   if (route.view === 'paintings') return <Paintings go={go} />
-  return <Home cat={route.cat} go={go} />
+  return <HomeGate cat={route.cat} go={go} />
 }
