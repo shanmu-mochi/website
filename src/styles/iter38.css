@@ -1,0 +1,106 @@
+/* iteration 38: the story page on the A24 film-page grid (a24.raviklaassens.com, measured 1440 / 390).
+   Tokens are the measured A24 numbers; every gap on the page is one of them. */
+.s38 {
+  --m: 6px;                 /* page margin (A24 6 / 7) */
+  --t-h1: 72px;             /* heading-l 72/72, -0.04em (A24 72 / 35.8) */
+  --t-lab: 7.5px;           /* subheading-xs, +0.2em caps (A24 7.5 / 8.14) */
+  --t-val: 13.5px;          /* paragraph-m (A24 13.5 / 14.66) */
+  --t-desc: 24px;           /* paragraph-xl 24/31.2 (A24 24 / 26) */
+  --row: 21px;              /* info row (A24 21.5 / 31) */
+  --h1-top: 72px;           /* title top (A24 72 / 46) */
+  --cta: 411px;             /* CTA area between the plus marks (A24 411) */
+  --btn: 53px; --btn-w: 231px; --btn-rule: 4px;   /* A24 53 / 40, 231, 4 / 3 */
+  --sec: 124vh;             /* ruled section: 1116 of 900 (A24), five rows of --sec/5 */
+  --ink: #111; --hair: rgba(17, 17, 17, .22); --paper38: #f2f2f2; --grey38: #d8d5d2;
+  background: var(--grey38) !important; color: var(--ink); padding: 0 var(--m) !important; margin: 0; overflow-anchor: none;
+  --lab-f: 500 var(--t-lab)/1.3 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --val-f: 400 var(--t-val)/1 'Inter', 'Helvetica Neue', Arial, sans-serif;
+}
+@media (max-width: 760px) {
+  .s38 { --m: 7px; --t-h1: 35.8px; --t-lab: 8.14px; --t-val: 14.66px; --t-desc: 26px; --row: 31px; --h1-top: 46px; --cta: 300px; --btn: 40px; --btn-w: auto; --btn-rule: 3px; --sec: 88vh; }
+}
+.s38 .pg-sn, .s38 .pg-top { margin-left: 0; margin-right: 0; padding-left: 0; padding-right: 0; }
+.s38 .pg-top { padding-top: 10px; padding-bottom: 0; }
+.s38 .pg-back { font: 400 15px/1 'Lora', serif; color: var(--ink); padding: 8px 0; }
+.s38 .s38-lab { font: var(--lab-f); letter-spacing: .2em; text-transform: uppercase; margin: 0; }
+.s38 .s38-val { font: var(--val-f); letter-spacing: -.025em; margin: 0; }
+
+/* 1 title block */
+.s38-head { padding-top: calc(var(--h1-top) - 56px); }
+.s38-title { font: 400 var(--t-h1)/1 'Lora', Georgia, serif; letter-spacing: -.04em; text-transform: uppercase; text-align: center; margin: 0 auto; padding-bottom: var(--h1-top); max-width: 18ch; text-wrap: balance; }
+.s38-credit { border-top: 1px solid var(--hair); padding: 8px 0; text-align: center; display: flex; justify-content: center; align-items: baseline; gap: 8px; }
+.s38-rows { margin: 0; border-bottom: 1px solid var(--hair); }
+.s38-rows > div { display: flex; justify-content: space-between; align-items: center; min-height: var(--row); border-top: 1px solid var(--hair); gap: 24px; }
+.s38-rows dd { text-align: right; }
+.s38-honors { text-align: center; padding-top: 8px; } .s38-honors p { margin: 0; font: var(--val-f); }
+.s38-cta { position: relative; min-height: var(--cta); margin-top: calc(var(--cta) * .38); display: flex; flex-direction: column; justify-content: flex-start; align-items: center; gap: 32px; padding: 56px 0 24px; box-sizing: border-box; }
+.s38-plus { position: absolute; width: 13px; height: 13px; }
+.s38-plus::before, .s38-plus::after { content: ''; position: absolute; background: var(--ink); }
+.s38-plus::before { left: 6px; top: 0; width: 1px; height: 13px; } .s38-plus::after { top: 6px; left: 0; height: 1px; width: 13px; }
+.s38-plus.is-tl { top: 0; left: 0; } .s38-plus.is-tr { top: 0; right: 0; } .s38-plus.is-bl { bottom: 0; left: 0; } .s38-plus.is-br { bottom: 0; right: 0; }
+.s38-first { font: 400 clamp(26px, 2.4vw, 34px)/1.25 'Tyrowo Inked', 'Lora', serif; font-feature-settings: 'calt' 1, 'kern' 1; text-align: center; max-width: 30ch; margin: 0; }
+.s38-btns { display: flex; gap: var(--m); }
+.s38-btn { display: flex; align-items: center; justify-content: center; gap: 6px; min-width: var(--btn-w); height: var(--btn); padding: 0 18px; box-sizing: border-box;
+  border-top: var(--btn-rule) double var(--ink); border-bottom: var(--btn-rule) double var(--ink); font: var(--val-f); letter-spacing: .02em; text-transform: uppercase; color: var(--ink); text-decoration: none; transition: background .2s; }
+.s38-btn:hover { background: rgba(17, 17, 17, .06); }
+.s38-btn.is-muted { opacity: .5; }
+
+/* ruled sections: five rows */
+.s38-sec { position: relative; height: var(--sec); margin: 0 calc(-1 * var(--m)); display: grid; grid-template-rows: repeat(5, 1fr); }
+.s38-row { position: relative; border-top: 1px solid var(--hair); display: flex; align-items: flex-start; padding: 0 var(--m); }
+.s38-w { font: 400 var(--t-h1)/1 'Lora', Georgia, serif; letter-spacing: -.04em; text-transform: uppercase; white-space: nowrap; margin-top: 6px; will-change: transform; color: inherit; text-decoration: none; }
+.s38-w.is-r { margin-left: auto; }
+
+/* 2 the painting: the only image, taller than its section, scroll moves it */
+.s38-paint { margin-top: -26vh; color: #fff; overflow: hidden; background: #111; }
+.s38-paint .s38-row { border-top-color: rgba(255, 255, 255, .3); z-index: 1; }
+.s38-paint .s38-row:first-child { border-top-color: transparent; }
+.s38-paint-f { position: absolute; inset: 0 0 auto 0; line-height: 0; }
+.s38-paint-img { display: block; width: 100%; height: calc(var(--sec) * 1.58); object-fit: cover; will-change: transform; }
+
+/* 3 the opening */
+.s38-desc { padding: 96px 0 96px; max-width: 30em; }
+.s38-desc p { font: 400 var(--t-desc)/1.3 'Inter', 'Helvetica Neue', Arial, sans-serif; letter-spacing: -.02em; margin: 0 0 1em; }
+.s38-desc p + p { font-size: 17px; line-height: 1.5; letter-spacing: 0; max-width: 34em; }
+
+/* 4 more to read: ruled rows like the info rows */
+.s38-more { padding-bottom: 96px; }
+.s38-more h2 { padding-bottom: 8px; }
+.s38-more ul { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--hair); }
+.s38-more a { display: flex; justify-content: space-between; align-items: center; gap: 24px; min-height: var(--row); border-top: 1px solid var(--hair); color: var(--ink); text-decoration: none; transition: opacity .2s; }
+.s38-more a:hover { opacity: .55; }
+.s38-more a .s38-val { text-align: right; }
+@media (max-width: 760px) { .s38-more a .s38-lab { flex: 0 0 auto; } }
+
+/* 5 the next story, on the rules of a greyer section */
+.s38-next { background: var(--grey38); }
+.s38-next .s38-row { border-top: 0; }
+.s38-rule { position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--hair); transform-origin: 100% 50%; }
+.s38-next-k { margin-top: 8px; transition: none; }
+.s38-fill { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--ink); transform: scaleX(0); transform-origin: 0 50%; }
+.s38-hint { position: absolute; right: var(--m); bottom: 10px; opacity: .6; }
+@media (max-width: 760px) { .s38-next .s38-w { white-space: normal; max-width: 100%; } }
+
+/* Menu pill: bottom centre (as A24's mobile nav), clear of the SHANMU RAJA name at the top */
+.mp35 { position: fixed; bottom: 16px; left: 50%; z-index: 60; transform: translate(-50%, 72px); transition: transform .35s cubic-bezier(.2,.7,.2,1), opacity .35s;
+  opacity: 0; background: #111; color: #f2f2f2; text-decoration: none; padding: 10px 20px; border-radius: 999px; font: 400 15px/1 'Lora', serif; }
+.mp35.is-on { transform: translate(-50%, 0); opacity: 1; }
+.ab-epi-1 { font-feature-settings: 'calt' 1, 'kern' 1 !important; }
+@media (prefers-reduced-motion: reduce) { .mp35 { transition: opacity .3s; transform: translate(-50%, 0); } .s38-rule { transform: scaleX(calc(1 - var(--q, 0))); } }
+
+/* paper above the painting, A24's grey below it (full-bleed fills) */
+.s38 .pg-sn, .s38 .pg-top, .s38-head { border-image: linear-gradient(var(--paper38), var(--paper38)) fill 0 / / 0 100vmax; }
+.s38-next .s38-w.is-l { margin-left: 18%; } .s38-next .s38-w.is-r { margin-left: 38%; }
+@media (max-width: 760px) { .s38-next .s38-w.is-l, .s38-next .s38-w.is-r { margin-left: 0; } }
+
+/* iteration 38: home caption under the front plate. Title, handwritten first line and kind · date stack in
+   normal flow with fixed gaps; the first line keeps every line it needs (no max-height), so nothing is covered. */
+.h-under { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.h-under .h-title { display: block; height: auto !important; max-height: none !important; overflow: visible !important; }
+.h-under .h-quote.h-quote-hw { display: block !important; max-height: none !important; overflow: visible !important; height: auto !important; margin: 10px auto 0 !important; line-height: 1.32 !important; }
+.h-under .h-umeta { display: block; position: static !important; margin: 10px 0 0 !important; flex: 0 0 auto; }
+@media (max-width: 760px) {
+  .s38-cta { min-height: 0; margin-top: 64px; padding: 40px 0 120px; gap: 24px; }
+  .s38-paint { margin-top: -64px; }
+}
+.pg.s38, .pg.s38 .s38-head > * { animation: none !important; }

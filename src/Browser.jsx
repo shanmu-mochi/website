@@ -26,10 +26,7 @@ import './styles/iter27.css'
 import './styles/iter28.css'
 import './styles/iter32.css'
 import './styles/iter33.css'
-import './styles/iter34.css'
-import { makeInk } from './lib/inkBloom.js'
-import './styles/iter36.css'
-import './styles/iter37.css'
+import './styles/iter38.css'
 
 const norm = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '')
 const pad2 = (n) => String(n).padStart(2, '0')
@@ -933,66 +930,43 @@ function Piece({ cat, i, go, via }) {
   )
 }
 
-/* iteration 21: the story page. Paris Review calm (white, Lora, centred caps title, hairline rules, tracked
-   caps labels) holding an A24 film-page order: title, the first line written in by hand, the details and the
-   one main way to read it, all above the fold; the painting is not shown until you scroll, then it rises in
-   from below with a torn, organic edge and opens out to the full width, once. Then the real opening and one
-   real line from the story (verbatim, src/storyTeasers.js), the way to read it again, and the page keeps
-   going: a row of more pieces, and past the end the next story takes over (scrolling up past the top goes back). */
-/* iteration 37: the story head. One order, fixed rhythm: kind · date, title, byline, rule, venue,
-   then (prose) the handwritten first line, the Read button and a small Next link. Empty fields leave no slot. */
-function StoryTop({ it, meta, honors, nextHref, onNext }) {
-  const mv = (k) => (meta.find(([x]) => x === k) || [])[1]
-  const venue = mv('Venue')
-  const kick = [mv('Kind'), mv('Published')].filter(Boolean).join(' · ')
-  const pub = venue && venue !== 'Unpublished' ? `Published on ${venue}` : ''
-  return (
-    <header className="s37-head">
-      {kick && <p data-rv className="s37-kick">{kick}</p>}
-      <h1 data-rv className="s37-title">{it.title}</h1>
-      <p data-rv className="s37-by">by Shanmu Raja</p>
-      <hr data-rv className="s37-rule" />
-      {pub && <p data-rv className="s37-meta">{pub}</p>}
-      {honors}
-      {it.cat === 'prose' && it.line && <p data-rv className="s37-first" key={it.slug}><Hand text={it.line} delay={0.4} speed={0.8 * Math.min(0.05, 1.1 / Math.max(1, it.line.length))} /></p>}
-      <div data-rv className="s37-acts">
-        {it.href ? <a className="s37-read" href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()}<b aria-hidden="true"> ↗</b></a> : <span className="s37-read is-muted">Not yet published</span>}
-        <a className="s37-next" href={nextHref} onClick={onNext}>Next story →</a>
-      </div>
-    </header>
-  )
+/* iteration 38: the story page, laid out like an A24 film page (a24.raviklaassens.com, measured at 1440 and 390).
+   1 title block: big caps title, hairline, credit line, ruled info rows, then the handwritten first line and the
+     double-ruled buttons between plus-stroke corner marks.
+   2 the painting: the one image on the page, full bleed behind five ruled rows, taller than its section so
+     scroll moves it (parallax); the pull line sits on the rules.
+   3 the opening, 4 more to read as ruled rows, 5 the next story on the rules of a greyer section.
+   Motion: one scroll handler computes every transform from scroll position (scrubbed, reversible). At the bottom
+   further input fills a push value q (wheel 620px, touch 380px, as A24); q drives the rules and the title in the
+   next section; at q = 1 the next story opens at its top. Let go early and q drains back. Up at a story's top goes
+   back one story, landing on its last screen. */
+const PUSH38 = { wheel: 620, touch: 380, hold: 180, drain: 0.9 }
+const clamp01 = (v) => Math.min(1, Math.max(0, v))
+// break a line into a few chunks that fit a row at the display size
+function chunks(text, max) {
+  const out = []; let cur = ''
+  for (const w of String(text || '').split(/\s+/).filter(Boolean)) { if (cur && (cur + ' ' + w).length > max) { out.push(cur); cur = w } else cur = cur ? cur + ' ' + w : w }
+  if (cur) out.push(cur)
+  return out
 }
-const metaRows = (x) => (x.meta || []).filter(([, v]) => v)
-
-/* iteration 36: the story page. Painting plate, title block, handwritten line, Read and Next, the
-   opening and more to read, then one last screen: "Next" and the next title, centred. Keep scrolling there
-   and the ink bleeds up around the title (a commit gesture, with resistance); let go before the threshold
-   and it draws back, pass it and the ink fills the page and lifts away into the next story's top.
-   At a story's top one upward gesture goes back exactly one story, landing on its last screen. */
-const INK36 = { veil: null }
-function inkVeil(title) {
-  let v = INK36.veil
-  if (!v) { v = INK36.veil = document.createElement('div'); v.className = 'nx36-veil'; v.setAttribute('aria-hidden', 'true'); document.body.appendChild(v) }
-  v.innerHTML = '<small>Next</small><span></span>'; v.lastChild.textContent = title
-  v.getAnimations().forEach((x) => x.cancel()); v.style.transform = ''; v.style.opacity = '1'; v.classList.add('is-on')
-  return v
+function torn(seed) {   // a torn paper top edge (a low ridge, like A24's), the same for a story every time
+  const r = prng(seed), a = [r(), r(), r()].map((v) => v * 6.28), pts = ['0% 100%']
+  for (let k = 0; k <= 80; k += 1) {
+    const x = k / 80, hill = 0.5 + 0.22 * Math.sin(x * 5.1 + a[0]) + 0.16 * Math.sin(x * 11.3 + a[1]) + 0.07 * Math.sin(x * 29 + a[2])
+    const y = 1 + 12 * clamp01(hill) + 4 * Math.pow(Math.abs(x - 0.5) * 2, 3) + (r() - 0.5) * 0.5
+    pts.push(`${(x * 100).toFixed(2)}% ${y.toFixed(2)}%`)
+  }
+  pts.push('100% 100%'); return `polygon(${pts.join(',')})`
 }
-function liftVeil() {
-  const v = INK36.veil; if (!v || !v.classList.contains('is-on')) return
-  const red = reduced()
-  const a = v.animate(red ? [{ opacity: 1 }, { opacity: 0 }] : [{ transform: 'translate3d(0,0,0)' }, { transform: 'translate3d(0,-100%,0)' }],
-    { duration: red ? 300 : 820, delay: red ? 0 : 140, easing: 'cubic-bezier(.65,0,.25,1)', fill: 'forwards' })
-  a.onfinish = () => { v.classList.remove('is-on'); a.cancel() }
-}
-const COMMIT36 = 0.6
+const seedOf = (s) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 9973, 7)
 function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
   const t = TEASERS[it.slug] || {}
-  const more = useRef(null), zone = useRef(null), discRef = useRef(null), inkRef = useRef(null), pillRef = useRef(null), linesRef = useRef(null)
+  const root = useRef(null), zone = useRef(null), pillRef = useRef(null)
   const N = items.length, next = (i + 1) % N, prev = (i - 1 + N) % N
   const nx = items[next], pv = items[prev]
   const goPiece = (c, k) => go({ view: 'piece', cat: c, i: k })
-  const lift = useRef(SEAM.to === it.slug && SEAM.dir === 1).current
-  // land where the seam says: down = at the top (the ink veil lifts off it); up = on this story's last screen
+  const mobile = typeof window !== 'undefined' && window.innerWidth <= 760
+  // land where the seam says: down = at the top; up = on this story's last screen
   useLayoutEffect(() => {
     if (SEAM.to !== it.slug) return
     const dir = SEAM.dir
@@ -1001,74 +975,53 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
       SEAM.skipTop = true
       const pin = () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' })
       pin()
-      // late fonts and images can still grow the page; stay on the last screen until the reader moves
       const ro = new ResizeObserver(pin); ro.observe(document.body)
-      window.addEventListener('scroll', pin, { passive: true })   // and absorb the fling left over from the gesture
+      window.addEventListener('scroll', pin, { passive: true })
       const stop = () => { ro.disconnect(); clearTimeout(tm); window.removeEventListener('scroll', pin); window.removeEventListener('wheel', stopIn); window.removeEventListener('touchstart', stop); window.removeEventListener('keydown', stop) }
       const stopIn = (e) => { if (!gestTail(e.deltaY, performance.now()) || e.deltaY > 0) stop() }
       const tm = setTimeout(stop, 2500)
       window.addEventListener('wheel', stopIn, { passive: true }); window.addEventListener('touchstart', stop, { passive: true }); window.addEventListener('keydown', stop)
     }
-    else { window.scrollTo({ top: 0, behavior: 'instant' }); requestAnimationFrame(liftVeil) }
+    else window.scrollTo({ top: 0, behavior: 'instant' })
   }, [it.slug])
-  // the ink renderer exists only while its screen is near; its field is prepared before the gesture starts
+  // THE scroll driver: one rAF-coalesced function reads scroll (and q) and writes every transform on the page
   useEffect(() => {
-    const z = zone.current, cv = discRef.current; if (!z || !cv || reduced()) return
-    let r = null, pend = 0, dead = false
-    const io = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting && !r && !pend) {   // shader compile + field render (~0.1s once) waits for an idle moment, not mid-scroll
-        const mk = () => { pend = 0; if (dead || r) return; try { r = makeInk(cv) } catch (er) { r = null } if (r) { inkRef.current = r; r.prepare() } }
-        pend = window.requestIdleCallback ? requestIdleCallback(mk, { timeout: 900 }) : setTimeout(mk, 200)
-      }
-      else if (!e.isIntersecting && r) { inkRef.current = null; r.dispose(); r = null; cv.style.visibility = 'hidden' }
-    }, { rootMargin: '60% 0px' })
-    io.observe(z)
-    return () => { dead = true; io.disconnect(); inkRef.current = null; if (r) r.dispose() }
-  }, [it.slug])
-  // Menu pill: hides while reading down, slides in on any upward scroll (scroll events only, no rAF loop)
-  useEffect(() => {
-    let lastY = window.scrollY
-    const on = () => { const y = window.scrollY, dy = y - lastY; lastY = y; const pl = pillRef.current; if (!pl) return; if (dy < -1 || y < 40) pl.classList.add('is-on'); else if (dy > 1) pl.classList.remove('is-on') }
-    on(); window.addEventListener('scroll', on, { passive: true })
-    return () => window.removeEventListener('scroll', on)
-  }, [it.slug])
-  // the commit gesture. q (0..1) is driven by input at the bottom of the page, never by scroll position
-  useEffect(() => {
+    const el = root.current; if (!el) return
     const red = reduced()
-    let q = 0, raf = 0, anim = null, idle = 0, done = false, ty = null, upAcc = 0, lastIn = 0, lastD = 0
-    const H = () => window.innerHeight
-    const atBottom = () => window.scrollY >= document.documentElement.scrollHeight - H() - 2
+    let raf = 0, q = 0, lastY = window.scrollY, drainT = 0, done = false, ty = null, upAcc = 0
+    const q$ = (s) => el.querySelectorAll(s)
+    const hero = el.querySelector('.s38-paint'), img = el.querySelector('.s38-paint-img'), words = q$('.s38-paint .s38-w'), nwords = q$('.s38-next .s38-w'), rules = q$('.s38-next .s38-rule'), fill = el.querySelector('.s38-fill'), kick = el.querySelector('.s38-next-k')
+    const prog = (node) => { const b = node.getBoundingClientRect(), H = window.innerHeight; return { p: clamp01((H - b.top) / (H + b.height)), h: b.height } }
     const paint = () => {
       raf = 0
-      const ink = inkRef.current, cv = discRef.current, tt = linesRef.current
-      if (cv) cv.style.visibility = q > 0.001 && ink ? 'visible' : 'hidden'
-      if (ink && q > 0.001) ink.draw(q)
-      if (zone.current) zone.current.style.setProperty('--q', q.toFixed(4))
-      if (tt) tt.style.setProperty('--ov', red ? (q > 0.5 ? 1 : 0) : Math.min(1, Math.max(0, (q - 0.4) / 0.14)).toFixed(3))
-      if (red && zone.current) zone.current.style.setProperty('--fade', q.toFixed(3))
+      const y = window.scrollY, dy = y - lastY; lastY = y
+      const pl = pillRef.current
+      if (pl) { if (y < window.innerHeight * 0.6 || dy > 1) pl.classList.remove('is-on'); else if (dy < -1) pl.classList.add('is-on') }   // the back link is on screen near the top
+      if (red) { if (zone.current) zone.current.style.setProperty('--q', q.toFixed(3)); return }
+      if (hero && img) {
+        const { p, h } = prog(hero), extra = img.offsetHeight - h
+        img.style.transform = `translate3d(0,${((p - 1) * extra).toFixed(1)}px,0)`
+        words.forEach((w, k) => { const s = k % 2 ? -1 : 1; w.style.transform = `translate3d(${(s * (p - 0.5) * (window.innerWidth <= 760 ? 3 : 8)).toFixed(2)}vw,0,0)` })
+      }
+      if (zone.current) {
+        const { p } = prog(zone.current), e = clamp01(p * 2)   // entering: words slide in to their places on the rules
+        nwords.forEach((w, k) => { const s = k % 2 ? 1 : -1; w.style.transform = `translate3d(${(s * (1 - e) * 6 + (k % 2 ? 1 : -1) * q * 4).toFixed(2)}vw,${(-q * 40).toFixed(1)}px,0)`; w.style.opacity = (1 - q * 0.6).toFixed(3) })
+        rules.forEach((r, k) => { r.style.transform = `scaleX(${clamp01(1 - clamp01(q * 1.6 - k * 0.12)).toFixed(4)})` })
+        if (fill) fill.style.transform = `scaleX(${q.toFixed(4)})`
+        if (kick) kick.style.opacity = (1 - q).toFixed(3)
+      }
     }
-    const set = (v) => { q = Math.min(1, Math.max(0, v)); if (!raf) raf = requestAnimationFrame(paint) }
-    const tween = (to, ms, then) => {
-      cancelAnimationFrame(anim); const from = q, t0 = performance.now()
-      const st = (now) => { const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3); set(from + (to - from) * e); if (k < 1) anim = requestAnimationFrame(st); else { anim = null; then && then() } }
-      anim = requestAnimationFrame(st)
+    const kickP = () => { if (!raf) raf = requestAnimationFrame(paint) }
+    const H = () => window.innerHeight
+    const atBottom = () => window.scrollY >= document.documentElement.scrollHeight - H() - 2
+    const drain = () => { clearTimeout(drainT); drainT = setTimeout(function d() { if (done || q <= 0) return; q = q * PUSH38.drain - 0.002; if (q < 0.002) q = 0; kickP(); if (q > 0) drainT = setTimeout(d, 16) }, PUSH38.hold) }
+    const commit = (d) => {
+      done = true; clearTimeout(drainT)
+      GEST.s = 1; GEST.t = performance.now(); GEST.m = Math.abs(d); GEST.touch = ty != null
+      SEAM.to = nx.slug; SEAM.dir = 1; SEAM.off = 0
+      go({ view: 'piece', cat, i: next }, { seam: true })
     }
-    const commit = () => {
-      if (done) return; done = true; clearTimeout(idle)
-      tween(1, 260 * (1 - q) + 60, () => {
-        inkVeil(nx.title)
-        GEST.s = 1; GEST.t = performance.now(); GEST.m = lastD; GEST.touch = ty != null
-        SEAM.to = nx.slug; SEAM.dir = 1; SEAM.off = 0
-        go({ view: 'piece', cat, i: next }, { seam: true })
-      })
-    }
-    const release = () => { clearTimeout(idle); idle = setTimeout(() => { if (done) return; if (q >= COMMIT36) commit(); else if (q > 0) tween(0, 420) }, 170) }
-    const push = (d) => {   // d in px of input, + = down
-      if (anim) { cancelAnimationFrame(anim); anim = null }
-      lastD = Math.abs(d)
-      set(q + d * 0.42 / (1.5 * H()))
-      if (q >= 1) commit(); else release()
-    }
+    const push = (d, per) => { q = clamp01(q + d / per); kickP(); if (q >= 1) commit(d); else drain() }
     const goUp = (d, now) => { done = true; GEST.touch = ty != null; GEST.s = -1; GEST.t = now; GEST.m = Math.abs(d); SEAM.to = pv.slug; SEAM.dir = -1; SEAM.off = 0; go({ view: 'piece', cat, i: prev }, { seam: true }) }
     const wh = (e) => {
       if (e.ctrlKey) return
@@ -1076,64 +1029,75 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit }) {
       const now = performance.now()
       const d = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H() : 1)
       if (!d) return
-      if (gestTail(d, now)) { e.preventDefault(); return }   // the rest of the gesture that just changed story
-      if ((d > 0 && atBottom()) || (d < 0 && q > 0)) { e.preventDefault(); lastIn = now; push(d); return }
+      if (gestTail(d, now)) { e.preventDefault(); return }
+      if ((d > 0 && atBottom()) || (d < 0 && q > 0)) { e.preventDefault(); push(d, PUSH38.wheel); return }
       if (d < 0 && window.scrollY <= 0 && !NAV.busy) { upAcc += -d; if (e.deltaMode === 1 || upAcc > 40) goUp(d, now); return }
-      upAcc = 0; void lastIn
+      upAcc = 0
     }
     const ts = (e) => { ty = e.touches[0].clientY; upAcc = 0; GEST.touch = false }
     const tmv = (e) => {
-      if (ty == null) { if (GEST.touch) e.preventDefault(); return }   // the same finger that changed story: hold the landing
+      if (ty == null) { if (GEST.touch) e.preventDefault(); return }
       if (done) { e.preventDefault(); return }
       const yy = e.touches[0].clientY, dy = ty - yy; ty = yy
-      if ((dy > 0 && atBottom()) || (dy < 0 && q > 0)) { e.preventDefault(); push(dy * 1.6); return }
+      if ((dy > 0 && atBottom()) || (dy < 0 && q > 0)) { e.preventDefault(); push(dy, PUSH38.touch); return }
       if (dy < 0 && window.scrollY <= 0 && !NAV.busy) { upAcc += -dy; if (upAcc > 70) { e.preventDefault(); goUp(dy, performance.now()) } }
     }
-    const te = () => { ty = null; if (q > 0 && !done) release() }
-    const key = (e) => { if (done || !atBottom()) return; if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); push(H() * 0.5) } }
+    const te = () => { ty = null }
+    const key = (e) => { if (done || !atBottom()) return; if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); push(PUSH38.wheel / 2, PUSH38.wheel) } }
+    paint()
+    window.addEventListener('scroll', kickP, { passive: true }); window.addEventListener('resize', kickP)
     window.addEventListener('wheel', wh, { passive: false }); window.addEventListener('touchstart', ts, { passive: true }); window.addEventListener('touchmove', tmv, { passive: false }); window.addEventListener('touchend', te, { passive: true }); window.addEventListener('keydown', key)
-    return () => { clearTimeout(idle); cancelAnimationFrame(raf); cancelAnimationFrame(anim); window.removeEventListener('wheel', wh); window.removeEventListener('touchstart', ts); window.removeEventListener('touchmove', tmv); window.removeEventListener('touchend', te); window.removeEventListener('keydown', key) }
+    return () => { clearTimeout(drainT); cancelAnimationFrame(raf); window.removeEventListener('scroll', kickP); window.removeEventListener('resize', kickP); window.removeEventListener('wheel', wh); window.removeEventListener('touchstart', ts); window.removeEventListener('touchmove', tmv); window.removeEventListener('touchend', te); window.removeEventListener('keydown', key) }
   }, [it.slug]) // eslint-disable-line react-hooks/exhaustive-deps
-  // the row of more pieces: vertical input always scrolls the page; only shift+wheel is mapped sideways
-  useEffect(() => {
-    const el = more.current; if (!el) return
-    const wh = (e) => { if (!e.shiftKey || e.deltaX) return; e.preventDefault(); el.scrollLeft += e.deltaY }
-    el.addEventListener('wheel', wh, { passive: false }); return () => el.removeEventListener('wheel', wh)
-  }, [])
+  const mv = (k) => (meta.find(([x]) => x === k) || [])[1]
+  const venue = mv('Venue')
+  const rows = [['Kind', mv('Kind')], ['Published', mv('Published')], ['Venue', venue], ['Painting', credit]].filter(([, v]) => v)
+  const op = t.opening || []
+  const pull = chunks(t.pull, mobile ? 12 : 16).slice(0, 4)
   const others = [...items.slice(i + 1), ...items.slice(0, i)].map((x) => ({ x, c: cat, k: items.indexOf(x) }))
   const pubs = (catOf0('publications').items || []).map((x, k) => ({ x, c: 'publications', k }))
-  const op = t.opening || []
   const nxHref = `#/${cat}/${nx.slug}`, toNext = (e) => { e.preventDefault(); goPiece(cat, next) }
+  const nxWords = chunks(nx.title, mobile ? 40 : 14).slice(0, 4)
+  const read = it.href
+    ? <a className="s38-btn" href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()} <b aria-hidden="true">↗</b></a>
+    : <span className="s38-btn is-muted">Not yet published</span>
   return (
-    <article className={`pg pg-piece pg-story pg-c-${cat} is-direct${lift ? ' is-lift' : ''}`}>
+    <article ref={root} className={`pg pg-piece pg-story s38 pg-c-${cat} is-direct`}>
       <PageTop back={() => go({ view: 'browse', cat })} backLabel={catOf(cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(N)}`} />
       <a ref={pillRef} className="mp35" href={`#/${cat}`} onClick={(e) => { e.preventDefault(); go({ view: 'browse', cat }) }}><span aria-hidden="true">←</span> Menu</a>
-      {it.src && (
-        <figure className="s37-hero">
-          <div ref={art} className="s37-hero-f"><img src={variantFor(it.src, 2000)} width={Math.round(1000 * aspectOf(it.src))} height={1000} alt={credit || it.title} decoding="async" fetchpriority="high" /></div>
-          {credit && <figcaption data-rv>{credit}</figcaption>}
-        </figure>)}
-      <StoryTop it={it} meta={meta} honors={honors} nextHref={nxHref} onNext={toNext} />
-      {(op.length > 0 || t.pull) && (
-        <section className="s37-teaser">
-          {op.map((p, k) => <p key={k}>{p}</p>)}
-          {t.pull && <blockquote className="s37-pull"><p>{t.pull}</p></blockquote>}
-        </section>)}
-      <section className="s37-more">
-        <h2 className="s37-label">More to read</h2>
-        <div className="s37-row" ref={more}>
-          {[...others, ...pubs].map(({ x, c, k }) => (
-            <a key={`${c}-${x.slug}`} className="s37-card" href={`#/${c}/${x.slug}`} onClick={(e) => { e.preventDefault(); goPiece(c, k) }}>
-              <span className="s37-card-f" style={{ background: x.src ? placeholderOf(x.src) : '#f4f2ec' }}>{x.src ? <img src={variantFor(x.src, 400)} alt="" loading="lazy" decoding="async" /> : <em>{x.title}</em>}</span>
-              <small>{catOf(c).label}</small><b>{x.title}</b>
-            </a>))}
+      <header className="s38-head">
+        <h1 className="s38-title">{it.title}</h1>
+        <div className="s38-credit"><span className="s38-lab">Written by</span> <span className="s38-val">Shanmu Raja</span></div>
+        <dl className="s38-rows">{rows.map(([k, v]) => <div key={k}><dt className="s38-lab">{k}</dt><dd className="s38-val">{v}</dd></div>)}</dl>
+        {honors && <div className="s38-honors">{honors}</div>}
+        <div className="s38-cta">
+          <i className="s38-plus is-tl" aria-hidden="true" /><i className="s38-plus is-tr" aria-hidden="true" /><i className="s38-plus is-bl" aria-hidden="true" /><i className="s38-plus is-br" aria-hidden="true" />
+          {it.line && <p className="s38-first">{it.line}</p>}
+          <div className="s38-btns">{read}<a className="s38-btn" href={nxHref} onClick={toNext}>Next story <b aria-hidden="true">→</b></a></div>
         </div>
+      </header>
+      {it.src && (
+        <section className="s38-paint s38-sec" style={{ clipPath: torn(seedOf(it.slug)) }} aria-label={credit || it.title}>
+          <div ref={art} className="s38-paint-f"><img className="s38-paint-img" src={variantFor(it.src, 2000)} alt={credit || it.title} decoding="async" fetchpriority="high" /></div>
+          {[0, 1, 2, 3, 4].map((k) => <div key={k} className="s38-row">{k > 0 && pull[k - 1] && <span className={`s38-w ${k % 2 ? 'is-l' : 'is-r'}`}>{pull[k - 1]}</span>}</div>)}
+        </section>)}
+      {op.length > 0 && (
+        <section className="s38-desc">
+          {op.map((p, k) => <p key={k}>{p}</p>)}
+        </section>)}
+      <section className="s38-more">
+        <h2 className="s38-lab">More to read</h2>
+        <ul>{[...others, ...pubs].map(({ x, c, k }) => (
+          <li key={`${c}-${x.slug}`}><a href={`#/${c}/${x.slug}`} onClick={(e) => { e.preventDefault(); goPiece(c, k) }}><span className="s38-lab">{catOf(c).label}</span><span className="s38-val">{x.title}</span></a></li>))}
+        </ul>
       </section>
-      <section className="nx36 s37-end" ref={zone} aria-label={`Next story: ${nx.title}`}>
-        {nx.src && <img className="s37-end-plate" src={variantFor(nx.src, 800)} width={Math.round(1000 * aspectOf(nx.src))} height={1000} alt="" fetchpriority="low" decoding="async" />}
-        <canvas className="nx36-cv" ref={discRef} aria-hidden="true" />
-        <a className="nx36-t s37-end-t" ref={linesRef} href={nxHref} onClick={toNext}><small>Next</small><span>{nx.title}</span></a>
-        <p className="nx36-hint s37-end-hint" aria-hidden="true">Keep scrolling</p>
+      <section className="s38-next s38-sec" ref={zone} aria-label={`Next story: ${nx.title}`}>
+        {[0, 1, 2, 3, 4].map((k) => (
+          <div key={k} className="s38-row"><i className="s38-rule" aria-hidden="true" />
+            {k === 0 && <span className="s38-lab s38-next-k">Next story</span>}
+            {k >= 1 && nxWords[k - 1] && <a className={`s38-w ${k % 2 ? 'is-l' : 'is-r'}`} href={nxHref} onClick={toNext}>{nxWords[k - 1]}</a>}
+            {k === 4 && <><i className="s38-fill" aria-hidden="true" /><span className="s38-lab s38-hint">Keep scrolling</span></>}
+          </div>))}
       </section>
     </article>
   )

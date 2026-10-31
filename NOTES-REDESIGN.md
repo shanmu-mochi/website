@@ -339,3 +339,44 @@ Tokens (on `.pg-story`, used only between blocks):
 - Deliberate deviation: the painting credit appears once, in the hero caption. The meta line carries only the venue.
 
 Mac (M5 Pro, Metal, temp build; the machine had load ~4–5 during the run), p95/max ms: home 16.8/150 · prose-index 16.7/16.8 · story-read 16.7/50 (1 long task, 64ms) · bloom-down 16.7/16.8 · bloom-up 16.8/83.3.
+
+## Iteration 38 — story page rebuilt on the A24 film page
+
+Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, behaving like A24's hero. All motion is one scroll-driven rAF system that is scrubbed and reversible. The only time-based parts are tiny hovers and the push drain, which A24 also has.
+
+| Token | A24 1440 | Ours 1440 | A24 390 | Ours 390 |
+|---|---|---|---|---|
+| Page margin | 6px | 6px | 7px | 7px |
+| H1 (heading-l) | 72px | 72px | 35.8px | 35.8px |
+| H1 top | 72 | 72 token (91 measured, under nav) | 46 | 46 |
+| Label | 7.5px | 7.5px | 8.14px | 8.14px |
+| Value | 13.5px | 13.5px | 14.66px | 14.66px |
+| Info row | 21.5px | 21px | 31px | 31px |
+| Description | 24px | 24px | 26px | 26px |
+| CTA area | 411px | 411px | — | 300px |
+| Button h / w / rule | 53 / 231 / 4px | 53 / 231 / 4px | 40 / – / 3px | 40 / auto / 3px |
+| Ruled section | 1116px (1.24×900, 5 rows) | 124vh, 5 rows | — | 88vh |
+| Hero image | 158% of section, torn top | 158%, torn clip-path | | |
+| Lower bg | #d8d5d2 | #d8d5d2 | | |
+| Push wheel / touch / hold / drain | 620 / 380 / 180ms / 0.9 | same | | |
+
+**Pill:** fixed at the bottom centre. It is hidden near the top and while scrolling down, and shown on an upward scroll, so it no longer overlaps "SHANMU RAJA".
+
+**Home caption:** the first line had max-height 2.8em, which let it overlap. The title, first line and kind·date are now a flex column with 10px gaps. Bounding boxes show 0 overlaps on all 35 pieces at 1440 and at 390 (ov38.cjs).
+
+**Crossing tests** (t38.cjs, wheel 1440 and touch 390):
+- Down commits exactly one story.
+- A flick that reaches q≈0.67 retracts to 0.
+- Going up lands at the previous story's bottom.
+- A partial push reverses.
+- No errors.
+
+**Remaining honest differences:**
+- No WebGL disc or second image in the next zone; there is a fill line instead.
+- Long titles wrap to two lines, so the hero block is taller.
+- We have an extra "More to read" list.
+- No trailer button.
+- The handwritten line is static.
+- The painting is cover-cropped.
+- On mobile the buttons stay in the CTA.
+- No Mac-GPU timing this iteration.
