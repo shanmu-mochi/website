@@ -574,3 +574,10 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - The pull quote's rows are balanced (same row count, even lengths) and phones use their real line width, so no word sits alone on a row.
 - A story with no link: Not yet published is a quiet left-aligned line, not an empty button box, and the empty space after the painting is trimmed.
 - The book's soft shadow fades as the book turns away; edge-on it showed as a grey rectangle.
+
+## Iteration 53: phones, smoother
+- Arrows are drawn (components/Arrow.jsx) instead of the ← → ↗ characters, which iPhones show as emoji or in a fallback font.
+- Paper grain on the book faces is one cached 256px tile laid on with overlay, not a pass over every pixel of every face: start-up main-thread stalls on a 4x-slowed phone went from 388ms to about 140ms.
+- Phones load the 800px painting files for the row (they are shrunk to 512px on the GPU anyway): about half the image bytes at start.
+- One material per compiled shader is kept when the row is torn down, so coming back from a story compiles nothing (it compiled four shaders every time).
+- A painting whose image arrives while it is in sight fades in from its placeholder colour over half a second instead of snapping.

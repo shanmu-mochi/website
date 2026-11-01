@@ -342,3 +342,8 @@ a, button, [role="button"] { -webkit-tap-highlight-color: transparent; }
 .s38 .pr45.is-unlinked .s38-btn.is-muted { height: auto; width: auto !important; padding: 0; display: inline-block; text-align: left; }
 .s38 .pr45.is-unlinked { margin-bottom: -40px; }
 .s42-again:empty { padding-top: 0 !important; padding-bottom: 48px !important; }
+/* iteration 53: drawn arrows (see components/Arrow.jsx); they sit on the text's centre line and nudge on hover like the glyphs did */
+.arw { display: inline-block; flex: none; vertical-align: -0.08em; overflow: visible; transition: transform .4s var(--glide); }
+.pg-cta-a:hover .arw, .s38-btn:hover .arw, .wp-btn:hover .arw { transform: translate(2px, -2px); }
+.pg-back:hover .arw, .mp35:hover .arw { transform: translateX(-3px); }
+.pg-back .arw, .mp35 .arw, .pp-back .arw { margin-right: 6px; }

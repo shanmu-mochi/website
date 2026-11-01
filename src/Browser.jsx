@@ -3,6 +3,7 @@
    Opening a piece is one continuous shared-element flight from the gallery into the white-paper page.
    Routes are hash-based so a plain static server works:
    #/prose  #/publications  #/luck  #/<cat>/<slug>  #/about  #/paintings */
+import Arrow from './components/Arrow'
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import gsap from 'gsap'
@@ -95,12 +96,21 @@ function wrap(ctx, text, maxW) {
   if (line) lines.push(line)
   return lines
 }
-function grain(ctx, W, H, k) {
-  // a fixed, seeded paper grain so a face never shimmers between renders
-  const img = ctx.getImageData(0, 0, W, H), d = img.data
+// a fixed, seeded paper grain so a face never shimmers between renders. Made once per strength as a mid-grey tile
+// and laid on with overlay (mid-grey leaves a colour as it is), instead of touching every pixel of every face:
+// that per-pixel pass was the single biggest cost of starting up on a phone.
+const GRAIN = new Map()
+function grainTile(k) {
+  if (GRAIN.has(k)) return GRAIN.get(k)
+  const S = 256, c = document.createElement('canvas'); c.width = c.height = S
+  const x = c.getContext('2d'), img = x.createImageData(S, S), d = img.data
   let s = 7
-  for (let j = 0; j < d.length; j += 4) { s = (s * 16807) % 2147483647; const n = ((s / 2147483647) - 0.5) * k; d[j] += n; d[j + 1] += n; d[j + 2] += n }
-  ctx.putImageData(img, 0, 0)
+  for (let j = 0; j < d.length; j += 4) { s = (s * 16807) % 2147483647; const v = 128 + ((s / 2147483647) - 0.5) * k; d[j] = d[j + 1] = d[j + 2] = v; d[j + 3] = 255 }
+  x.putImageData(img, 0, 0); GRAIN.set(k, c)
+  return c
+}
+function grain(ctx, W, H, k) {
+  ctx.save(); ctx.globalCompositeOperation = 'overlay'; ctx.fillStyle = ctx.createPattern(grainTile(k), 'repeat'); ctx.fillRect(0, 0, W, H); ctx.restore()
 }
 function fitTitle(ctx, text, maxW, maxH, from, min, lh, weight = 700) {
   let fs = from, lines
@@ -284,7 +294,7 @@ const canvasTexture = (c) => new GAL.mod.CanvasTexture(c)
 // iteration 47: on a phone one 1200px file serves the carousel, the flight and the story page (cached once, so the
 // hand-offs stay seamless); on a desktop the sizes are unchanged
 const PHONE = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches && Math.min(window.innerWidth, window.innerHeight) <= 760
-const PLATE_CSS = PHONE ? 750 : 900, STORY_CSS = PHONE ? 750 : 2000
+const PLATE_CSS = PHONE ? 480 : 900, STORY_CSS = PHONE ? 750 : 2000
 const frontTexture = (it) => (it.cat === 'prose' || it.cat === 'paintings') && it.src ? GAL.mod.imageTexture(variantFor(it.src, PLATE_CSS)) : GAL.mod.texture(faceKey(it, 'front'), () => fontsReady().then(() => canvasTexture(faceCanvas(it, 'front'))))
 const backTexture = (it) => GAL.mod.texture(faceKey(it, 'back'), () => fontsReady().then(() => canvasTexture(faceCanvas(it, 'back'))))
 const URLS = new Map()
@@ -934,7 +944,7 @@ function Home({ cat, go }) {
 
       {/* iteration 20: the vertical run stops at the end of Luck; the art page is one clear click away */}
       {sec === SEC_ORDER[SEC_ORDER.length - 1] && cur === ROW.length - 1 && (
-        <a className={`h-end${show ? ' is-on' : ''}`} href="#/art" onClick={(e) => { e.preventDefault(); go({ view: 'paintings' }) }}>Art that I love <span aria-hidden="true">→</span></a>)}
+        <a className={`h-end${show ? ' is-on' : ''}`} href="#/art" onClick={(e) => { e.preventDefault(); go({ view: 'paintings' }) }}>Art that I love <Arrow /></a>)}
       <div className={`h-foot${foot ? ' is-on' : ''}`}>
         <button type="button" className={`h-count${tocOn ? ' is-open' : ''}`} aria-label={`${catOf(sec).label}, contents`} aria-expanded={tocOn} onClick={() => setTocOn((v) => !v)}>
           {pad2(cur - SEC_START[sec] + 1)} <i>/</i> {pad2(catOf0(sec).items.length)}
@@ -1003,7 +1013,7 @@ function PageTop({ back, backLabel, go, right, active }) {
     <>
       <SiteNav go={go} active={active} className="pg-sn" />
       <div className="pg-top">
-        <a href="#/" className="pg-back" onClick={(e) => { e.preventDefault(); back() }}><span aria-hidden="true">←</span> {backLabel}</a>
+        <a href="#/" className="pg-back" onClick={(e) => { e.preventDefault(); back() }}><Arrow dir="left" /> {backLabel}</a>
         <span className="pg-count">{right}</span>
       </div>
     </>
@@ -1076,8 +1086,8 @@ function Piece({ cat, i, go, via }) {
   // iteration 14: say each thing once. The byline is dropped when every part of it is already a meta row.
   const showBy = !!it.by && !String(it.by).split('·').every((p) => meta.some(([, v]) => norm(v) === norm(p)))
   const cta = it.href
-    ? <a className="pg-cta-a" href={it.href} target="_blank" rel="noreferrer"><span>{it.cta}</span><b aria-hidden="true">↗</b></a>
-    : it.internal ? <a className="pg-cta-a" href={it.internal}><span>{it.cta}</span><b aria-hidden="true">→</b></a>
+    ? <a className="pg-cta-a" href={it.href} target="_blank" rel="noreferrer"><span>{it.cta}</span><Arrow dir="ne" /></a>
+    : it.internal ? <a className="pg-cta-a" href={it.internal}><span>{it.cta}</span><Arrow /></a>
       : it.cta ? <span className="pg-cta-a is-muted"><span>{it.cta}</span></span> : null
   const credit = it.src ? creditText(it.src) : ''
   const honors = it.honors && it.honors.map((h) => <p key={h.href} className="pg-honor"><a href={h.href} onClick={(e) => { e.preventDefault(); go(parse(h.href)) }}>{h.text}</a></p>)
@@ -1342,12 +1352,12 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, hold }) {
   const nxHref = `#/${cat}/${nx.slug}`, toNext = (e) => { e.preventDefault(); go({ view: 'piece', cat, i: next }, { fade: true }) }
   const nxLines = (() => { const c = chunks(nx.title, mobile ? 14 : 16); return c.length > 3 ? [c[0], c[1], c.slice(2).join(' ')] : c })()
   const read = it.href
-    ? <a className="s38-btn" href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()} <b aria-hidden="true">↗</b></a>
+    ? <a className="s38-btn" href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()} <Arrow dir="ne" /></a>
     : <span className="s38-btn is-muted">Not yet published</span>
   return (
     <article ref={root} className={`pg pg-piece pg-story s38 pg-c-${cat} is-direct`}>
       <PageTop back={() => go({ view: 'browse', cat })} backLabel={catOf(cat).label} active={cat} go={go} right={`${pad2(i + 1)} / ${pad2(N)}`} />
-      <a ref={pillRef} className="mp35" href={`#/${cat}`} onClick={(e) => { e.preventDefault(); go({ view: 'browse', cat }) }}><span aria-hidden="true">←</span> Menu</a>
+      <a ref={pillRef} className="mp35" href={`#/${cat}`} onClick={(e) => { e.preventDefault(); go({ view: 'browse', cat }) }}><Arrow dir="left" /> Menu</a>
       {/* iteration 45: a Paris Review fiction page (theparisreview.org, measured): title, a byline row between two rules,
           the opening set like a book (first paragraph flush, the rest indented), then the link */}
       <header className={`s38-head s42-head pr45${it.href ? '' : ' is-unlinked'}`}>
@@ -1366,7 +1376,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, hold }) {
           {Array.from({ length: fit.n + 1 }, (_, k) => <div key={k} className="s38-row">{k > 0 && pull[k - 1] && <span className={`s38-w ${k % 2 ? 'is-l' : 'is-r'}`} style={fit.f ? { fontSize: `${fit.f}px` } : undefined}><span className="s42-r">{pull[k - 1]}</span></span>}</div>)}
         </section>)}
       {it.src && credit && <p className="s42-cap"><span className="s38-lab">Painting</span><span className="s42-cap-v">{credit}</span></p>}
-      <div className="s42-again">{it.href && <a className="s38-btn" href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()} <b aria-hidden="true">↗</b></a>}</div>
+      <div className="s42-again">{it.href && <a className="s38-btn" href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()} <Arrow dir="ne" /></a>}</div>
       <section className="s38-next s42-nx" ref={zone} aria-label={`Next story: ${nx.title}`}>
         {[0, 1, 2, 3, 4].map((k) => (
           <div key={k} className="s38-row"><i className="s38-rule" aria-hidden="true" />

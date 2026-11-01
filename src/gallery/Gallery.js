@@ -55,6 +55,8 @@ const rad = THREE.MathUtils.degToRad
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v))
 const outCubic = (t) => 1 - (1 - t) ** 3
 
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const KEEP = new Map(), KEPT = new Set()
 /* ---- one renderer for the life of the page, so leaving and coming back never makes a new GL context ---- */
 let RENDERER = null
 function renderer() {
@@ -113,14 +115,15 @@ function shadowTexture() {
 const SHADOW_GEO = new THREE.PlaneGeometry(1, 1)
 // the cover: its own uv, a cloth strip on the spine side with a crease, and a soft band of light
 function bookCover(mat, cloth, band) {
-  const u = { uSheen: { value: 0.5 }, uAmt: { value: 0 }, uBand: { value: band }, uCloth: { value: cloth } }
+  const u = { uSheen: { value: 0.5 }, uAmt: { value: 0 }, uBand: { value: band }, uCloth: { value: cloth }, uPh: { value: new THREE.Color() }, uFade: { value: 1 } }
   mat.userData.u = u
   mat.onBeforeCompile = (s) => {
     Object.assign(s.uniforms, u)
     s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vSUv;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvSUv = uv;')
     s.fragmentShader = s.fragmentShader
-      .replace('#include <common>', '#include <common>\nvarying vec2 vSUv;\nuniform float uSheen; uniform float uAmt; uniform float uBand; uniform vec3 uCloth;')
+      .replace('#include <common>', '#include <common>\nvarying vec2 vSUv;\nuniform float uSheen; uniform float uAmt; uniform float uBand; uniform vec3 uCloth; uniform vec3 uPh; uniform float uFade;')
       .replace('#include <map_fragment>', `#include <map_fragment>
+        diffuseColor.rgb = mix(uPh, diffuseColor.rgb, uFade);
         if (uBand > 0.0) {
           float cl = 1.0 - smoothstep(uBand, uBand + 0.003, vSUv.x);
           diffuseColor.rgb = mix(diffuseColor.rgb, uCloth, cl);
@@ -131,7 +134,7 @@ function bookCover(mat, cloth, band) {
         float sb = exp(-pow((sd - uSheen) / 0.12, 2.0));
         diffuseColor.rgb += uAmt * sb * (1.0 - diffuseColor.rgb);`)
   }
-  mat.customProgramCacheKey = () => 'book-cover-49'
+  mat.customProgramCacheKey = () => 'book-cover-53'
   return u
 }
 export function texture(key, make) {
@@ -207,7 +210,11 @@ export default class Gallery {
   }
   clearPlates() {
     gsap.killTweensOf(this.tw)
-    for (const p of this.plates) { gsap.killTweensOf(p); this.root.remove(p.group); p.mesh.geometry.dispose(); p.mats.forEach((m) => m.dispose()) }
+    // one material per compiled shader is kept alive, never disposed, so the renderer keeps that shader: coming back
+    // to the row then reuses them instead of compiling four shaders mid-flight (a visible hitch on a phone)
+    const props = this.renderer.properties
+    const drop = (m) => { if (KEPT.has(m)) return; const prg = props.get(m).currentProgram; if (prg && !KEEP.has(prg)) { KEEP.set(prg, m); KEPT.add(m); return } m.dispose() }
+    for (const p of this.plates) { gsap.killTweensOf(p); this.root.remove(p.group); p.mesh.geometry.dispose(); p.mats.forEach(drop) }
     this.plates = []
   }
   makePlate(it, i) {
@@ -248,7 +255,11 @@ export default class Gallery {
     p.load = () => {
       if (p.loaded) return
       p.loaded = true
-      Promise.resolve(this.o.frontTexture(it, this.mode, w / h)).then((t) => { if (t && this.plates[i] === p) { front.map = t; front.color.set(0xffffff); front.needsUpdate = true; this.dirty = true } res() })
+      Promise.resolve(this.o.frontTexture(it, this.mode, w / h)).then((t) => { if (t && this.plates[i] === p) {
+        // a painting that arrives while its plate is in sight fades in from its placeholder colour instead of snapping
+        if (p.cover && this.G && Math.abs(p.i - this.L) <= 2.5 && !reducedMotion()) { p.cover.uPh.value.copy(front.color); p.cover.uFade.value = 0; gsap.to(p.cover.uFade, { value: 1, duration: 0.5, ease: 'power1.out', onUpdate: () => { this.dirty = true } }) }
+        front.map = t; front.color.set(0xffffff); front.needsUpdate = true; this.dirty = true
+      } res() })
       idle(() => this.o.backTexture(it, this.mode, w / h)).then((t) => { if (t && this.plates[i] === p) { back.map = t; back.needsUpdate = true; this.dirty = true } })
     }
     if (Math.abs(i - this.L) <= CFG.renderRadius + 2) p.load()

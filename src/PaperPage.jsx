@@ -3,6 +3,7 @@
    2. the four medRxiv PDFs, extracted to paperDocs.json + figure crops by a script,
    3. the three drafts (iteration 16), rendered from main.tex -> texDocs/<slug>.json (components/paper/TexBody.jsx),
    4. everything else: a typeset partial page with what we hold and a link to the full paper. */
+import Arrow from './components/Arrow'
 import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { useSpy, useReveal, sentences } from './lib/wpHooks.js'
 
@@ -145,8 +146,8 @@ function Partial({ it }) {
           <aside className="wp-key">
             <p className="wp-label">{wip ? 'In preparation' : 'Full paper'}</p>
             <p className="wp-p">{wip ? 'This study is in preparation. No abstract has been published yet; it will appear here once it is out.' : 'The full text is published with the journal.'}</p>
-            {ab.status && <p className="wp-p">{ab.status}{ab.statusHref && <> <a href={ab.statusHref} target="_blank" rel="noreferrer">Journal listing ↗</a></>}</p>}
-            {it.href && <a className="wp-btn" href={it.href} target="_blank" rel="noreferrer">Full paper{it.doi ? ` · doi ${it.doi}` : ''} <b aria-hidden="true">↗</b></a>}
+            {ab.status && <p className="wp-p">{ab.status}{ab.statusHref && <> <a href={ab.statusHref} target="_blank" rel="noreferrer">Journal listing <Arrow dir="ne" /></a></>}</p>}
+            {it.href && <a className="wp-btn" href={it.href} target="_blank" rel="noreferrer">Full paper{it.doi ? ` · doi ${it.doi}` : ''} <Arrow dir="ne" /></a>}
           </aside>
         </section>
       </div>
@@ -173,7 +174,7 @@ function Partial({ it }) {
         <section id="cite" className="wp-sec">
           <h2 className="wp-h2">Citation</h2>
           <p className="wp-p">{ab.authors || it.authors}. {ab.fullTitle || it.title}. <em>{ab.cite || it.venueFull}</em>.{it.doi && <> doi:<a href={`https://doi.org/${it.doi}`} target="_blank" rel="noreferrer">{it.doi}</a></>}{ab.pmid && <> · PMID <a href={`https://pubmed.ncbi.nlm.nih.gov/${ab.pmid}/`} target="_blank" rel="noreferrer">{ab.pmid}</a></>}</p>
-          {it.href && <p><a className="wp-btn" href={it.href} target="_blank" rel="noreferrer">Read at the journal <b aria-hidden="true">↗</b></a></p>}
+          {it.href && <p><a className="wp-btn" href={it.href} target="_blank" rel="noreferrer">Read at the journal <Arrow dir="ne" /></a></p>}
         </section>
         <p className="wp-src">{ab.source} Only the published abstract is shown here; the full text is with the publisher.</p>
       </div>
@@ -220,7 +221,7 @@ export default function PaperPage({ it, top, cover, nav, honors }) {
           </dl>
           {honors}
           {stat && <p className="wp-stat"><b>{stat[1]}</b><span>patients in the cohort</span></p>}
-          {links.length > 0 && <p className="wp-links">{links.map((l) => <a key={l.label} href={l.href} target="_blank" rel="noreferrer">{l.label} <b aria-hidden="true">↗</b></a>)}</p>}
+          {links.length > 0 && <p className="wp-links">{links.map((l) => <a key={l.label} href={l.href} target="_blank" rel="noreferrer">{l.label} <Arrow dir="ne" /></a>)}</p>}
         </div>
       </header>
       {kind === 'embed' ? <Embedded slug={it.slug} /> : kind === 'tex' ? <Suspense fallback={<div className="wp-loading" aria-busy="true" />}><TexBody tex={it.tex} /></Suspense> : kind === 'pdf' ? <PdfBody slug={it.slug} it={it} /> : <Partial it={it} />}

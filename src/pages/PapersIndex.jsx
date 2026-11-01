@@ -1,4 +1,5 @@
 import React from 'react'
+import Arrow from '../components/Arrow'
 import '../styles/paper.css'
 import { Progress, TopBar, Hero } from '../components/paper/Shell'
 import { Rv } from '../components/paper/Bits'
@@ -42,7 +43,7 @@ export default function PapersIndex() {
               <div className="pp-k">{d.k}</div>
               <h3>{d.t}</h3>
               <p>{d.d}</p>
-              <div className="pp-go">Read the white paper here <span className="pp-arrow">→</span></div>
+              <div className="pp-go">Read the white paper here <Arrow className="pp-arrow" /></div>
             </a>
           ))}
         </Rv>

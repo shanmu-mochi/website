@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import Arrow from '../Arrow'
 import { Rv } from './Bits'
 
 export function Progress() {
@@ -20,7 +21,7 @@ export function TopBar({ actions = [] }) {
   return (
     <div className="pp-top">
       <div className="pp-top-in">
-        <a className="pp-back" href="/"><span className="pp-arrow">←</span> Shanmu Raja</a>
+        <a className="pp-back" href="/"><Arrow dir="left" className="pp-arrow" /> Shanmu Raja</a>
         <div className="pp-top-act">
           {actions.map((a) => (
             <a key={a.label} href={a.href} target={a.href.startsWith('http') ? '_blank' : undefined} rel={a.href.startsWith('http') ? 'noreferrer' : undefined}>{a.label}</a>
