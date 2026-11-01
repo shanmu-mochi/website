@@ -565,3 +565,8 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - `SrIndex` adds the same content the carousel shows, out of sight (sr-only), on carousel pages only. It covers the bio (as on About), every story with kind, date, first line and its Substack/Medium link, every paper with its link or DOI, the honours, and the papers page and email. Links are `tabIndex -1`, so keyboard focus never lands somewhere invisible.
 - The baked homepage now carries 5,411 characters, 17 story links and 4 DOI links. The sitemap URLs all resolve in the build.
 - Before deploying I checked that no file on the live site would be lost (0 of 591; the new build has 733) and that the title, description, canonical, og:image and JSON-LD match the live page.
+
+## Iteration 52: phone nav
+- Phones (760px and under) get one slim bar: the name on the left, Menu on the right. The two rows of links and the socials under them are gone from the carousel and every page.
+- Menu opens a full-screen sheet: the six sections in large Lora with their counts, the current one in italic with a dot, the socials at the bottom. Close, Escape or picking a section shuts it; the page underneath does not scroll while it is open.
+- Fix: a link changed in the address bar (or Forward) while on the carousel opened the front painting instead of the linked story.

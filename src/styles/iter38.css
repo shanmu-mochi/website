@@ -313,3 +313,27 @@ a, button, [role="button"] { -webkit-tap-highlight-color: transparent; }
 @media (max-width: 760px) { .s42-hint { top: calc(74% - 30px); bottom: auto; left: 0; right: 0; text-align: center; } }
 /* iteration 51: the text index (search engines, AI crawlers, screen readers); present, out of sight */
 .sr-index { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+/* iteration 52: the phone nav. One slim bar, name left and Menu right; the links and socials live in a full-screen menu */
+.sn-menu { display: none; }
+@media (max-width: 760px) {
+  .h-top.sn, .pg-sn.sn { grid-template-columns: 1fr auto !important; grid-template-areas: "m b" !important; align-items: center !important; padding: max(10px, env(safe-area-inset-top)) 18px 0 !important; }
+  .sn .h-mark { justify-self: start !important; font-size: 15px !important; }
+  .sn .sn-nav.sn-l, .sn .sn-nav.sn-r, .h-sfoot { display: none !important; }
+  .sn-menu { grid-area: b; display: inline-flex; align-items: center; min-height: 44px; padding: 0 2px 0 14px; margin-right: -2px; border: 0; background: none; color: var(--ink); font: 600 11.5px/1 'Archivo', 'Helvetica Neue', Arial, sans-serif; letter-spacing: .18em; text-transform: uppercase; cursor: pointer; }
+}
+.sn-sheet { position: fixed; inset: 0; z-index: 200; background: #f2f2f2; display: flex; flex-direction: column; padding: max(10px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom)); overflow-y: auto; overscroll-behavior: contain; animation: sn-in .32s cubic-bezier(.32,.72,0,1) both; }
+.sn-sheet-top { display: flex; justify-content: space-between; align-items: center; min-height: 44px; }
+.sn-sheet-mark { font: 700 15px/1 var(--disp); letter-spacing: .015em; word-spacing: .08em; text-transform: uppercase; color: var(--ink); }
+.sn-sheet-x { min-height: 44px; padding: 0 2px 0 14px; margin-right: -2px; border: 0; background: none; color: var(--ink); font: 600 11.5px/1 'Archivo', 'Helvetica Neue', Arial, sans-serif; letter-spacing: .18em; text-transform: uppercase; cursor: pointer; }
+.sn-sheet-l { list-style: none; margin: auto 0; padding: 32px 0; }
+.sn-sheet-l li { border-top: 1px solid rgba(17, 17, 17, .14); animation: sn-rise .5s cubic-bezier(.32,.72,0,1) both; animation-delay: calc(.04s + var(--k) * .035s); }
+.sn-sheet-l li:last-child { border-bottom: 1px solid rgba(17, 17, 17, .14); }
+.sn-sheet-l a { display: flex; justify-content: space-between; align-items: baseline; padding: 15px 0 13px; color: var(--ink); text-decoration: none; }
+.sn-sheet-t { font: 400 clamp(28px, 8.4vw, 38px)/1.05 'Lora', Georgia, serif; letter-spacing: -.01em; }
+.sn-sheet-n { font: 500 11px/1 'Archivo', 'Helvetica Neue', Arial, sans-serif; letter-spacing: .12em; color: rgba(17, 17, 17, .5); font-variant-numeric: tabular-nums; }
+.sn-sheet-l a.is-on .sn-sheet-t { font-style: italic; }
+.sn-sheet-l a.is-on .sn-sheet-n::before { content: '\25CF\00a0\00a0'; font-size: 7px; vertical-align: 2px; color: var(--ink); }
+.sn-sheet-soc { justify-content: center; gap: 10px !important; }
+@keyframes sn-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sn-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .sn-sheet, .sn-sheet-l li { animation: none; } }

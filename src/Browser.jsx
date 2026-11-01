@@ -494,8 +494,40 @@ function SiteNav({ go, active, className = '', onHover, onJump }) {
     {menu === id && at && createPortal(<Toc cat={id} current={-1} onPick={(k) => pick(id, k)} className="toc-drop" style={at} onMouseEnter={() => openMenu(id)} onMouseLeave={closeMenu} />, document.body)}
     </span>
   )
+  // iteration 52: phones get one slim bar (name, Menu) and a full-screen menu instead of two rows of links
+  const [sheet, setSheet] = useState(false)
+  useEffect(() => {
+    if (!sheet) return
+    const k = (e) => { if (e.key === 'Escape') setSheet(false) }
+    window.addEventListener('keydown', k)
+    if (SCROLL.lenis) SCROLL.lenis.stop()
+    const o = document.body.style.overflow; document.body.style.overflow = 'hidden'
+    return () => { window.removeEventListener('keydown', k); document.body.style.overflow = o; if (SCROLL.lenis) SCROLL.lenis.start() }
+  }, [sheet])
+  const MENU = [['prose', catOf('prose').label], ['publications', catOf('publications').label], ['luck', catOf('luck').label], ['deep', catOf('deep').label], ['paintings', 'Art that I love'], ['about', 'About']]
   return (
     <header className={`sn ${className}`}>
+      <button type="button" className="sn-menu" aria-expanded={sheet} aria-controls="sn-sheet" onClick={() => setSheet(true)}>Menu</button>
+      {sheet && createPortal(
+        <div id="sn-sheet" className="sn-sheet" role="dialog" aria-modal="true" aria-label="Menu">
+          <div className="sn-sheet-top">
+            <span className="sn-sheet-mark">Shanmu Raja</span>
+            <button type="button" className="sn-sheet-x" onClick={() => setSheet(false)} autoFocus>Close</button>
+          </div>
+          <ol className="sn-sheet-l">
+            {MENU.map(([id, label], k) => {
+              const n = id === 'about' ? null : (catOf0(id).items || []).length
+              return (
+                <li key={id} style={{ '--k': k }}>
+                  <a href={id === 'about' ? '#/about' : id === 'paintings' ? '#/art' : `#/${id}`} className={id === active ? 'is-on' : undefined} aria-current={id === active ? 'true' : undefined}
+                    onClick={(e) => { e.preventDefault(); setSheet(false); jump(id) }}>
+                    <span className="sn-sheet-t">{label}</span>{n ? <span className="sn-sheet-n">{pad2(n)}</span> : null}
+                  </a>
+                </li>)
+            })}
+          </ol>
+          <Socials className="sn-sheet-soc" />
+        </div>, document.body)}
       <nav className="sn-nav sn-l h-nav" aria-label="Sections">
         {['prose', 'publications', 'luck'].map((c) => item(c, catOf(c).label))}
       </nav>
@@ -1401,7 +1433,7 @@ export default function Browser() {
     try {
       if (NAV.hold && !(from.view === 'browse' && r.view === 'browse')) { await Promise.race([NAV.hold, wait(2500)]); NAV.hold = null }
       if (from.view === 'browse') {
-        if (r.view === 'piece' && HOME.api && !opts.direct) {
+        if (r.view === 'piece' && HOME.api && !opts.direct && !opts.pop) {
           const now = pieceRoute('home', HOME.api.index())
           if (!same(now, r)) r = now
           if (!reduced()) await HOME.api.open()
