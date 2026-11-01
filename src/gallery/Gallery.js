@@ -828,9 +828,10 @@ export default class Gallery {
     p.mesh.getWorldDirection(_v).transformDirection(this.cam.matrixWorldInverse)
     if (p.cover) { const u = p.cover; u.uSheen.value = 0.55 + 1.1 * (_v.x * 0.8 - _v.y * 0.6); u.uAmt.value = clamp((1 - _v.z) * 0.7, 0, 0.18) * (1 - p.face) }
     if (p.shadow) {
-      const c = Math.abs(Math.cos(p.spinY))
+      // the shadow is flat, so it fades out as the book turns away from face-on (edge-on it read as a grey box)
+      const c = Math.abs(Math.cos(p.spinY)) * Math.abs(Math.cos(p.spinX))
       p.shadow.scale.x = p.w * 1.3 * Math.max(0.18, c); p.shadow.position.x = 0.05 + 0.06 * Math.sin(p.spinY)
-      p.shadow.material.opacity = 0.2 * (1 - p.face)
+      p.shadow.material.opacity = 0.2 * (1 - p.face) * c * c
     }
   }
 

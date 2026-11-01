@@ -571,3 +571,6 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - Menu opens a full-screen sheet: the six sections in large Lora with their counts, the current one in italic with a dot, the socials at the bottom. Close, Escape or picking a section shuts it; the page underneath does not scroll while it is open.
 - Fix: a link changed in the address bar (or Forward) while on the carousel opened the front painting instead of the linked story.
 - Fugue State: its first line, opening paragraph and pull quote now come from the final draft (the old placeholder line was invented). Still no link, labelled Not yet published.
+- The pull quote's rows are balanced (same row count, even lengths) and phones use their real line width, so no word sits alone on a row.
+- A story with no link: Not yet published is a quiet left-aligned line, not an empty button box, and the empty space after the painting is trimmed.
+- The book's soft shadow fades as the book turns away; edge-on it showed as a grey rectangle.

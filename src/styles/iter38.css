@@ -337,3 +337,8 @@ a, button, [role="button"] { -webkit-tap-highlight-color: transparent; }
 @keyframes sn-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes sn-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .sn-sheet, .sn-sheet-l li { animation: none; } }
+/* iteration 52: a story with no link yet: "Not yet published" is a quiet line under the text, not an empty button's box */
+.s38 .pr45.is-unlinked .s42-btns { margin-top: 28px; }
+.s38 .pr45.is-unlinked .s38-btn.is-muted { height: auto; width: auto !important; padding: 0; display: inline-block; text-align: left; }
+.s38 .pr45.is-unlinked { margin-bottom: -40px; }
+.s42-again:empty { padding-top: 0 !important; padding-bottom: 48px !important; }

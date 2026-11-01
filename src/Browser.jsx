@@ -1151,18 +1151,35 @@ function chunks(text, max) {
 }
 // the sentence over the painting is shown whole: as many rows as it needs, the type only as small as it must be.
 // Mirrors the painting rows in iter38.css (side padding 9vw / 4vw, section 124vh / 88vh, display size 5.2vw / 8.4vw).
+// the same number of rows as chunks(), but as even as they can be, so no word is left alone on a row
+function balanced(text, max) {
+  const ws = String(text || '').split(/\s+/).filter(Boolean), k = chunks(text, max).length, n = ws.length
+  if (k <= 1 || n <= k) return chunks(text, max)
+  const len = (a, b) => ws.slice(a, b).join(' ').length
+  const best = (a, r) => {   // [longest row, rows] for words a.. in r rows
+    if (r === 1) return [len(a, n), [ws.slice(a).join(' ')]]
+    let top = null
+    for (let b = a + 1; b <= n - r + 1; b++) {
+      const l = len(a, b); if (l > max && b > a + 1) break
+      const [m, rest] = best(b, r - 1), v = Math.max(l, m)
+      if (!top || v < top[0]) top = [v, [ws.slice(a, b).join(' '), ...rest]]
+    }
+    return top
+  }
+  return best(0, k)[1]
+}
 function fitPull(text, mobile) {
   const vw = window.innerWidth, vh = window.innerHeight
   const base = mobile ? Math.min(35.8, vw * 0.084) : Math.min(72, vw * 0.052)
-  const keep = chunks(text, mobile ? 12 : 16)
-  if (!text || keep.length <= 4) return { rows: keep, n: 4, f: null }
   const W = vw - 2 * (mobile ? 7 + vw * 0.04 : 6 + vw * 0.09), Hs = (mobile ? 0.88 : 1.24) * vh, most = mobile ? 7 : 6
+  const keep = balanced(text, mobile ? Math.max(12, Math.floor(W / (base * 0.64))) : 16)
+  if (!text || keep.length <= 4) return { rows: keep, n: 4, f: null }
   for (let f = base; f >= 12; f -= 1) {
-    const rows = chunks(text, Math.floor(W / (f * 0.64)))
+    const rows = balanced(text, Math.floor(W / (f * 0.64)))
     const n = Math.max(4, rows.length)
     if (rows.length <= most && f <= (Hs / (n + 1)) * 0.62) return { rows, n, f }
   }
-  return { rows: chunks(text, Math.floor(W / (12 * 0.64))), n: most, f: 12 }
+  return { rows: balanced(text, Math.floor(W / (12 * 0.64))), n: most, f: 12 }
 }
 const factsOf = (x) => { const v = (k) => ((x.meta || []).find(([y]) => y === k) || [])[1]; return [x.kind || v('Kind'), v('Venue'), v('Published')].filter(Boolean).join(' · ') }
 function Story({ it, cat, i, items, go, art, meta, honors, credit, hold }) {
@@ -1333,7 +1350,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, hold }) {
       <a ref={pillRef} className="mp35" href={`#/${cat}`} onClick={(e) => { e.preventDefault(); go({ view: 'browse', cat }) }}><span aria-hidden="true">←</span> Menu</a>
       {/* iteration 45: a Paris Review fiction page (theparisreview.org, measured): title, a byline row between two rules,
           the opening set like a book (first paragraph flush, the rest indented), then the link */}
-      <header className="s38-head s42-head pr45">
+      <header className={`s38-head s42-head pr45${it.href ? '' : ' is-unlinked'}`}>
         <h1 className="s38-title pr45-title"><span className="s42-m"><span className="s42-r">{it.title}</span></span></h1>
         {it.subject && <p className="pr45-deck"><span className="s42-m"><span className="s42-r">{it.subject}</span></span></p>}
         <div className="pr45-by"><span className="s42-m"><span className="s42-r pr45-by-in"><span className="pr45-author">Shanmu Raja</span>{facts && <span className="pr45-facts">{facts}</span>}</span></span></div>
