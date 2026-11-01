@@ -570,3 +570,4 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - Phones (760px and under) get one slim bar: the name on the left, Menu on the right. The two rows of links and the socials under them are gone from the carousel and every page.
 - Menu opens a full-screen sheet: the six sections in large Lora with their counts, the current one in italic with a dot, the socials at the bottom. Close, Escape or picking a section shuts it; the page underneath does not scroll while it is open.
 - Fix: a link changed in the address bar (or Forward) while on the carousel opened the front painting instead of the linked story.
+- Fugue State: its first line, opening paragraph and pull quote now come from the final draft (the old placeholder line was invented). Still no link, labelled Not yet published.
