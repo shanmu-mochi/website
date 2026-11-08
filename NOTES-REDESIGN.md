@@ -581,3 +581,11 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - Phones load the 800px painting files for the row (they are shrunk to 512px on the GPU anyway): about half the image bytes at start.
 - One material per compiled shader is kept when the row is torn down, so coming back from a story compiles nothing (it compiled four shaders every time).
 - A painting whose image arrives while it is in sight fades in from its placeholder colour over half a second instead of snapping.
+
+## Iteration 54: full-site audit fixes
+- Phones: every paper page cut its title, deck and facts off at the right edge. The header's single grid column grew to its widest line (604px on a 390px phone) and the page clips sideways overflow. The column is now minmax(0, 1fr).
+- The Wegovy paper was listed as "Work in progress" with "no abstract published". It was published in the Journal of Obesity and Metabolic Diseases (Vol. 2, 102, 12 Dec 2025): now peer-reviewed, sole author, published abstract, the open-access PDF on the site.
+- Healthcare's AI Trap listed its venue as "Economics"; now "SSRN working paper".
+- Small links on paper and award pages (DOI, PDF, Full paper, Related) are full thumb targets on phones.
+- Paintings go to the graphics card one per frame, and the desktop row uses the 1200px files: the intro's 190-220ms freeze while the name was on screen is gone (no frame over 40ms now).
+- Each page names itself in the browser tab ("Burnt Red Tongues · Shanmu Raja").

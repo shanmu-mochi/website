@@ -78,10 +78,22 @@ export const ABSTRACTS = {
   },
   // works in progress: no public abstract found; only what the repo already states
   'Concordance of LLMs with Guidelines at the Week-8 GLP-1 Follow-Up': { wip: true, excerpt: '714 telehealth encounters. Claude, GPT-4o, Gemini vs FDA & AGA guidance.' },
+  // published 12 Dec 2025 (JScholar, open access, CC BY 3.0); abstract copied from the published PDF
   'Branded Wegovy™ vs. Compounded Semaglutide + Cyanocobalamin': {
-    wip: true, excerpt: 'Retrospective observational study, Mochi Health.',
-    status: 'Listed as an article in process at the Journal of Obesity and Metabolic Diseases (JScholar) under the title “Effectiveness, Adherence, and Safety of Branded Wegovy™ vs. Compounded Semaglutide + Cyanocobalamin (CSC)”; no abstract is public yet.',
-    statusHref: 'https://www.jscholaronline.org/journals/journal-of-obesity-and-metabolic-diseases/articles-in-process.php',
+    fullTitle: 'Effectiveness, Adherence, and Safety of Branded Wegovy™ Vs. Compounded Semaglutide + Cyanocobalamin (CSC)',
+    authors: 'Raja S',
+    journal: 'Journal of Obesity and Metabolic Diseases', cite: 'J Obes Metab Dis. 2025;2:102. Presented at the ACPM Annual Meeting, May 2026 (finalist abstract)', year: '2025',
+    n: '4,887 patients',
+    excerpt: 'During recent semaglutide shortages, compounded formulations were frequently used in place of Wegovy™, yet comparative real-world evidence remains limited.',
+    finding: 'CSC achieved weight loss equivalent to WGV and demonstrated significantly higher treatment adherence in routine care.',
+    keywords: ['GLP-1 agonist', 'weight loss', 'real world', 'obesity', 'adherence', 'compounded medications'],
+    abstract: [
+      ['Background', 'During recent semaglutide shortages, compounded formulations were frequently used in place of Wegovy™, yet comparative real-world evidence remains limited. We compared weight-loss effectiveness, responder rates, adherence, and safety between adults receiving branded semaglutide (WGV) and compounded semaglutide + cyanocobalamin (CSC).'],
+      ['Methods', 'We conducted a retrospective cohort study of adults initiating WGV or CSC between February 15, 2024 and March 15, 2025. The primary endpoint was percent weight change at the fifth refill window (R5; 20 to 28 weeks). Equivalence was prespecified at ±1.5 percentage points. Responder thresholds (≥5%, ≥10%, ≥15%) and adherence (Kaplan-Meier, log-rank) were assessed. Adverse events were summarized by severity.'],
+      ['Results', 'The R5 cohort included 190 WGV and 4,697 CSC patients. The adjusted mean difference in percent weight loss (CSC minus WGV) was −0.063pp (95% CI: −0.590 to 0.464), meeting equivalence. Responder rates were also equivalent. Adherence favored CSC: 35.7% vs. 22.9% (RR=1.56; p < 0.001), supported by a Cox model showing a lower discontinuation risk (HR=0.662; 95% CI: 0.565 to 0.775). Safety profiles appeared similar, though the small branded safety sample (n=42) precluded definitive comparative conclusions.'],
+      ['Conclusions', 'CSC achieved weight loss equivalent to WGV and demonstrated significantly higher treatment adherence in routine care. These findings establish CSC as a clinically viable alternative when access or affordability limits use of branded semaglutide.'],
+    ],
+    source: 'Abstract from the published article (J Obes Metab Dis, 12 December 2025).',
   },
   'Variation of Reimbursements within DRGs in Orthopedic Trauma': { wip: true, excerpt: 'Healthcare economics and policy.' },
 }

@@ -294,7 +294,7 @@ const canvasTexture = (c) => new GAL.mod.CanvasTexture(c)
 // iteration 47: on a phone one 1200px file serves the carousel, the flight and the story page (cached once, so the
 // hand-offs stay seamless); on a desktop the sizes are unchanged
 const PHONE = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches && Math.min(window.innerWidth, window.innerHeight) <= 760
-const PLATE_CSS = PHONE ? 480 : 900, STORY_CSS = PHONE ? 750 : 2000
+const PLATE_CSS = PHONE ? 480 : 750, STORY_CSS = PHONE ? 750 : 2000
 const frontTexture = (it) => (it.cat === 'prose' || it.cat === 'paintings') && it.src ? GAL.mod.imageTexture(variantFor(it.src, PLATE_CSS)) : GAL.mod.texture(faceKey(it, 'front'), () => fontsReady().then(() => canvasTexture(faceCanvas(it, 'front'))))
 const backTexture = (it) => GAL.mod.texture(faceKey(it, 'back'), () => fontsReady().then(() => canvasTexture(faceCanvas(it, 'back'))))
 const URLS = new Map()
@@ -1450,6 +1450,13 @@ export default function Browser() {
   }, [])
   const [route, setRoute] = useState(() => parse(window.location.hash))
   const routeRef = useRef(route); routeRef.current = route
+  // each page names itself in the browser tab (the home page keeps the title baked into index.html)
+  const baseTitle = useRef(typeof document !== 'undefined' ? document.title : '')
+  useEffect(() => {
+    const it = route.view === 'piece' ? (catOf(route.cat).items || [])[route.i] : null
+    const name = it ? it.title : route.view === 'about' ? 'About' : route.view === 'paintings' ? 'Art that I love' : route.view === 'browse' && route.cat !== 'home' ? catOf(route.cat).label : ''
+    document.title = name ? `${name} · Shanmu Raja` : baseTitle.current
+  }, [route])
   if (route.view === 'browse') lastCat.current = route.cat
 
   const go = useCallback(async (r, opts = {}) => {

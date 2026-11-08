@@ -137,8 +137,20 @@ function bookCover(mat, cloth, band) {
   mat.customProgramCacheKey = () => 'book-cover-53'
   return u
 }
+// textures go to the graphics card one per frame: the intro asked for about nine at once, and uploading them all in
+// the first frame they were drawn froze the page for about 220ms while the name was on screen
+const UPQ = []
+let upRaf = 0
+function pumpUploads() {
+  upRaf = 0
+  const job = UPQ.shift(); if (!job) return
+  if (RENDERER) RENDERER.initTexture(job[0])
+  job[1](job[0])
+  if (UPQ.length) upRaf = requestAnimationFrame(pumpUploads)
+}
+const uploaded = (t) => new Promise((res) => { UPQ.push([t, res]); if (!upRaf) upRaf = requestAnimationFrame(pumpUploads) })
 export function texture(key, make) {
-  if (!TEX.has(key)) TEX.set(key, Promise.resolve(make()).then((t) => { if (t) { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4 } return t }))
+  if (!TEX.has(key)) TEX.set(key, Promise.resolve(make()).then((t) => { if (t) { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4 } return t && RENDERER ? uploaded(t) : t }))
   return TEX.get(key)
 }
 // iteration 48: on a phone the graphics card gets a 512px-wide copy of each painting (a plate there is about 240 css

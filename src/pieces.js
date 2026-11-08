@@ -174,7 +174,7 @@ export const STORY_PAINTING = {
 }
 
 const WHITE_PAPERS = [
-  { title: 'Healthcare’s AI Trap', sub: 'AI automates them first, severing both supports at once.', authors: 'Shanmugesh Raja, MS', href: '/papers/ai-trap', doi: '10.2139/ssrn.7119078', pdf: '/papers/healthcares-ai-trap.pdf', kindLabel: 'White paper', venue: 'Economics' },
+  { title: 'Healthcare’s AI Trap', sub: 'AI automates them first, severing both supports at once.', authors: 'Shanmugesh Raja, MS', href: '/papers/ai-trap', doi: '10.2139/ssrn.7119078', pdf: '/papers/healthcares-ai-trap.pdf', kindLabel: 'White paper', venue: 'SSRN working paper' },
   { title: 'Mapping Medi-Cal Deserts in California', sub: 'Provider shortages, preventable hospitalizations, and the limits of workforce policy in Medi-Cal: an empirical study of California’s 58 counties, with five causal identification strategies and a portfolio policy response.', authors: 'Shanmugesh Raja', href: '/papers/medi-cal-deserts', pdf: '/papers/medi-cal-deserts.pdf', kindLabel: 'White paper · Master’s Thesis', venue: 'UCSF · Health Policy & Law · April 2026' },
 ]
 
@@ -284,7 +284,7 @@ export const CATS = [
   { id: 'publications', label: 'Publications', items: pubs },
   { id: 'luck', label: 'Luck', items: luck },
   // iteration 18: Deep Dives, the economics takes. Only the two white papers qualify from the data:
-  // Healthcare's AI Trap (venue "Economics") and the Medi-Cal deserts thesis (UCSF Health Policy & Law,
+  // Healthcare's AI Trap (SSRN working paper) and the Medi-Cal deserts thesis (UCSF Health Policy & Law,
   // workforce economics). Same records as in Publications, so each opens its own white-paper page.
   { id: 'deep', label: 'Deep Dives', items: pubs.filter((x) => /^White paper/.test(x.kind || '')).map((x) => ({ ...x, cat: 'deep' })) },
 ]

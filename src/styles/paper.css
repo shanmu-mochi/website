@@ -347,3 +347,5 @@ a.pp-row:hover h4 { text-decoration: underline; text-decoration-color: var(--lin
   .pp-pill { min-height: 44px; display: inline-flex; align-items: center; }
   .pp-toc a { padding: 1.05rem 0; }
 }
+/* phones: the top-bar links (PDF, Essay, All papers) get a full thumb target without moving */
+@media (max-width: 760px) { .pp-top-act a { padding-left: 9px; padding-right: 9px; margin-left: -9px; margin-right: -9px; } }

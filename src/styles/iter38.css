@@ -347,3 +347,14 @@ a, button, [role="button"] { -webkit-tap-highlight-color: transparent; }
 .pg-cta-a:hover .arw, .s38-btn:hover .arw, .wp-btn:hover .arw { transform: translate(2px, -2px); }
 .pg-back:hover .arw, .mp35:hover .arw { transform: translateX(-3px); }
 .pg-back .arw, .mp35 .arw, .pp-back .arw { margin-right: 6px; }
+/* iteration 54: paper pages on phones. The header's one grid column grew to its widest line (604px on a 390px
+   phone), and the page clips sideways overflow, so titles and decks were cut off at the right edge */
+@media (max-width: 900px) {
+  .wp-head { grid-template-columns: minmax(0, 1fr) !important; }
+  .wp-head > * { min-width: 0; }
+  .wp-title h1, .wp-deck { overflow-wrap: break-word; }
+}
+@media (max-width: 760px) {
+  /* the small links on paper and award pages (DOI, PDF, Full paper, journal listing) get a full thumb target */
+  .wp-facts a, .wp-links a, .wp-p a, .wp-btn, .pg-cta-a, .pg-related a, .pg-honor a { display: inline-block; padding-top: 11px; padding-bottom: 11px; margin-top: -11px; margin-bottom: -11px; }
+}
