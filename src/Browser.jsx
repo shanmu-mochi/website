@@ -14,7 +14,7 @@ import { CATS, META, PAINTINGS, SOCIALS, SELECTED_ITEMS, variantFor, aspectOf, p
 import NOTES from './pieceNotes'
 import PaperPage from './PaperPage'
 import TEASERS from './storyTeasers'
-import { coverOf, drawPaperCover, drawAwardCover, shade } from './covers'
+import { coverOf, drawPaperCover, drawAwardCover, spineOf } from './covers'
 import { GLIDE, plateSize, SECTIONS } from './gallery/shared'
 import './styles/globals.css'
 import './styles/a24.css'
@@ -316,7 +316,7 @@ function useFaceURL(it) {
 }
 
 function itemsFor(cat) {
-  return catOf(cat).items.map((it) => ({ ...it, aspect: it.src ? aspectOf(it.src) : 0.74, placeholder: (it.cat === 'prose' || it.cat === 'paintings') && it.src ? placeholderOf(it.src) : coverOf(it) ? coverOf(it).bg : '#f9f8f4', spine: !it.src && coverOf(it) ? shade(coverOf(it).bg, 0.72) : undefined }))
+  return catOf(cat).items.map((it) => ({ ...it, aspect: it.src ? aspectOf(it.src) : 0.74, placeholder: (it.cat === 'prose' || it.cat === 'paintings') && it.src ? placeholderOf(it.src) : coverOf(it) ? coverOf(it).bg : '#f9f8f4', spine: !it.src && coverOf(it) ? spineOf(it) : undefined }))
 }
 
 /* ---------------- the shared-element flight ----------------
