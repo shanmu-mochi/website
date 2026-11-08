@@ -589,3 +589,9 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - Small links on paper and award pages (DOI, PDF, Full paper, Related) are full thumb targets on phones.
 - Paintings go to the graphics card one per frame, and the desktop row uses the 1200px files: the intro's 190-220ms freeze while the name was on screen is gone (no frame over 40ms now).
 - Each page names itself in the browser tab ("Burnt Red Tongues · Shanmu Raja").
+- Section jumps (nav, phone menu) left the caption beside the plate until a resize: the row slides in, and the canvas position was measured mid-slide (-235px) and cached. It is now measured from offsets, which ignore transforms. Also on the live site before this fix.
+
+## Iteration 55: a cover of its own for every paper and award
+- src/covers.js: each of the 16 papers has its own paper colour, ink and a drawing of what it is about (two overlapping weight curves and two unequal price bars; a cloud of patient trajectories; a fork for escalate or switch; a week-8 marker with the forecast band; a helix; the aortic arch with stent rings; true-lumen cross-sections; a stent mesh; a model-vs-guidance dot grid; two injection pens; box plots; a ladder with its middle rungs gone; California as dots thinning where doctors are scarce; before/after bars; a price path that jumps on decision day; the supervision rungs).
+- The four awards: a rosette (ACPM finalist), a laurel wreath (poetry prize), a pen nib (Kalanithi shortlist), and a magazine cover with a flame for Burnt Red Tongues (New Yorker shortlist).
+- The 3D plate's placeholder and spine take the cover's paper colour, and the paper page's cover box matches it.

@@ -237,7 +237,7 @@ export default class Gallery {
     const cloth = new THREE.Color(it.placeholder || '#777').multiplyScalar(0.58)
     const edge = new THREE.MeshBasicMaterial(book ? { map: PAGES_U } : { color: sec.edge })
     const edgeY = book ? new THREE.MeshBasicMaterial({ map: PAGES_V }) : edge
-    const spine = new THREE.MeshBasicMaterial({ color: book ? cloth : sec.spine })
+    const spine = new THREE.MeshBasicMaterial({ color: book ? cloth : it.spine ? new THREE.Color(it.spine) : sec.spine })
     const front = new THREE.MeshBasicMaterial({ color: new THREE.Color(it.placeholder) })
     const back = new THREE.MeshBasicMaterial({ color: 0xfbfaf8 })
     const cover = book ? bookCover(front, cloth.clone(), 0.022) : null
@@ -701,7 +701,7 @@ export default class Gallery {
 
   resize() {
     const w = Math.max(1, this.el.clientWidth), h = Math.max(1, this.el.clientHeight)
-    this._b = this.el.getBoundingClientRect(); this._W = w; this._H = h
+    this._b = this.place(); this._W = w; this._H = h
     this.renderer.setSize(w, h, false)
     this.cam.aspect = w / h
     this.cam.updateProjectionMatrix()
@@ -915,6 +915,13 @@ export default class Gallery {
     if (this.o.onFrame) this.o.onFrame()
   }
 
+  // where the canvas sits on the page, ignoring CSS transforms: a section jump slides the row in, and measuring with
+  // getBoundingClientRect mid-slide cached an offset (235px) that put the caption beside its plate until a resize
+  place() {
+    let x = 0, y = 0
+    for (let e = this.el; e; e = e.offsetParent) { x += e.offsetLeft; y += e.offsetTop }
+    return { left: x - window.scrollX, top: y - window.scrollY }
+  }
   /* screen-space box of an object (exact when it is face-on) */
   rectOf(i) {
     const p = this.plates[i]; if (!p) return null
@@ -927,7 +934,7 @@ export default class Gallery {
       const X = (_v.x + 1) * 0.5 * W, Y = (1 - _v.y) * 0.5 * H
       if (X < x0) x0 = X; if (X > x1) x1 = X; if (Y < y0) y0 = Y; if (Y > y1) y1 = Y
     }
-    const b = this._b || (this._b = this.el.getBoundingClientRect())
+    const b = this._b || (this._b = this.place())
     return { x: x0 + b.left, y: y0 + b.top, w: x1 - x0, h: y1 - y0 }
   }
 

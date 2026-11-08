@@ -14,6 +14,7 @@ import { CATS, META, PAINTINGS, SOCIALS, SELECTED_ITEMS, variantFor, aspectOf, p
 import NOTES from './pieceNotes'
 import PaperPage from './PaperPage'
 import TEASERS from './storyTeasers'
+import { coverOf, drawPaperCover, drawAwardCover, shade } from './covers'
 import { GLIDE, plateSize, SECTIONS } from './gallery/shared'
 import './styles/globals.css'
 import './styles/a24.css'
@@ -186,6 +187,9 @@ const faceKey = (it, side) => `${it.cat}:${it.slug}:${side}`
 function faceCanvas(it, side) {
   const sec = SECTIONS[it.cat === 'deep' ? 'publications' : it.cat] || SECTIONS.prose, [w, h] = plateSize({ aspect: it.src ? aspectOf(it.src) : 0.74 }, sec), aspect = w / h
   const key = faceKey(it, side)
+  const CV = { grain, fitTitle, wrap, caps: smallCaps, BOOK }
+  if ((it.cat === 'publications' || it.cat === 'deep') && side === 'front' && coverOf(it)) return drawFace(key, aspect, (ctx, W, H) => drawPaperCover(ctx, W, H, it, CV))
+  if (it.cat === 'luck' && side === 'front' && coverOf(it)) return drawFace(key, aspect, (ctx, W, H) => drawAwardCover(ctx, W, H, it, CV))
   if ((it.cat === 'publications' || it.cat === 'deep') && side === 'front') return drawFace(key, aspect, (ctx, W, H) => {
     ctx.fillStyle = '#f9f8f4'; ctx.fillRect(0, 0, W, H)
     ctx.fillStyle = 'rgba(0,0,0,.05)'; ctx.fillRect(0, 0, 14, H)            // the fold by the spine
@@ -312,7 +316,7 @@ function useFaceURL(it) {
 }
 
 function itemsFor(cat) {
-  return catOf(cat).items.map((it) => ({ ...it, aspect: it.src ? aspectOf(it.src) : 0.74, placeholder: (it.cat === 'prose' || it.cat === 'paintings') && it.src ? placeholderOf(it.src) : '#f9f8f4' }))
+  return catOf(cat).items.map((it) => ({ ...it, aspect: it.src ? aspectOf(it.src) : 0.74, placeholder: (it.cat === 'prose' || it.cat === 'paintings') && it.src ? placeholderOf(it.src) : coverOf(it) ? coverOf(it).bg : '#f9f8f4', spine: !it.src && coverOf(it) ? shade(coverOf(it).bg, 0.72) : undefined }))
 }
 
 /* ---------------- the shared-element flight ----------------
@@ -1118,7 +1122,7 @@ function Piece({ cat, i, go, via }) {
       </div>
       <div className="pg-body">
         <figure className="pg-fig">
-          <div ref={art} className="pg-art" style={{ '--ar': ar, aspectRatio: String(ar), background: it.src && cat === 'prose' ? placeholderOf(it.src) : '#f9f8f4', visibility: hold ? 'hidden' : undefined }}>
+          <div ref={art} className="pg-art" style={{ '--ar': ar, aspectRatio: String(ar), background: it.src && cat === 'prose' ? placeholderOf(it.src) : coverOf(it) ? coverOf(it).bg : '#f9f8f4', visibility: hold ? 'hidden' : undefined }}>
             {face && <img src={it.src && cat === 'prose' ? variantFor(it.src, 1400) : face} alt={cat === 'prose' ? credit : `${it.title}, cover`} decoding="async" />}
           </div>
           {cat === 'prose' && credit && <figcaption>{credit}</figcaption>}
