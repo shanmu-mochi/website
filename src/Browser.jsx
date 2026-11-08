@@ -1375,7 +1375,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, hold }) {
         </div>
       </header>
       {it.src && (
-        <section className="s38-paint s38-sec" aria-label={credit || it.title} style={{ background: placeholderOf(it.src), ...(fit.n > 4 ? { gridTemplateRows: `repeat(${fit.n + 1}, 1fr)` } : {}) }}>
+        <section className={`s38-paint s38-sec${t.boxed ? ' is-boxed' : ''}`} aria-label={credit || it.title} style={{ background: placeholderOf(it.src), ...(fit.n > 4 ? { gridTemplateRows: `repeat(${fit.n + 1}, 1fr)` } : {}) }}>
           <div ref={art} className="s38-paint-f" style={{ visibility: hold ? 'hidden' : undefined }}><img className="s38-paint-img" src={variantFor(it.src, STORY_CSS)} alt={credit || it.title} decoding="async" fetchpriority="high" /></div>
           {Array.from({ length: fit.n + 1 }, (_, k) => <div key={k} className="s38-row">{k > 0 && pull[k - 1] && <span className={`s38-w ${k % 2 ? 'is-l' : 'is-r'}`} style={fit.f ? { fontSize: `${fit.f}px` } : undefined}><span className="s42-r">{pull[k - 1]}</span></span>}</div>)}
         </section>)}

@@ -358,3 +358,5 @@ a, button, [role="button"] { -webkit-tap-highlight-color: transparent; }
   /* the small links on paper and award pages (DOI, PDF, Full paper, journal listing) get a full thumb target */
   .wp-facts a, .wp-links a, .wp-p a, .wp-btn, .pg-cta-a, .pg-related a, .pg-honor a { display: inline-block; padding-top: 11px; padding-bottom: 11px; margin-top: -11px; margin-bottom: -11px; }
 }
+/* iteration 56: on a busy painting the pull quote sits on black bars (storyTeasers "boxed") */
+.s38-paint.is-boxed .s38-w > .s42-r { background: #0b0b0b; color: #fff; padding: 0.02em 0.12em 0.06em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
