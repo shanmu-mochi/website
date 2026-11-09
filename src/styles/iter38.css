@@ -359,9 +359,11 @@ a, button, [role="button"] { -webkit-tap-highlight-color: transparent; }
   .wp-facts a, .wp-links a, .wp-p a, .wp-btn, .pg-cta-a, .pg-related a, .pg-honor a { display: inline-block; padding-top: 11px; padding-bottom: 11px; margin-top: -11px; margin-bottom: -11px; }
 }
 /* iteration 56: on a busy painting the pull quote sits on black bars (storyTeasers "boxed") */
-/* iteration 62: no bars. The painting dims a little under its words and the words carry a soft shadow */
-.s38-paint.is-boxed .s38-paint-f::after { content: ''; position: absolute; inset: 0; background: rgba(12, 10, 8, .38); pointer-events: none; }
-.s38-paint.is-boxed .s38-w { text-shadow: 0 2px 22px rgba(0, 0, 0, .55), 0 1px 3px rgba(0, 0, 0, .35); }
+/* iteration 63: the words over a painting are a touch heavier and the painting is dimmed just enough for them: a little
+   on every story, more on the bright, busy ones (storyTeasers "boxed"). No bars, no blur. */
+.s38-paint .s38-w { font-weight: 600; text-shadow: 0 1px 2px rgba(0, 0, 0, .22); }
+.s38-paint .s38-paint-img { filter: brightness(.9); }
+.s38-paint.is-boxed .s38-paint-img { filter: brightness(.72) saturate(.9); }
 
 /* iteration 59: the row's background, carried over a story's opening fade */
 .fly-bd { position: fixed; inset: 0; z-index: 59; pointer-events: none; }
