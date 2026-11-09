@@ -624,3 +624,8 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - Fugue State pull quote: "The stones are the hills are the fog is the sky."
 - Crossing into the next section takes two swipes: at the end of a row the first only leans it out; a second within 1.4s carries you across.
 - Words over paintings: Lora 600 with a faint shadow; every painting at 90% brightness, the ten busy or bright ones at 72%. No bars, no blur.
+- Blurbs above each story's closing link (storyTeasers blurb).
+- Steps between pieces ease in and out (critically damped spring); one piece per swipe or flick.
+- Leaving a story: the page fades (inline opacity no longer blocks it) and white melts to the row's grey.
+- From a story to another section via the nav: a plain fade, no painting flight.
+- A Pound of Flesh pull quote: "My selfish fantasy of tender acknowledgment — my boy, my sweet boy."

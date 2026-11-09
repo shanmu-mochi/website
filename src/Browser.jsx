@@ -1416,7 +1416,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, hold }) {
           {Array.from({ length: fit.n + 1 }, (_, k) => <div key={k} className="s38-row">{k > 0 && pull[k - 1] && <span className={`s38-w ${k % 2 ? 'is-l' : 'is-r'}`} style={fit.f ? { fontSize: `${fit.f}px` } : undefined}><span className="s42-r">{pull[k - 1]}</span></span>}</div>)}
         </section>)}
       {it.src && credit && <p className="s42-cap"><span className="s38-lab">Painting</span><span className="s42-cap-v">{credit}</span></p>}
-      <div className="s42-again">{it.href && <a className="s38-btn" href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()} <Arrow dir="ne" /></a>}</div>
+      <div className="s42-again">{t.blurb && <p className="s42-blurb">{t.blurb}</p>}{!it.href && t.blurb && <span className="s42-soon">Not yet published</span>}{it.href && <a className="s38-btn" href={it.href} target="_blank" rel="noreferrer">{`Read on ${venue || ''}`.trim()} <Arrow dir="ne" /></a>}</div>
       <section className="s38-next s42-nx" ref={zone} aria-label={`Next story: ${nx.title}`}>
         {[0, 1, 2, 3, 4].map((k) => (
           <div key={k} className="s38-row"><i className="s38-rule" aria-hidden="true" />
