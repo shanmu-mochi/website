@@ -512,7 +512,7 @@ function SiteNav({ go, active, className = '', onHover, onJump }) {
     <a href={id === 'about' ? '#/about' : id === 'paintings' ? '#/art' : `#/${id}`} className={id === active ? 'is-on' : ''} aria-current={id === active ? 'true' : undefined}
       onMouseEnter={() => h(id)} onMouseLeave={() => h(null)} onFocus={() => h(id)} onBlur={() => h(null)}
       onClick={(e) => { e.preventDefault(); if (e.detail) e.currentTarget.blur(); jump(id) }}>
-      <span className="h-cat-l">{label}<CatRing on={hov === id || menu === id} redraw={active} ring /></span>
+      <span className="h-cat-l">{label}<CatRing on={hov === id || menu === id} redraw={active} /></span>
     </a>
     {menu === id && at && createPortal(<Toc cat={id} current={-1} onPick={(k) => pick(id, k)} className="toc-drop" style={at} onMouseEnter={() => openMenu(id)} onMouseLeave={closeMenu} />, document.body)}
     </span>
@@ -783,8 +783,7 @@ function Home({ cat, go }) {
     const c = SEC_ORDER[k]
     secRef.current(c, dir, dir > 0 ? 0 : catOf0(c).items.length - 1)
   }
-  const [hv, setHv] = useState(-1)
-  const [hr, setHr] = useState(null)
+  const [hv, setHv] = useState(-1), [tHov, setTHov] = useState(false)
   const qRef = useRef(null)
   /* iteration 21: press D for a live readout of the scroll controller (to diagnose a real machine) */
   const dbgEl = useRef(null)
@@ -948,22 +947,6 @@ function Home({ cat, go }) {
     return () => window.removeEventListener('keydown', on)
   }, [])
 
-  useEffect(() => {
-    if (hv < 0) { setHr(null); return }
-    let raf = 0, last = ''
-    const tick = () => {
-      const g = gal.current, b = mainRef.current && mainRef.current.getBoundingClientRect()
-      // iteration 64: the pen circles the words under the front painting, not the painting; other plates get no circle
-      const q = qRef.current, front = g && hv === g.index()
-      const qb = front && q ? q.getBoundingClientRect() : null
-      const r = qb && qb.width ? { x: qb.left - 40, y: qb.top - 30, w: qb.width + 80, h: qb.height + 52 } : null
-      if (!r && last) { last = ''; setHr(null) }
-      if (r) { const k = `${r.x | 0},${r.y | 0},${r.w | 0},${r.h | 0}`; if (k !== last) { last = k; setHr({ x: r.x - b.left, y: r.y - b.top, w: r.w, h: r.h }) } }
-      raf = requestAnimationFrame(tick)
-    }
-    tick()
-    return () => cancelAnimationFrame(raf)
-  }, [hv])
   const list = ROW
   const it = list[Math.min(cur, list.length - 1)]
   const hIt = hv >= 0 && phase === 'ready' && !leaving ? list[hv] : null
@@ -988,16 +971,11 @@ function Home({ cat, go }) {
 
       {/* iteration 21 (t81): under the front painting, in reading order: its title, then its first line written in by hand, then the details */}
       <div ref={qRef} className={`h-under${show ? ' is-on' : ''}`} key={`u-${shown}-${cur}`} aria-live="polite">
-        <h1 className="h-title"><a href={`#/${it.cat}/${it.slug}`} onClick={(e) => { e.preventDefault(); go(pieceRoute('home', cur)) }}>{it.title}</a></h1>
+        <h1 className="h-title"><a href={`#/${it.cat}/${it.slug}`} onMouseEnter={() => setTHov(true)} onMouseLeave={() => setTHov(false)} onClick={(e) => { e.preventDefault(); go(pieceRoute('home', cur)) }}><span className="h-cat-l">{it.title}<CatRing on={show && (tHov || (gal.current && hv >= 0 && hv === gal.current.index()))} redraw={cur} /></span></a></h1>
         {it.line && it.cat === 'prose' && <blockquote className="h-quote h-quote-hw is-on">{it.line}</blockquote>}
         <p className="h-umeta">{(it.cat === 'paintings' ? meta.map(([, v]) => v) : [it.kind || (it.meta.find(([k]) => k === 'Kind' || k === 'Recognition') || [])[1], (it.meta.find(([k]) => k === 'Published' || k === 'Date') || [])[1] || it.date]).filter(Boolean).join(' \u00b7 ')}</p>
       </div>
 
-      {/* iteration 18: the pen circles the plate under the pointer, and a story writes out its first line */}
-      {hIt && hr && (
-        <div className="h-hov" style={{ left: hr.x, top: hr.y, width: hr.w, height: hr.h }} aria-hidden="true">
-          <Scribble w={hr.w} h={hr.h} on pad={0.04} redraw={hv} />
-        </div>)}
 
       {end && <EndCard go={go} close={() => setEnd(false)} />}
       {/* iteration 20: the vertical run stops at the end of Luck; the art page is one clear click away */}
