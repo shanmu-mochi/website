@@ -396,8 +396,8 @@ export default class Gallery {
     return new Promise((done) => {
       const t = this.tl({ onComplete: () => done({ i, back }) })
       if (c) { this.tw.value = this.L; t.to(this.tw, { value: i, duration: c, ease: 'power2.out', onUpdate: () => { this.L = this.tw.value } }, 0) }
-      t.to(this.G, { others: 0, duration: 0.5, ease: 'none' }, c * 0.5)
-        .to(p, { face: 1, spinX: 0, duration: 0.55, ease: GLIDE }, c * 0.5)
+      t.to(this.G, { others: 0, duration: 0.4, ease: 'none' }, c * 0.5)
+        .to(p, { face: 1, spinX: 0, duration: 0.42, ease: GLIDE }, c * 0.5)
     })
   }
   /* coming back from a page: put the front object face-on, alone, and report where it is on screen */

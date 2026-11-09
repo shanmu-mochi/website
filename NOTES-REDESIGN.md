@@ -595,3 +595,7 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - src/covers.js: each of the 16 papers has its own paper colour, ink and a drawing of what it is about (two overlapping weight curves and two unequal price bars; a cloud of patient trajectories; a fork for escalate or switch; a week-8 marker with the forecast band; a helix; the aortic arch with stent rings; true-lumen cross-sections; a stent mesh; a model-vs-guidance dot grid; two injection pens; box plots; a ladder with its middle rungs gone; California as dots thinning where doctors are scarce; before/after bars; a price path that jumps on decision day; the supervision rungs).
 - The four awards: a rosette (ACPM finalist), a laurel wreath (poetry prize), a pen nib (Kalanithi shortlist), and a magazine cover with a flame for Burnt Red Tongues (New Yorker shortlist).
 - The 3D plate's placeholder and spine take the cover's paper colour, and the paper page's cover box matches it.
+
+## Iteration 58: opening a story
+- A story opens through its painting: the copy grows in one motion to cover the screen (a sharp 1200px+ copy swaps in on the way), then fades over the page as the head rises. It used to land in the painting's strip low on the page, so the picture blew up to the full screen and was then shoved down into the strip, over a grey band of the section's placeholder colour.
+- The carousel's face-on turn before the flight is 0.42s (was 0.55s). Click to readable page is about 1.4s.

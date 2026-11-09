@@ -1045,8 +1045,23 @@ function Piece({ cat, i, go, via }) {
     if (!flying) return
     let live = true
     const back = FLY.data.back
-    const slot = cat === 'prose' && art.current.parentElement ? rectOfEl(art.current.parentElement) : null
-    NAV.hold = flyTo(rectOfEl(art.current), { back: false, duration: back ? 0.95 : 0.85, clip: slot })
+    if (cat === 'prose' && it.src && !reduced()) {
+      // iteration 58: a story opens through its painting. The copy grows, in one motion, to cover the screen (a sharp
+      // copy swaps in on the way), then fades away over the page, whose head rises as it goes. It used to land in the
+      // painting's strip low on the page, so the picture blew up and was then shoved down, over a grey band.
+      const W = window.innerWidth, H = window.innerHeight
+      let w = W, h = W / ar; if (h < H) { h = H; w = H * ar }
+      const hi = new Image(); hi.src = variantFor(it.src, STORY_CSS)
+      decoded(hi).then(() => { const f = FLY.node && FLY.node.querySelector('.fly-f'); if (f && FLY.dir === 'in') f.src = hi.src })
+      // the page is already laid out under the copy (it stays transparent until its own fade), so the hand-off
+      // overlaps the flight: the copy starts fading as it nears full size while the page fades up beneath it
+      setHold(false)
+      const n = FLY.node, fade = n ? new Promise((r) => gsap.to(n, { autoAlpha: 0, duration: 0.45, ease: 'power1.inOut', delay: 0.32, onComplete: r })) : null
+      NAV.hold = Promise.all([flyTo({ x: (W - w) / 2, y: (H - h) / 2, w, h }, { duration: 0.7, clip: { x: 0, y: 0, w: W, h: H } }), fade])
+        .then(() => { if (FLY.dir === 'in') flyClear() })
+      return () => { live = false }
+    }
+    NAV.hold = flyTo(rectOfEl(art.current), { back: false, duration: back ? 0.95 : 0.85 })
       .then(() => decoded(art.current && art.current.querySelector('img')))
       .then(() => { if (!live) return; setHold(false); return frames(2) })
       .then(() => { if (FLY.dir === 'in') flyClear() })
@@ -1216,7 +1231,8 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, hold }) {
     const q = (s) => [...el.querySelectorAll(s)]
     parallax()
     if (flown.current) gsap.set(q('.s38-paint .s38-w > .s42-r'), { yPercent: RISE.shift })
-    const tl = gsap.timeline()
+    // opened through the painting: the page shows as the full-screen copy fades (0.8s flight), so the head rises then
+    const tl = gsap.timeline({ delay: flown.current ? 0.32 : 0 })
     tl.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5 }, 0)
     tl.fromTo(q('.s42-head .s38-title .s42-r'), { yPercent: RISE.shift }, { yPercent: 0, duration: RISE.dur, ease: 'energy', stagger: RISE.titleStagger }, 0.05)
     tl.fromTo(q('.s42-head > :not(.s38-title):not(.s42-open) .s42-r'), { yPercent: RISE.shift }, { yPercent: 0, duration: RISE.dur, ease: 'energy', stagger: RISE.textStagger }, RISE.text)
