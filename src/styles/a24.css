@@ -369,7 +369,7 @@ a.pg-cta-a:hover b { transform: translate(3px, -3px); }
   color: var(--ink); white-space: nowrap; pointer-events: none; will-change: transform; }
 .h-iname-m { display: block; overflow: hidden; padding: .04em 0; margin: -.04em 0; }
 .h-iname-m > span { display: block; transform: translateY(110%); }
-.h-iname.is-f .h-iname-m > span { animation: hRise .9s cubic-bezier(.32,.72,0,1) .15s both; }
+.h-iname.is-f .h-iname-m > span { animation: hRise .6s cubic-bezier(.32,.72,0,1) .05s both; }
 @keyframes hRise { from { transform: translateY(110%); } to { transform: none; } }
 .h-top.sn .sn-nav, .h-top.sn .sn-mail { transform: translateY(-8px); opacity: 0; transition: transform .9s cubic-bezier(.32,.72,0,1) .25s, opacity .7s cubic-bezier(.32,.72,0,1) .25s; }
 .h-top.sn.is-on .sn-nav, .h-top.sn.is-on .sn-mail { transform: none; opacity: 1; }

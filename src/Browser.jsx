@@ -322,7 +322,7 @@ function itemsFor(cat) {
 /* ---------------- the shared-element flight ----------------
    A DOM clone of the object's face(s) that rides between the WebGL plate and the page image.
    It starts exactly over the face-on plate (same image, same pixels), so the swap at either end is invisible. */
-const FLY = { node: null, dir: null, data: null }
+const FLY = { node: null, bd: null, dir: null, data: null }
 function flyNode(rect, it, back, band = 1) {
   flyClear()
   const n = document.createElement('div')
@@ -337,7 +337,7 @@ function flyNode(rect, it, back, band = 1) {
   FLY.node = n
   return n
 }
-function flyClear() { if (FLY.node) { gsap.killTweensOf(FLY.node); gsap.killTweensOf(FLY.node.firstChild); FLY.node.remove() } FLY.node = null; FLY.dir = null; FLY.data = null }
+function flyClear() { if (FLY.node) { gsap.killTweensOf(FLY.node); gsap.killTweensOf(FLY.node.firstChild); FLY.node.remove() } if (FLY.bd) { gsap.killTweensOf(FLY.bd); FLY.bd.remove() } FLY.node = null; FLY.bd = null; FLY.dir = null; FLY.data = null }
 function flyTo(rect, { back = false, duration = 0.85, clip = null } = {}) {
   const n = FLY.node
   if (!n) return Promise.resolve()
@@ -606,10 +606,12 @@ function Home({ cat, go }) {
   const returning = FLY.dir === 'out' && FLY.data && FLY.data.mode === 'home'
   // where the row starts: a section asked for by a nav click on another page, else where you left it,
   // else the start of the section in the link (#/luck), else the beginning
-  const start0 = useRef(null)
+  const start0 = useRef(null), glideHome = useRef(null)
   if (start0.current == null) {
     const j = ROWPOS.jumpTo; ROWPOS.jumpTo = null
-    start0.current = j ? SEC_START[j] : ROWPOS.set ? lastIdx.home : cat !== 'home' && SEC_START[cat] >= 0 ? SEC_START[cat] : 0
+    const from = returning ? ROW.findIndex((x) => x.cat === FLY.data.cat && x.slug === (catOf(FLY.data.cat).items[FLY.data.i] || {}).slug) : -1
+    if (from >= 0 && (!j || ROW[from].rowCat === j)) { start0.current = from; glideHome.current = SEC_START[ROW[from].rowCat] }
+    else start0.current = j ? SEC_START[j] : ROWPOS.set ? lastIdx.home : cat !== 'home' && SEC_START[cat] >= 0 ? SEC_START[cat] : 0
   }
   const [cur, setCur] = useState(start0.current)
   // iteration 20: the gallery holds one section at a time; `cur` stays a ROW index, base = section start
@@ -811,7 +813,7 @@ function Home({ cat, go }) {
       const p = g.plates[g.index()]
       NAV.hold = Promise.race([p.ready, wait(600)]).then(() => flyTo(rect, { back: false, duration: 0.8 }))
         .then(() => frames(1)).then(() => { if (!live) return; const l = g.land(); return frames(2).then(() => { flyClear(); return l }) })
-        .then(() => { if (live) setPhase('ready') })
+        .then(() => { if (!live) return; setPhase('ready'); const to = glideHome.current; glideHome.current = null; if (to != null && to - base.current !== g.index()) wait(250).then(() => live && g.to(to - base.current, 'key')) })
       void d
     } else if (!session.introDone && !reduced()) {
       const near = g.plates.filter((p) => Math.abs(p.i - g.L) <= 3)
@@ -824,11 +826,11 @@ function Home({ cat, go }) {
         if (!live) return
         session.introDone = true
         try { g.warm() } catch { /* best effort */ }
-        // hold: rise (0.15 + 0.9s) plus a beat, at least ~1.7s from first paint
-        return wait(Math.max(300, 1750 - (performance.now() - t0)))
+        // iteration 59: a shorter intro. Hold: the name's rise (0.05 + 0.6s) plus a short beat, ~0.9s from first paint
+        return wait(Math.max(120, 900 - (performance.now() - t0)))
           .then(() => { if (!live) return; setPhase('fly'); return frames(1) })
-          .then(() => { if (!live) return; flipName(); return wait(380) })
-          .then(() => { if (!live) return; setPhase('intro'); if (start0.current === base.current) flashCard(ROW[base.current].rowCat); wait(760).then(() => live && setNameOn(false)); return g.intro() })
+          .then(() => { if (!live) return; flipName(); return wait(180) })
+          .then(() => { if (!live) return; setPhase('intro'); if (start0.current === base.current) flashCard(ROW[base.current].rowCat); wait(480).then(() => live && setNameOn(false)); return g.intro() })
           .then(() => live && setPhase('ready'))
       })
     } else {
@@ -856,7 +858,7 @@ function Home({ cat, go }) {
     const ink = (el) => { const rg = document.createRange(); rg.selectNodeContents(el); return rg.getBoundingClientRect() }
     const o = n.getBoundingClientRect(), oi = ink(n.querySelector('.h-iname-m > span')), r = ink(m)
     const s = r.width / oi.width
-    n.style.transition = 'transform 1.1s cubic-bezier(.32,.72,0,1)'
+    n.style.transition = 'transform .8s cubic-bezier(.32,.72,0,1)'
     n.style.transform = `translate(${(-o.width / 2 + (r.left - (oi.left - o.left) * s) - o.left).toFixed(2)}px, ${(-o.height / 2 + (r.top - (oi.top - o.top) * s) - o.top).toFixed(2)}px) scale(${s.toFixed(4)})`
   }
 
@@ -869,8 +871,10 @@ function Home({ cat, go }) {
         const { i, back } = await g.openFace()
         const it = ROW[base.current + i]
         const n = flyNode(g.rectOf(i), it, back)
+        // the row's own background rides along under the copy, so the page change is a fade, not a cut
+        const bd = document.createElement('div'); bd.className = 'fly-bd'; bd.style.background = getComputedStyle(mainRef.current || document.body).backgroundColor; document.body.insertBefore(bd, n); FLY.bd = bd
         await Promise.all([...n.querySelectorAll('img')].map(decoded))
-        await frames(1)
+        await frames(2)
         g.hidePlate(i)
         const pr = pieceRoute('home', base.current + i)
         FLY.dir = 'in'; FLY.data = { cat: pr.cat, i: pr.i, back, mode: g.mode }
@@ -1046,19 +1050,17 @@ function Piece({ cat, i, go, via }) {
     let live = true
     const back = FLY.data.back
     if (cat === 'prose' && it.src && !reduced()) {
-      // iteration 58: a story opens through its painting. The copy grows, in one motion, to cover the screen (a sharp
-      // copy swaps in on the way), then fades away over the page, whose head rises as it goes. It used to land in the
-      // painting's strip low on the page, so the picture blew up and was then shoved down, over a grey band.
-      const W = window.innerWidth, H = window.innerHeight
-      let w = W, h = W / ar; if (h < H) { h = H; w = H * ar }
-      const hi = new Image(); hi.src = variantFor(it.src, STORY_CSS)
-      decoded(hi).then(() => { const f = FLY.node && FLY.node.querySelector('.fly-f'); if (f && FLY.dir === 'in') f.src = hi.src })
-      // the page is already laid out under the copy (it stays transparent until its own fade), so the hand-off
-      // overlaps the flight: the copy starts fading as it nears full size while the page fades up beneath it
+      // iteration 59: a story opens with a fade-through. The face-on painting eases up a little and dissolves while the
+      // row's grey melts into the page and the head rises; the painting is already waiting in its place below. (A zoom to
+      // full screen cropped a portrait painting to its middle, and a flight into the strip read as a shove.)
       setHold(false)
-      const n = FLY.node, fade = n ? new Promise((r) => gsap.to(n, { autoAlpha: 0, duration: 0.45, ease: 'power1.inOut', delay: 0.32, onComplete: r })) : null
-      NAV.hold = Promise.all([flyTo({ x: (W - w) / 2, y: (H - h) / 2, w, h }, { duration: 0.7, clip: { x: 0, y: 0, w: W, h: H } }), fade])
-        .then(() => { if (FLY.dir === 'in') flyClear() })
+      const n = FLY.node, bd = FLY.bd
+      NAV.hold = new Promise((r) => {
+        const tl = gsap.timeline({ onComplete: r })
+        if (n) tl.to(n, { scale: 1.06, autoAlpha: 0, duration: 0.5, ease: 'power2.out', transformOrigin: '50% 50%' }, 0)
+        if (bd) tl.to(bd, { autoAlpha: 0, duration: 0.55, ease: 'power1.inOut' }, 0.05)
+        if (!n && !bd) r()
+      }).then(() => { if (FLY.dir === 'in') flyClear() })
       return () => { live = false }
     }
     NAV.hold = flyTo(rectOfEl(art.current), { back: false, duration: back ? 0.95 : 0.85 })
@@ -1148,8 +1150,8 @@ function Piece({ cat, i, go, via }) {
           </dl>
           {cta && <div className="pg-cta">{cta}</div>}
           {it.related && <p className="pg-related"><small>Related</small><a href={it.related.href} onClick={(e) => { e.preventDefault(); go(parse(it.related.href)) }}>{it.related.title}</a> <em>· {it.related.kind}</em></p>}
-          {it.quote && <blockquote className="pg-quote"><span>{it.quote}</span></blockquote>}
-          {cat !== 'prose' && it.line && norm(it.line) !== norm(it.quote) && <p className="pg-line">{it.line}</p>}
+          {cat !== 'luck' && it.quote && <blockquote className="pg-quote"><span>{it.quote}</span></blockquote>}
+          {cat !== 'prose' && cat !== 'luck' && it.line && norm(it.line) !== norm(it.quote) && <p className="pg-line">{it.line}</p>}
           {cat !== 'prose' && it.src && credit && <p className="pg-credit">Painting: {credit}</p>}
         </div>
       </div>
@@ -1232,7 +1234,7 @@ function Story({ it, cat, i, items, go, art, meta, honors, credit, hold }) {
     parallax()
     if (flown.current) gsap.set(q('.s38-paint .s38-w > .s42-r'), { yPercent: RISE.shift })
     // opened through the painting: the page shows as the full-screen copy fades (0.8s flight), so the head rises then
-    const tl = gsap.timeline({ delay: flown.current ? 0.32 : 0 })
+    const tl = gsap.timeline({ delay: flown.current ? 0.12 : 0 })
     tl.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5 }, 0)
     tl.fromTo(q('.s42-head .s38-title .s42-r'), { yPercent: RISE.shift }, { yPercent: 0, duration: RISE.dur, ease: 'energy', stagger: RISE.titleStagger }, 0.05)
     tl.fromTo(q('.s42-head > :not(.s38-title):not(.s42-open) .s42-r'), { yPercent: RISE.shift }, { yPercent: 0, duration: RISE.dur, ease: 'energy', stagger: RISE.textStagger }, RISE.text)

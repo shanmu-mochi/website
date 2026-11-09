@@ -340,8 +340,8 @@ export default class Gallery {
     const q = this.q
     return new Promise((done) => {
       this.tl({ onComplete: done })
-        .to(q, { rise: 1, turn: 1, duration: 1.7, ease: GLIDE, onUpdate: () => { progress && progress(q.rise) } }, 0)
-        .call(() => { this.fan() }, null, 1.55)
+        .to(q, { rise: 1, turn: 1, duration: 1.2, ease: GLIDE, onUpdate: () => { progress && progress(q.rise) } }, 0)
+        .call(() => { this.fan() }, null, 1.05)
     }).then(() => new Promise((r) => setTimeout(r, CFG.fanDuration * 800)))
   }
   fan() {

@@ -360,3 +360,6 @@ a, button, [role="button"] { -webkit-tap-highlight-color: transparent; }
 }
 /* iteration 56: on a busy painting the pull quote sits on black bars (storyTeasers "boxed") */
 .s38-paint.is-boxed .s38-w > .s42-r { background: #0b0b0b; color: #fff; padding: 0.02em 0.12em 0.06em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+
+/* iteration 59: the row's background, carried over a story's opening fade */
+.fly-bd { position: fixed; inset: 0; z-index: 59; pointer-events: none; }
