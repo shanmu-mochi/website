@@ -610,7 +610,7 @@ function Home({ cat, go }) {
   if (start0.current == null) {
     const j = ROWPOS.jumpTo; ROWPOS.jumpTo = null
     const from = returning ? ROW.findIndex((x) => x.cat === FLY.data.cat && x.slug === (catOf(FLY.data.cat).items[FLY.data.i] || {}).slug) : -1
-    if (from >= 0 && (!j || ROW[from].rowCat === j)) { start0.current = from; glideHome.current = SEC_START[ROW[from].rowCat] }
+    if (from >= 0 && (!j || ROW[from].rowCat === j)) start0.current = from
     else start0.current = j ? SEC_START[j] : ROWPOS.set ? lastIdx.home : cat !== 'home' && SEC_START[cat] >= 0 ? SEC_START[cat] : 0
   }
   const [cur, setCur] = useState(start0.current)
@@ -1039,7 +1039,7 @@ function Piece({ cat, i, go, via }) {
   const [hold, setHold] = useState(flying)
   const dir = NAV.dir
   const face = useFaceURL(it)
-  const ar = it.src ? aspectOf(it.src) : SECTIONS[cat === 'deep' ? 'publications' : cat].aspect
+  const ar = cat === 'luck' ? 1 : it.src ? aspectOf(it.src) : SECTIONS[cat === 'deep' ? 'publications' : cat].aspect
   const goRef = useRef(go); goRef.current = go
 
   useLayoutEffect(() => {
@@ -1511,6 +1511,22 @@ export default function Browser() {
     if (NAV.pending) { const [p, o] = NAV.pending; NAV.pending = null; go(p, o) }
   }, [])
 
+  useEffect(() => {
+    if (route.view !== 'piece' || route.cat === 'prose') return
+    let acc = 0, t = 0, spent = false
+    const scrollsX = (el) => { for (let e = el; e && e !== document.body; e = e.parentElement) { if (e.scrollWidth > e.clientWidth + 2 && /auto|scroll/.test(getComputedStyle(e).overflowX)) return true } return false }
+    const wh = (e) => {
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY) || scrollsX(e.target)) return
+      const now = e.timeStamp
+      if (now - t > NEXT.gap) { acc = 0; spent = false }
+      t = now
+      if (spent) return
+      acc = e.deltaX < 0 ? acc - e.deltaX : 0
+      if (acc >= SIDE) { spent = true; go({ view: 'browse', cat: route.cat === 'deep' ? 'deep' : route.cat }) }
+    }
+    window.addEventListener('wheel', wh, { passive: true })
+    return () => window.removeEventListener('wheel', wh)
+  }, [route, go])
   useEffect(() => {
     const on = () => go(parse(window.location.hash), { pop: true })
     window.addEventListener('popstate', on)
