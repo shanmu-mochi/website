@@ -582,6 +582,13 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - One material per compiled shader is kept when the row is torn down, so coming back from a story compiles nothing (it compiled four shaders every time).
 - A painting whose image arrives while it is in sight fades in from its placeholder colour over half a second instead of snapping.
 
+## Iteration 54: publication covers, Quanta style
+- Every publication cover (all 16, in Publications, Deep Dives and the home row) is now a Quanta-style cover drawn in faceCanvas(): a saturated colour field on the top 59% with one drawing of the paper's idea, then on paper a small-caps kicker (kind and short venue) on a coloured rule, the title in bold Lora, and the byline with the year.
+- Colours and drawing per paper live in one file, src/data/pubCovers.js (bg, accent, ink, art). The drawings are in src/components/coverArt.js. They are illustrations, not charts: no measured values and no numbers on them (the 58 marks on the Medi-Cal cover are its 58 counties).
+- Kicker, venue, year and byline are read from the records (src/pieces.js coverOf): medRxiv for the preprints, the journal abbreviation from the PubMed citation for the peer-reviewed papers, Draft for the working papers, SSRN from the AI Trap DOI, UCSF for the thesis. The AI Trap year (2026) is from "Draft, June 2026" in src/pages/AiTrap.jsx. Works in progress show no venue or year, because the repo has none.
+- Same 737 x 1024 canvas as before, used for the WebGL plate, the paper-page cover and the flight between them, so texture memory is unchanged. No image loads were added.
+- The card backs, the home caption (kind and date only) and the story covers are unchanged.
+- Checked on a production build at 1024x640 (DPR 2), 1280x720, 1440x900, 1728x1117 and 390x844: through all 16 plates in the carousel, five paper pages each, no console errors.
 ## Iteration 54: full-site audit fixes
 - Phones: every paper page cut its title, deck and facts off at the right edge. The header's single grid column grew to its widest line (604px on a 390px phone) and the page clips sideways overflow. The column is now minmax(0, 1fr).
 - The Wegovy paper was listed as "Work in progress" with "no abstract published". It was published in the Journal of Obesity and Metabolic Diseases (Vol. 2, 102, 12 Dec 2025): now peer-reviewed, sole author, published abstract, the open-access PDF on the site.
