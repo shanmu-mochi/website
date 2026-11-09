@@ -28,7 +28,7 @@ const pressure = (v) => {
 const HOLD_MS = 350   // a finger still this long on the centred book is a hold (look), not a tap (open)
 const NUDGE_MS = 4000   // after this long without input, the centred book turns a little and back, once
 // A24's disc-gallery wheel (a24.raviklaassens.com), unchanged
-const WHEEL = { noiseFloor: 0.3, stepThreshold: 4.6, eventCap: 24, envelopeTau: 550, riseFactor: 1.2, tickGap: 34, tickRatio: 1, pauseGap: 130, idleReset: 150, minStepTick: 90, minStepFlick: 190, sustainDelay: 480, sustainRatio: 0.8, carry: 900, carryGap: 420, edge: Infinity, edgeArm: 1400 }
+const WHEEL = { noiseFloor: 0.3, stepThreshold: 3.4, eventCap: 24, envelopeTau: 550, riseFactor: 1.2, tickGap: 34, tickRatio: 1, pauseGap: 130, idleReset: 150, minStepTick: 90, minStepFlick: 190, sustainDelay: 480, sustainRatio: 0.8, carry: 900, carryGap: 420, edge: Infinity, edgeArm: 1400 }
 export const CFG = {
   galleryScale: 1.08, camDist: 4.4, fov: 40,
   hoverTilt: 0.21, dragSens: 0.95, dragSmooth: 0.32, dragMaxV: 0.5, dragStart: 5,
@@ -39,7 +39,7 @@ export const CFG = {
   flightRecede: 2.2, flightStagger: 0.45, flightStaggerIn: 0.28, flightStaggerMax: 4, popOut: 0.35, popIn: 0.02,
   preloadBoost: 0.8, preloadGrowBy: 0.5, preloadSpin: 1.1, preloadRise: 3, preloadDepth: 0.7, fanDuration: 1.15,
   touchGap: 2.2, touchDepth: 0.5, touchDrop: 1, touchActive: 1.5, touchInactive: 0.6, touchFlick: 0.035, touchSpan: 1.8,
-  resetDuration: 1.2, renderRadius: 6, stepSpring: 11,
+  resetDuration: 1.2, renderRadius: 6, stepSpring: 13,
   wheelFloor: 0.3,
   // iteration 14: vertical intent. A gesture ends after gestureGap ms without events; sectionPx of
   // vertical travel inside one gesture (or one mouse-wheel notch) asks for the next section.

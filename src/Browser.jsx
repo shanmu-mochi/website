@@ -586,7 +586,7 @@ const SCROLL = { lenis: null, tick: null }
 function startLenis() {
   if (SCROLL.lenis || reduced()) return
   const coarse = window.matchMedia('(pointer: coarse)').matches
-  SCROLL.lenis = new Lenis({ lerp: coarse ? 1 : 0.165, wheelMultiplier: 1.3, touchMultiplier: 1, allowNestedScroll: true })
+  SCROLL.lenis = new Lenis({ lerp: coarse ? 1 : 0.165, wheelMultiplier: 1.6, touchMultiplier: 1, allowNestedScroll: true })
   SCROLL.tick = (s) => { if (SCROLL.lenis) SCROLL.lenis.raf(s * 1000) }
   gsap.ticker.add(SCROLL.tick); gsap.ticker.lagSmoothing(0)
 }
