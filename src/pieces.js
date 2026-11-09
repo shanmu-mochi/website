@@ -154,6 +154,8 @@ export const STORIES = [
   { title: 'Sonder', kind: 'Essay · My time in India', venue: 'Medium', excerpt: 'In India, every passing stranger carried a life as vivid as my own.', href: 'https://shanmuraja.medium.com/sonder-c07feba361e0', first: "In the office, I pulled up the X-ray and the MRI of bilateral knees so the doctor could take a look.", published: 'Feb 2024' },
   { title: 'Do You Lift, Bro?', kind: 'Essay · My time in orthopedics', venue: 'Medium', excerpt: 'On the orthopedics ward, strength was both the question and the cure.', href: 'https://shanmuraja.medium.com/do-you-lift-bro-b2c620677895', first: "My hand surprisingly wasn’t shaking as I drew the blood from the patient.", published: 'Jun 2024' },
   { title: 'Got Your Toe!', kind: 'Essay · A skilled nursing facility', venue: 'Medium', excerpt: 'At the nursing home, the body keeps a longer memory than the mind.', href: 'https://shanmuraja.medium.com/got-your-toe-472b0e2a74cb', first: "The doctor and I walk down the long dreary-colored hallway, an indication that you’re in a hospital, a reason for the goosebumps and anxious memories many others have.", published: 'Aug 2023' },
+  { title: 'A Ladder from the Methodists', kind: 'Short Story', venue: 'Forthcoming', excerpt: "Tansy’s sign says KEEP HOLLIS ST OPEN.", first: "Tansy’s sign says KEEP HOLLIS ST OPEN." },
+  { title: 'A Few Faultless Words', kind: 'Short Story', venue: 'Forthcoming', excerpt: "The side stand is no good on our floor.", first: "The side stand is no good on our floor." },
 ]
 
 export const STORY_PAINTING = {
@@ -162,6 +164,8 @@ export const STORY_PAINTING = {
   'How to Be Thanked': 'sargent-dinner.jpg',
   'Burnt Red Tongues': 'vishnu-shesha.jpg',
   'Fugue State': 'automat.jpg',
+  'A Ladder from the Methodists': 'hopper-sundaymorning.jpg',
+  'A Few Faultless Words': 'shergil-brahmacharis.jpg',
   'A Pound of Flesh': 'vonmax-anatom.jpg',
   'a boring call': 'hopper-elevenam.jpg',
   'The Sound and the Fury': 'turner-rain.jpg',

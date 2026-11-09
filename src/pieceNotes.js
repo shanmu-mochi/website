@@ -18,6 +18,8 @@ export default {
   'prose/sonder': '',   // Sonder
   'prose/do-you-lift-bro': '',   // Do You Lift, Bro?
   'prose/got-your-toe': '',   // Got Your Toe!
+  'prose/a-ladder-from-the-methodists': '',
+  'prose/a-few-faultless-words': '',
   // publications
   'publications/same-result-different-price': '',   // Same Result, Different Price
   'publications/off-trial-real-world-weight-loss-on-tirzepatide-semaglutide': '',   // Off-Trial: Real-World Weight Loss on Tirzepatide & Semaglutide

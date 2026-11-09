@@ -631,3 +631,4 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - A Pound of Flesh pull quote: "My selfish fantasy of tender acknowledgment — my boy, my sweet boy."
 - Back to the carousel: the flying copy takes the painting's own shape (cover-fit area of the image), clipped to the strip; it was squashed up to 40% desktop, 76% phone.
 - Trackpad: carousel steps on 23% less movement and settle ~20% sooner; pages scroll 1.3x.
+- Two forthcoming stories at the end of Prose: A Ladder from the Methodists (Hopper, Early Sunday Morning) and A Few Faultless Words (Sher-Gil, Brahmacharis). Opening, pull quote and blurb from the drafts; Coming soon, no link.
