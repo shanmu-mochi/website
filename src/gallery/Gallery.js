@@ -28,7 +28,7 @@ const pressure = (v) => {
 const HOLD_MS = 350   // a finger still this long on the centred book is a hold (look), not a tap (open)
 const NUDGE_MS = 4000   // after this long without input, the centred book turns a little and back, once
 // A24's disc-gallery wheel (a24.raviklaassens.com), unchanged
-const WHEEL = { noiseFloor: 0.3, stepThreshold: 6, eventCap: 24, envelopeTau: 550, riseFactor: 1.2, tickGap: 34, tickRatio: 1, pauseGap: 130, idleReset: 150, minStepTick: 90, minStepFlick: 190, sustainDelay: 480, sustainRatio: 0.8 }
+const WHEEL = { noiseFloor: 0.3, stepThreshold: 6, eventCap: 24, envelopeTau: 550, riseFactor: 1.2, tickGap: 34, tickRatio: 1, pauseGap: 130, idleReset: 150, minStepTick: 90, minStepFlick: 190, sustainDelay: 360, sustainRatio: 0.8, carry: 320, carryGap: 220 }
 export const CFG = {
   galleryScale: 1.08, camDist: 4.4, fov: 40,
   hoverTilt: 0.21, dragSens: 0.95, dragSmooth: 0.32, dragMaxV: 0.5, dragStart: 5,
@@ -562,12 +562,16 @@ export default class Gallery {
     // momentum tail doesn't look like a fresh gesture the moment the new row is ready
     if (this.busy()) { s.free = false; s.stepT = now; s.n = 0; s.peak = Math.max(s.peak, a); return }
     if (!s.free) {
-      s.n += 1; s.peak = Math.max(s.peak, a)
+      s.n += 1; s.peak = Math.max(s.peak, a); s.travel = (s.travel || 0) + a
       const since = now - s.stepT
+      // iteration 61: a long, strong swipe carries on: every carry px of travel after a step (and at least carryGap
+      // ms later) is one more piece, so a big swipe moves two or three and a gentle one still moves one
+      const carry = s.travel >= W.carry && since >= W.carryGap
       const pause = gap >= W.pauseGap
       const tick = gap >= W.tickGap && s.n <= 2 && since >= W.minStepTick && a >= s.peak * W.tickRatio
       const flick = rising && since >= W.minStepFlick
       const sustain = since >= W.sustainDelay && s.env >= s.peak * W.sustainRatio
+      if (carry) { s.travel = 0; s.stepT = now; s.n = 0; this.dbg.kind = 'carry'; this.step(d > 0 ? 1 : -1, 'wheel'); return }
       if (!(pause || tick || flick || sustain)) return
       s.free = true; s.acc = 0; s.dir = 0; s.surge = !(pause || tick || sustain)
     }
@@ -575,7 +579,7 @@ export default class Gallery {
     if (dir !== s.dir) { s.acc = 0; s.dir = dir }
     s.acc += Math.min(s.surge ? Math.max(0, a - env0) : a, W.eventCap)
     if (s.acc < W.stepThreshold) return
-    s.free = false; s.surge = false; s.acc = 0; s.stepT = now; s.n = 0; s.peak = a
+    s.free = false; s.surge = false; s.acc = 0; s.stepT = now; s.n = 0; s.peak = a; s.travel = 0
     this.dbg.kind = 'step'; this.dbg.d = d
     this.step(dir, 'wheel')
   }
