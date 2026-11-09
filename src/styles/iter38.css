@@ -388,3 +388,14 @@ a, button, [role="button"] { -webkit-tap-highlight-color: transparent; }
 .end-n { font: 600 12px/1 'Archivo', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: #6e6b66; white-space: nowrap; }
 .end-x { align-self: flex-start; margin-top: 34px; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0; border: 0; background: none; font: 600 12px/1 'Archivo', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: #141414; cursor: pointer; }
 @media (max-width: 760px) { .end-card { padding: 0 22px; } .end-l { flex-direction: column; gap: 10px; } .end-l .end-m { font-size: 15vw; } }
+
+/* iteration 65: the blurb sits right under the painting's credit, left-aligned, with the link beside it */
+.s42-again { flex-direction: row; justify-content: space-between; align-items: flex-start; gap: 48px; padding: 22px var(--m) 140px; }
+.s42-blurb { margin: 0; padding: 0; max-width: 600px; text-align: left; font-size: 20px; line-height: 1.5; }
+.s42-again .s38-btn, .s42-again .s42-soon { flex: none; margin-top: 6px; }
+.s42-again:has(> .s42-btn:only-child), .s42-again > .s38-btn:only-child { margin-left: auto; }
+@media (max-width: 760px) {
+  .s42-again { flex-direction: column; gap: 22px; padding: 18px var(--m) 96px; }
+  .s42-blurb { font-size: 17.5px; padding: 0; margin: 0; }
+  .s42-again .s38-btn { margin-top: 0; }
+}
