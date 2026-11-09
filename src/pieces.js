@@ -37,6 +37,7 @@ export const META = {
   'sargent-dinner.jpg': { title: 'A Dinner Table at Night', artist: 'John Singer Sargent', year: '1884', minH: 48 },
   'eljaleo.jpg':        { title: 'Kiss by the Window', artist: 'Edvard Munch', year: '1892', minH: 54 },
   'sargent-gassed.jpg': { title: 'Gassed', artist: 'John Singer Sargent', year: '1919', minH: 52 },
+  'eakins-grossclinic.jpg': { title: 'The Gross Clinic', artist: 'Thomas Eakins', year: '1875' },
   'automat.jpg':        { title: 'Automat', artist: 'Edward Hopper', year: '1927', minH: 48 },
   'hopper-roomny.jpg':  { title: 'Room in New York', artist: 'Edward Hopper', year: '1932', minH: 48 },
   'hopper-elevenam.jpg':{ title: 'Eleven A.M.', artist: 'Edward Hopper', year: '1926', minH: 48 },
@@ -164,7 +165,7 @@ export const STORY_PAINTING = {
   'A Pound of Flesh': 'vonmax-anatom.jpg',
   'a boring call': 'hopper-elevenam.jpg',
   'The Sound and the Fury': 'turner-rain.jpg',
-  'Birds Do Not Sing in Caves': 'sargent-gassed.jpg',
+  'Birds Do Not Sing in Caves': 'eakins-grossclinic.jpg',
   'Young Boy Blues': 'munch-sick.jpg',
   'I’ve Gone to the Country Spa': 'vangogh-oldman.jpg',
   'Jack of All Trades, Master of None': 'vangogh-ward.jpg',
@@ -279,9 +280,11 @@ AWARDS.forEach((a, n) => {
   ;(it.honors = it.honors || []).push({ text, href: `#/luck/${luck[n].slug}` })
   it.meta.splice(1, 0, ['Recognition', text])
 })
+const pubRank = (x) => /^White paper/.test(x.kind || '') ? 0 : /aortic|petticoat|tevar|lumen/i.test(x.slug) ? 1 : 2
 export const CATS = [
   { id: 'prose', label: 'Prose', items: prose },
-  { id: 'publications', label: 'Publications', items: pubs },
+  // iteration 62: Deep Dives first, then the vascular surgery papers, then the rest
+  { id: 'publications', label: 'Publications', items: [...pubs].sort((a, b) => pubRank(a) - pubRank(b)) },
   { id: 'luck', label: 'Luck', items: luck },
   // iteration 18: Deep Dives, the economics takes. Only the two white papers qualify from the data:
   // Healthcare's AI Trap (SSRN working paper) and the Medi-Cal deserts thesis (UCSF Health Policy & Law,

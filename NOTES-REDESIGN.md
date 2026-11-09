@@ -606,3 +606,12 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - Awards pages: no quoted lines.
 - Back to the carousel from any page (nav or back link): it lands on the piece you were on, then glides to the first piece of that section. It used to swap to the first piece under the landing copy.
 - Paper covers are editorial illustrations (src/covers.js MOTIFS): two pens with $25 and $1,200 tags; a tipped flask spilling a winding path; a signpost (Escalate / Switch); a calendar torn at week 8; a twisted ribbon; a petticoat of stent mesh; the aorta sliced and fanned; a tape measure round a vessel; three robot hands with answer cards; a branded pen and its plain reflection; three receipts of different lengths; a mousetrap baited with a stethoscope; dunes with one small clinic; a heart in a blood-pressure cuff; a coin over a circled date; a waiting-room door with a person and a robot in the glass.
+
+## Iteration 62
+- Covers: 16 papers and The New Yorker award are finished images (public/covers, sources in cover-sources/): Quanta-style illustrations, historical anatomy plates for the aortic papers, full paintings for the Deep Dives (Matsys for AI Trap, Lange's 1936 Nipomo photograph for Medi-Cal), the Burnt Red Tongues chromolithograph for the New Yorker shortlist.
+- Publications order: Deep Dives first, then the vascular surgery papers, then the rest.
+- Calmer scrolling: one piece per swipe unless very long; held scroll at A24's 480ms; pages scroll 1:1 (wheel multiplier 1).
+- The nav TOC opens after a 180ms hover and closes 70ms after the pointer leaves.
+- Busy paintings: no black bars; the painting dims under the words and the words carry a soft shadow.
+- Birds Do Not Sing in Caves: Eakins, The Gross Clinic (1875), replacing Sargent's Gassed, which was too wide to crop.
+- Fugue State pull quote: "The stones are the hills are the fog is the sky."

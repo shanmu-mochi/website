@@ -359,7 +359,9 @@ a, button, [role="button"] { -webkit-tap-highlight-color: transparent; }
   .wp-facts a, .wp-links a, .wp-p a, .wp-btn, .pg-cta-a, .pg-related a, .pg-honor a { display: inline-block; padding-top: 11px; padding-bottom: 11px; margin-top: -11px; margin-bottom: -11px; }
 }
 /* iteration 56: on a busy painting the pull quote sits on black bars (storyTeasers "boxed") */
-.s38-paint.is-boxed .s38-w > .s42-r { background: #0b0b0b; color: #fff; padding: 0.02em 0.12em 0.06em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+/* iteration 62: no bars. The painting dims a little under its words and the words carry a soft shadow */
+.s38-paint.is-boxed .s38-paint-f::after { content: ''; position: absolute; inset: 0; background: rgba(12, 10, 8, .38); pointer-events: none; }
+.s38-paint.is-boxed .s38-w { text-shadow: 0 2px 22px rgba(0, 0, 0, .55), 0 1px 3px rgba(0, 0, 0, .35); }
 
 /* iteration 59: the row's background, carried over a story's opening fade */
 .fly-bd { position: fixed; inset: 0; z-index: 59; pointer-events: none; }

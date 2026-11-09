@@ -489,13 +489,14 @@ function SiteNav({ go, active, className = '', onHover, onJump }) {
   const [menu, setMenu] = useState(null), shut = useRef(0)
   const fine = typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches
   const [at, setAt] = useState(null)
-  const openMenu = (id, el) => {
+  const openMenu = (id, el, now) => {
     clearTimeout(shut.current)
     if (!fine || !TOC_CATS.includes(id)) { setMenu(null); return }
+    if (el && !now && menu !== id) { shut.current = setTimeout(() => openMenu(id, el, true), 180); return }
     if (el) { const r = el.getBoundingClientRect(), w = Math.min(440, window.innerWidth - 24); setAt({ left: Math.round(Math.max(12, Math.min(window.innerWidth - w - 12, r.left + r.width / 2 - w / 2))), top: Math.round(r.bottom + 12) }) }
     setMenu(id)
   }
-  const closeMenu = () => { clearTimeout(shut.current); shut.current = setTimeout(() => setMenu(null), 160) }
+  const closeMenu = () => { clearTimeout(shut.current); shut.current = setTimeout(() => setMenu(null), 70) }
   useEffect(() => () => clearTimeout(shut.current), [])
   useEffect(() => { if (!menu) return; const k = (e) => { if (e.key === 'Escape') setMenu(null) }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k) }, [menu])
   const pick = (cat, k) => { setMenu(null); go({ view: 'piece', cat, i: k }, { direct: true, fade: true }) }
@@ -579,7 +580,7 @@ const SCROLL = { lenis: null, tick: null }
 function startLenis() {
   if (SCROLL.lenis || reduced()) return
   const coarse = window.matchMedia('(pointer: coarse)').matches
-  SCROLL.lenis = new Lenis({ lerp: coarse ? 1 : 0.165, wheelMultiplier: coarse ? 1 : 1.25, touchMultiplier: 1, allowNestedScroll: true })
+  SCROLL.lenis = new Lenis({ lerp: coarse ? 1 : 0.165, wheelMultiplier: 1, touchMultiplier: 1, allowNestedScroll: true })
   SCROLL.tick = (s) => { if (SCROLL.lenis) SCROLL.lenis.raf(s * 1000) }
   gsap.ticker.add(SCROLL.tick); gsap.ticker.lagSmoothing(0)
 }
