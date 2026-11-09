@@ -28,7 +28,7 @@ const pressure = (v) => {
 const HOLD_MS = 350   // a finger still this long on the centred book is a hold (look), not a tap (open)
 const NUDGE_MS = 4000   // after this long without input, the centred book turns a little and back, once
 // A24's disc-gallery wheel (a24.raviklaassens.com), unchanged
-const WHEEL = { noiseFloor: 0.3, stepThreshold: 3.4, eventCap: 24, envelopeTau: 550, riseFactor: 1.2, tickGap: 34, tickRatio: 1, pauseGap: 130, idleReset: 150, minStepTick: 90, minStepFlick: 190, sustainDelay: 480, sustainRatio: 0.8, carry: 900, carryGap: 420, edge: Infinity, edgeArm: 1400 }
+const WHEEL = { noiseFloor: 0.3, stepThreshold: 4.0, eventCap: 24, envelopeTau: 550, riseFactor: 1.2, tickGap: 34, tickRatio: 1, pauseGap: 130, idleReset: 150, minStepTick: 90, minStepFlick: 190, sustainDelay: 480, sustainRatio: 0.8, carry: 900, carryGap: 420, edge: Infinity, edgeArm: 1400 }
 export const CFG = {
   galleryScale: 1.08, camDist: 4.4, fov: 40,
   hoverTilt: 0.21, dragSens: 0.95, dragSmooth: 0.32, dragMaxV: 0.5, dragStart: 5,
