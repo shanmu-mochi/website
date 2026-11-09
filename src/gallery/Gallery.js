@@ -39,7 +39,7 @@ export const CFG = {
   flightRecede: 2.2, flightStagger: 0.45, flightStaggerIn: 0.28, flightStaggerMax: 4, popOut: 0.35, popIn: 0.02,
   preloadBoost: 0.8, preloadGrowBy: 0.5, preloadSpin: 1.1, preloadRise: 3, preloadDepth: 0.7, fanDuration: 1.15,
   touchGap: 2.2, touchDepth: 0.5, touchDrop: 1, touchActive: 1.5, touchInactive: 0.6, touchFlick: 0.035, touchSpan: 1.8,
-  resetDuration: 1.2, renderRadius: 6,
+  resetDuration: 1.2, renderRadius: 6, stepSpring: 9,
   wheelFloor: 0.3,
   // iteration 14: vertical intent. A gesture ends after gestureGap ms without events; sectionPx of
   // vertical travel inside one gesture (or one mouse-wheel notch) asks for the next section.
@@ -172,7 +172,7 @@ export default class Gallery {
     this.el = el; this.o = opts
     this.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     this.items = []; this.N = 0; this.plates = []; this.mode = 'prose'
-    this.L = 0; this.Se = 0; this.Te = 0; this.Ce = 0; this.we = 0
+    this.L = 0; this.Se = 0; this.Te = 0; this.Ce = 0; this.we = 0; this.Lv = 0
     this.G = { active: 1, others: 1, inbound: false }
     this.q = { active: false, rise: 1, turn: 1 }
     this.tw = { value: 0 }; this.tweening = false; this.target = -1
@@ -562,16 +562,13 @@ export default class Gallery {
     // momentum tail doesn't look like a fresh gesture the moment the new row is ready
     if (this.busy()) { s.free = false; s.stepT = now; s.n = 0; s.peak = Math.max(s.peak, a); return }
     if (!s.free) {
-      s.n += 1; s.peak = Math.max(s.peak, a); s.travel = (s.travel || 0) + a
+      s.n += 1; s.peak = Math.max(s.peak, a)
       const since = now - s.stepT
-      // iteration 61: a long, strong swipe carries on: every carry px of travel after a step (and at least carryGap
-      // ms later) is one more piece, so a big swipe moves two or three and a gentle one still moves one
-      const carry = s.travel >= W.carry && since >= W.carryGap
+
       const pause = gap >= W.pauseGap
       const tick = gap >= W.tickGap && s.n <= 2 && since >= W.minStepTick && a >= s.peak * W.tickRatio
       const flick = rising && since >= W.minStepFlick
       const sustain = since >= W.sustainDelay && s.env >= s.peak * W.sustainRatio
-      if (carry) { s.travel = 0; s.stepT = now; s.n = 0; this.dbg.kind = 'carry'; this.step(d > 0 ? 1 : -1, 'wheel'); return }
       if (!(pause || tick || flick || sustain)) return
       s.free = true; s.acc = 0; s.dir = 0; s.surge = !(pause || tick || sustain)
     }
@@ -884,12 +881,19 @@ export default class Gallery {
     this.maybeNudge(now)
     const r = Math.min(3, dt * 60)
     const dragging = this.drag && this.drag.on && this.drag.spin < 0
+    if (!(this.oneAxis && !dragging && !this.flight && !this.q.active)) this.Lv = 0
     if (this.oneAxis && !dragging && !this.flight && !this.q.active) {
       if (this.pend) { const p = this.pend; this.pend = 0; this.push(p, false) }
       // the hand has stopped: settle on the nearest plate (the same chase acts as the spring)
       if (performance.now() - this.lastIn > 140) { const sn = Math.round(clamp(this.T, 0, this.N - 1)); if (sn !== this.T) { this.T = sn; this.dbg.edge = '' } }
       if (this.reduced) this.L = Math.round(clamp(this.T, 0, this.N - 1))
-      else { this.L += (this.T - this.L) * (1 - Math.exp(-dt * 9)); if (Math.abs(this.T - this.L) < 5e-4) this.L = this.T }
+      else {
+        // iteration 63: a critically damped spring instead of an exponential chase, so a step eases in as well as out
+        // (the chase started at full speed, which read as a jolt); retargeting mid-move keeps its velocity
+        const w = CFG.stepSpring, n = 4, h = dt / n
+        for (let k = 0; k < n; k++) { this.Lv += (w * w * (this.T - this.L) - 2 * w * this.Lv) * h; this.L += this.Lv * h }
+        if (Math.abs(this.T - this.L) < 5e-4 && Math.abs(this.Lv) < 2e-3) { this.L = this.T; this.Lv = 0 }
+      }
       this.Se = 0; this.Te = 0
     } else if (!dragging && !this.flight) {
       if (Math.abs(this.Se) > 1e-5) {
@@ -970,6 +974,10 @@ export default class Gallery {
     window.removeEventListener('resize', this.h.resize)
     c.style.cursor = ''
     this.renderer.renderLists.dispose()
-    c.remove()
+    // iteration 63: keep the canvas in the page, hidden, for a moment: taking the GL canvas out of the document while a
+    // page copy is in flight made the browser drop that copy's pixels for one frame
+    c.style.visibility = 'hidden'
+    document.body.appendChild(c)
+    setTimeout(() => { if (c.parentNode === document.body) c.remove(); c.style.visibility = '' }, 800)
   }
 }

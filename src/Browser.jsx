@@ -335,6 +335,12 @@ function flyNode(rect, it, back, band = 1) {
   n.querySelector('.fly-b').src = faceURL(it, 'back')
   Object.assign(n.style, { left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.w}px`, height: `${rect.h}px` })
   n.querySelector('.fly-in').style.transform = back ? 'rotateY(180deg)' : 'none'
+  // iteration 63: a copy that will not turn over is drawn flat. As a 3D layer it went blank for a frame when the page
+  // under it changed (only its spine strip showed)
+  // the face is also drawn into a canvas over the img: a canvas keeps its pixels when the page under it changes, where
+  // the img could be re-rastered and miss a frame
+  if (!back) { const im = n.querySelector('.fly-f'), cv = document.createElement('canvas'); cv.className = 'fly-cv'; const draw = () => { if (!im.naturalWidth) return; const r = Math.min(2, window.devicePixelRatio || 1); cv.width = Math.round(rect.w * r); cv.height = Math.round(rect.h * r); const x = cv.getContext('2d'), s = Math.max(cv.width / im.naturalWidth, cv.height / im.naturalHeight), w = im.naturalWidth * s, h = im.naturalHeight * s; x.drawImage(im, (cv.width - w) / 2, (cv.height - h) / 2, w, h) }; if (im.complete) draw(); else im.addEventListener('load', draw, { once: true }); im.after(cv) }
+  if (!back) { const fi = n.querySelector('.fly-in'); fi.style.transformStyle = 'flat'; const ff = n.querySelector('.fly-f'); ff.style.backfaceVisibility = 'visible'; ff.style.webkitBackfaceVisibility = 'visible'; n.querySelector('.fly-b').style.display = 'none'; const bd = n.querySelector('.fly-band'); if (bd) bd.style.transform = 'none' }
   document.body.appendChild(n)
   FLY.node = n
   return n
@@ -596,11 +602,16 @@ const NAV = { busy: false, pending: null, hold: null, dir: 0 }
 const SEAM = { to: null, dir: 0, off: 0, skipTop: false }
 const HOME = { api: null }
 const PAGE = { api: null }
-function fadeOutPage() {
+function fadeOutPage(toRow) {
   const el = document.querySelector('.pg')
   if (!el || reduced()) return Promise.resolve()
+  // going to the row: the page's white melts into the row's grey, so the row does not cut in
+  if (toRow && !FLY.bd) { const bd = document.createElement('div'); bd.className = 'fly-bd'; bd.style.background = '#f2f2f2'; bd.style.opacity = '0'; bd.style.zIndex = '58'; document.body.appendChild(bd); FLY.bd = bd; gsap.to(bd, { opacity: 1, duration: 0.36, ease: 'power1.inOut' }) }
   el.classList.add('is-leaving')
-  return wait(360)
+  // iteration 63: fade it here, not by class: a page's own entrance leaves an inline opacity that beat the class, so the
+  // page held for 360ms and then vanished in one frame
+  gsap.killTweensOf(el)
+  return new Promise((r) => gsap.to(el, { autoAlpha: 0, duration: 0.36, ease: 'power1.inOut', onComplete: r }))
 }
 
 function Home({ cat, go }) {
@@ -809,6 +820,7 @@ function Home({ cat, go }) {
     g.tone(bgFor(items[g.index()]))
     let live = true
     requestAnimationFrame(() => live && setBgOn(true))
+    if (FLY.bd && FLY.dir !== 'in') { const bd = FLY.bd; gsap.to(bd, { opacity: 0, duration: 0.35, ease: 'power1.out', onComplete: () => { bd.remove(); if (FLY.bd === bd) FLY.bd = null } }) }
     if (returning) {
       // coming back from a page: the page image is already in the air (FLY); land it on its object
       const d = FLY.data
@@ -1093,6 +1105,9 @@ function Piece({ cat, i, go, via }) {
         FLY.dir = 'out'; FLY.data = { cat, i, back: false, mode: 'home' }
         // iteration 19: the row comes back with this piece in front
         lastIdx.home = Math.max(0, ROW.findIndex((x) => x.cat === cat && x.slug === it.slug)); ROWPOS.set = true
+        // the page's white melts into the row's grey under the flying copy, so there is no cut when the row appears
+        const bd = document.createElement('div'); bd.className = 'fly-bd'; bd.style.background = '#f2f2f2'; bd.style.opacity = '0'; bd.style.zIndex = '58'; document.body.appendChild(bd); FLY.bd = bd
+        gsap.to(bd, { opacity: 1, duration: 0.36, ease: 'power1.inOut' })
         return fadeOutPage()
       },
     }
@@ -1501,8 +1516,10 @@ export default function Browser() {
         NAV.dir = (r.i > from.i && !(from.i === 0 && r.i === catOf(r.cat).items.length - 1)) || (from.i === catOf(r.cat).items.length - 1 && r.i === 0) ? 1 : -1
         if (!reduced() && opts.fade) { const el = document.querySelector('.pg'); if (el) await gsap.to(el, { autoAlpha: 0, duration: 0.4 }) }
         else if (!reduced() && !opts.seam) { const el = document.querySelector('.pg'); if (el) { el.classList.add(NAV.dir > 0 ? 'is-out-n' : 'is-out-p'); await wait(240) } }
-      } else if (from.view === 'piece' && r.view === 'browse' && PAGE.api) await PAGE.api.toGallery()
-      else if (from.view !== 'browse') await fadeOutPage()
+      } else if (from.view === 'piece' && r.view === 'browse' && PAGE.api && (r.cat === from.cat || r.cat === 'home')) await PAGE.api.toGallery()
+      // iteration 63: from a page to a different section (the nav), a plain fade; flying this page's painting home into a
+      // row that is about to slide to another section read as a flip
+      else if (from.view !== 'browse') await fadeOutPage(r.view === 'browse')
     } catch (e) { void e }
     const h = hashOf(r)
     routeRef.current = r
