@@ -15,6 +15,7 @@ import NOTES from './pieceNotes'
 import PaperPage from './PaperPage'
 import TEASERS from './storyTeasers'
 import { coverOf, drawPaperCover, drawAwardCover, spineOf } from './covers'
+import { coverImage, COVER_ASPECT } from './coverImages'
 import { GLIDE, plateSize, SECTIONS } from './gallery/shared'
 import './styles/globals.css'
 import './styles/a24.css'
@@ -185,7 +186,7 @@ function drawFace(key, aspect, draw) {
 }
 const faceKey = (it, side) => `${it.cat}:${it.slug}:${side}`
 function faceCanvas(it, side) {
-  const sec = SECTIONS[it.cat === 'deep' ? 'publications' : it.cat] || SECTIONS.prose, [w, h] = plateSize({ aspect: it.src ? aspectOf(it.src) : 0.74 }, sec), aspect = w / h
+  const sec = SECTIONS[it.cat === 'deep' ? 'publications' : it.cat] || SECTIONS.prose, [w, h] = plateSize({ aspect: it.src ? aspectOf(it.src) : 0.74, coverAspect: coverImage(it, 600) ? COVER_ASPECT : undefined }, sec), aspect = w / h
   const key = faceKey(it, side)
   const CV = { grain, fitTitle, wrap, caps: smallCaps, BOOK }
   if ((it.cat === 'publications' || it.cat === 'deep') && side === 'front' && coverOf(it)) return drawFace(key, aspect, (ctx, W, H) => drawPaperCover(ctx, W, H, it, CV))
@@ -299,10 +300,11 @@ const canvasTexture = (c) => new GAL.mod.CanvasTexture(c)
 // hand-offs stay seamless); on a desktop the sizes are unchanged
 const PHONE = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches && Math.min(window.innerWidth, window.innerHeight) <= 760
 const PLATE_CSS = PHONE ? 480 : 750, STORY_CSS = PHONE ? 750 : 2000
-const frontTexture = (it) => (it.cat === 'prose' || it.cat === 'paintings') && it.src ? GAL.mod.imageTexture(variantFor(it.src, PLATE_CSS)) : GAL.mod.texture(faceKey(it, 'front'), () => fontsReady().then(() => canvasTexture(faceCanvas(it, 'front'))))
+const frontTexture = (it) => coverImage(it, PLATE_CSS) ? GAL.mod.imageTexture(coverImage(it, PLATE_CSS * 1.5)) : (it.cat === 'prose' || it.cat === 'paintings') && it.src ? GAL.mod.imageTexture(variantFor(it.src, PLATE_CSS)) : GAL.mod.texture(faceKey(it, 'front'), () => fontsReady().then(() => canvasTexture(faceCanvas(it, 'front'))))
 const backTexture = (it) => GAL.mod.texture(faceKey(it, 'back'), () => fontsReady().then(() => canvasTexture(faceCanvas(it, 'back'))))
 const URLS = new Map()
 const faceURL = (it, side) => {
+  if (side === 'front' && coverImage(it, PLATE_CSS)) return coverImage(it, PLATE_CSS * 1.5)
   if (side === 'front' && (it.cat === 'prose' || it.cat === 'paintings') && it.src) return variantFor(it.src, PLATE_CSS)
   const k = faceKey(it, side)
   if (!URLS.has(k)) URLS.set(k, faceCanvas(it, side).toDataURL('image/jpeg', 0.92))
@@ -310,13 +312,13 @@ const faceURL = (it, side) => {
 }
 /* the page shows the very same face the gallery showed, so the hand-off is invisible */
 function useFaceURL(it) {
-  const [u, setU] = useState(() => (it.cat === 'prose' && it.src) || CANVAS.has(faceKey(it, 'front')) ? faceURL(it, 'front') : null)
+  const [u, setU] = useState(() => coverImage(it, 600) ? coverImage(it, 1200) : (it.cat === 'prose' && it.src) || CANVAS.has(faceKey(it, 'front')) ? faceURL(it, 'front') : null)
   useEffect(() => { let on = true; if (!u) fontsReady().then(() => on && setU(faceURL(it, 'front'))); return () => { on = false } }, [it, u])
   return u
 }
 
 function itemsFor(cat) {
-  return catOf(cat).items.map((it) => ({ ...it, aspect: it.src ? aspectOf(it.src) : 0.74, placeholder: (it.cat === 'prose' || it.cat === 'paintings') && it.src ? placeholderOf(it.src) : coverOf(it) ? coverOf(it).bg : '#f9f8f4', spine: !it.src && coverOf(it) ? spineOf(it) : undefined }))
+  return catOf(cat).items.map((it) => ({ ...it, aspect: it.src ? aspectOf(it.src) : 0.74, coverAspect: coverImage(it, 600) ? COVER_ASPECT : undefined, placeholder: (it.cat === 'prose' || it.cat === 'paintings') && it.src ? placeholderOf(it.src) : coverOf(it) ? coverOf(it).bg : '#f9f8f4', spine: !it.src && coverOf(it) ? spineOf(it) : undefined }))
 }
 
 /* ---------------- the shared-element flight ----------------
@@ -1039,7 +1041,7 @@ function Piece({ cat, i, go, via }) {
   const [hold, setHold] = useState(flying)
   const dir = NAV.dir
   const face = useFaceURL(it)
-  const ar = cat === 'luck' ? 1 : it.src ? aspectOf(it.src) : SECTIONS[cat === 'deep' ? 'publications' : cat].aspect
+  const ar = coverImage(it, 600) ? COVER_ASPECT : cat === 'luck' ? 1 : it.src ? aspectOf(it.src) : SECTIONS[cat === 'deep' ? 'publications' : cat].aspect
   const goRef = useRef(go); goRef.current = go
 
   useLayoutEffect(() => {

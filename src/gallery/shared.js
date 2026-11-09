@@ -21,7 +21,7 @@ export const SECTIONS = {
 }
 
 export function plateSize(it, sec) {
-  const a = sec.aspect || it.aspect
+  const a = it.coverAspect || sec.aspect || it.aspect
   let h = Math.sqrt(sec.area / a), w = a * h
   const m = Math.max(w, h)
   if (m > sec.maxSide) { w *= sec.maxSide / m; h *= sec.maxSide / m }

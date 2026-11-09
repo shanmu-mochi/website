@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 940" width="1200" height="940">
+  <rect width="1200" height="940" fill="#2E6359"/>
+  <!-- stand -->
+  <rect x="592" y="190" width="16" height="560" fill="#F3EEE3"/>
+  <path d="M470 790 L730 790 L670 750 L530 750 Z" fill="#F3EEE3"/>
+  <circle cx="600" cy="196" r="20" fill="#E8775A"/>
+  <!-- beam, level -->
+  <rect x="250" y="188" width="700" height="16" rx="8" fill="#F3EEE3"/>
+  <!-- left pan -->
+  <line x1="290" y1="204" x2="230" y2="420" stroke="#F3EEE3" stroke-width="5"/>
+  <line x1="290" y1="204" x2="350" y2="420" stroke="#F3EEE3" stroke-width="5"/>
+  <path d="M200 420 L380 420 Q370 456 290 456 Q210 456 200 420 Z" fill="#F3EEE3"/>
+  <!-- right pan -->
+  <line x1="910" y1="204" x2="850" y2="420" stroke="#F3EEE3" stroke-width="5"/>
+  <line x1="910" y1="204" x2="970" y2="420" stroke="#F3EEE3" stroke-width="5"/>
+  <path d="M820 420 L1000 420 Q990 456 910 456 Q830 456 820 420 Z" fill="#F3EEE3"/>
+  <!-- identical vials -->
+  <g id="vial">
+    <rect x="262" y="306" width="56" height="114" rx="10" fill="#F3EEE3"/>
+    <rect x="262" y="306" width="56" height="114" rx="10" fill="none" stroke="#1E3F39" stroke-width="5"/>
+    <rect x="258" y="286" width="64" height="26" rx="5" fill="#1E3F39"/>
+    <rect x="262" y="352" width="56" height="34" fill="#9CC3B6"/>
+  </g>
+  <use href="#vial" x="620"/>
+  <!-- price tags: the same shape, hung straight; one small, one large -->
+  <line x1="290" y1="456" x2="290" y2="530" stroke="#F3EEE3" stroke-width="3"/>
+  <path d="M250 530 L330 530 L330 586 L250 586 L230 558 Z" fill="#E8775A"/>
+  <circle cx="248" cy="558" r="6" fill="#2E6359"/>
+  <text x="292" y="571" text-anchor="middle" font-family="Lora, Georgia, serif" font-weight="700" font-size="34" fill="#F3EEE3">$</text>
+  <line x1="910" y1="456" x2="910" y2="530" stroke="#F3EEE3" stroke-width="3"/>
+  <path d="M820 530 L1000 530 L1000 656 L820 656 L775 593 Z" fill="#E8775A"/>
+  <circle cx="815" cy="593" r="10" fill="#2E6359"/>
+  <text x="912" y="618" text-anchor="middle" font-family="Lora, Georgia, serif" font-weight="700" font-size="66" fill="#F3EEE3">$$$$</text>
+</svg>

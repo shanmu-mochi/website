@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1056 720" width="1056" height="720">
+  <rect width="1056" height="720" fill="#33204f"/>
+  <path id="w" fill="none" stroke="#F4F1EA" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" d="M150.0 416.8 L158.2 423.1 L166.3 434.4 L174.5 417.4 L182.7 415.3 L190.8 405.9 L199.0 402.8 L207.2 420.3 L215.3 421.2 L223.5 430.4 L231.7 417.2 L239.8 407.1 L248.0 406.9 L256.2 416.7 L264.3 413.6 L272.5 424.7 L280.7 433.9 L288.8 432.8 L297.0 415.7 L305.2 406.3 L313.3 419.6 L321.5 412.4 L329.7 436.2 L337.8 427.7 L346.0 418.2 L354.2 407.3 L362.3 404.7 L370.5 416.8 L378.7 415.1 L386.8 431.3 L395.0 434.0 L403.2 422.1 L411.3 414.8 L419.5 400.3 L427.7 403.3 L435.8 415.7 L444.0 433.2 L452.2 430.1 L460.3 420.9 L468.5 415.3 L476.7 407.3 L484.8 407.8 L493.0 426.5 L501.2 433.7 L509.3 426.7 L517.5 425.3 L525.7 414.1 L533.8 414.8 L542.0 415.7 L550.2 417.6 L558.3 438.9 L566.5 424.4 L574.7 422.3 L582.8 418.1 L591.0 401.8 L599.2 411.5 L607.3 413.3 L615.5 433.3 L623.7 436.0 L631.8 424.9 L640 420"/>
+  <line x1="640" y1="150" x2="640" y2="610" stroke="#F4F1EA" stroke-width="4" stroke-dasharray="10 14" opacity=".7"/>
+  <polyline points="640,420 660,190 900,182" fill="none" stroke="#E8834A" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="640,420 662,590 900,600" fill="none" stroke="#F4F1EA" stroke-width="5" stroke-dasharray="12 12" opacity=".75"/>
+  <circle cx="640" cy="420" r="16" fill="#E8834A"/>
+</svg>
