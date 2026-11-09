@@ -563,6 +563,35 @@ function SiteNav({ go, active, className = '', onHover, onJump }) {
     </header>
   )
 }
+/* iteration 64: the end of the row. After the last Deep Dive a deliberate push brings up a closing card that leads to
+   the two pages that are not part of the row; any push back, Escape or the close link returns to the last plate. */
+function EndCard({ go, close }) {
+  const ref = useRef(null)
+  useEffect(() => {
+    const el = ref.current; if (!el) return
+    if (!reduced()) gsap.fromTo(el, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.45, ease: 'power1.out' })
+    if (!reduced()) gsap.fromTo(el.querySelectorAll('.end-r'), { yPercent: 110 }, { yPercent: 0, duration: 0.9, ease: 'energy', stagger: 0.07, delay: 0.08 })
+    const t0 = performance.now()
+    let shut = false
+    const leave = () => { if (shut) return; shut = true; if (reduced()) { close(); return } gsap.to(el, { autoAlpha: 0, duration: 0.35, ease: 'power1.in', onComplete: close }) }
+    // the swipe that opened the card is still arriving for a moment; only a fresh push back closes it
+    const wh = (e) => { e.preventDefault(); if (performance.now() - t0 > 650 && (e.deltaY < -4 || e.deltaX < -4)) leave() }
+    let t1 = null
+    const ts = (e) => { t1 = e.touches[0] ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null }
+    const tm = (e) => { if (!t1 || performance.now() - t0 < 400) return; const t = e.touches[0]; if (t.clientX - t1.x > 60 || t.clientY - t1.y > 60) leave() }
+    const key = (e) => { if (['Escape', 'ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); e.stopPropagation(); leave() } }
+    el.addEventListener('wheel', wh, { passive: false }); el.addEventListener('touchstart', ts, { passive: true }); el.addEventListener('touchmove', tm, { passive: true }); window.addEventListener('keydown', key, true)
+    return () => { el.removeEventListener('wheel', wh); el.removeEventListener('touchstart', ts); el.removeEventListener('touchmove', tm); window.removeEventListener('keydown', key, true) }
+  }, [close])
+  const to = (r) => (e) => { e.preventDefault(); go(r) }
+  return createPortal(
+    <div ref={ref} className="end-card" role="dialog" aria-label="The end of the row">
+      <p className="end-k"><span className="end-m"><span className="end-r">That is everything</span></span></p>
+      <a className="end-l" href="#/art" onClick={to({ view: 'paintings' })}><span className="end-m"><span className="end-r">Art that I love</span></span><span className="end-n">{PAINTINGS.length} paintings</span></a>
+      <a className="end-l" href="#/about" onClick={to({ view: 'about' })}><span className="end-m"><span className="end-r">About</span></span><span className="end-n">Shanmu Raja</span></a>
+      <button type="button" className="end-x" onClick={close}><Arrow dir="left" /> Back to the row</button>
+    </div>, document.body)
+}
 function Socials({ className = '' }) {
   return (
     <nav className={`h-social ${className}`} aria-label="Elsewhere">
@@ -745,11 +774,12 @@ function Home({ cat, go }) {
     secRef.current(c, SEC_ORDER.indexOf(c) > SEC_ORDER.indexOf(now) ? 1 : -1, 0, true)
   }
   const edgeRef = useRef(null)
+  const [end, setEnd] = useState(false)
   edgeRef.current = (dir) => {
     const now = ROW[base.current].rowCat, k = SEC_ORDER.indexOf(now) + dir
     // iteration 24: back past the very first plate replays Prose's own opening and lands on its first plate
     if (k < 0) { secRef.current(now, -1, 0); return }
-    if (k >= SEC_ORDER.length) { const g = gal.current; if (g) g.nudge(dir); return }
+    if (k >= SEC_ORDER.length) { setEnd(true); return }   // iteration 64: past the last plate, the closing card
     const c = SEC_ORDER[k]
     secRef.current(c, dir, dir > 0 ? 0 : catOf0(c).items.length - 1)
   }
@@ -969,6 +999,7 @@ function Home({ cat, go }) {
           <Scribble w={hr.w} h={hr.h} on pad={0.04} redraw={hv} />
         </div>)}
 
+      {end && <EndCard go={go} close={() => setEnd(false)} />}
       {/* iteration 20: the vertical run stops at the end of Luck; the art page is one clear click away */}
       {sec === SEC_ORDER[SEC_ORDER.length - 1] && cur === ROW.length - 1 && (
         <a className={`h-end${show ? ' is-on' : ''}`} href="#/art" onClick={(e) => { e.preventDefault(); go({ view: 'paintings' }) }}>Art that I love <Arrow /></a>)}

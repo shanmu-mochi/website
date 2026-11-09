@@ -375,3 +375,16 @@ a, button, [role="button"] { -webkit-tap-highlight-color: transparent; }
 .s42-blurb { max-width: 620px; margin: 0 auto 34px; padding: 0 24px; font: italic 400 21px/1.55 'Lora', Georgia, serif; color: #2a2a2a; text-align: center; text-wrap: pretty; }
 .s42-soon { font: 600 11.5px/1 'Archivo', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #8a867d; }
 @media (max-width: 760px) { .s42-blurb { font-size: 18px; margin-bottom: 26px; padding: 0 6px; } }
+
+/* iteration 64: the closing card at the end of the row */
+.end-card { position: fixed; inset: 0; z-index: 70; background: #f2f2f2; display: flex; flex-direction: column; justify-content: center; padding: 0 9vw; gap: 4px; }
+.end-m { display: block; overflow: hidden; padding: .06em 0; margin: -.06em 0; }
+.end-r { display: block; }
+.end-k { margin: 0 0 28px; font: 600 12px/1 'Archivo', sans-serif; letter-spacing: .2em; text-transform: uppercase; color: #6e6b66; }
+.end-l { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; padding: 22px 0 20px; border-top: 1px solid rgba(17,17,17,.16); color: #141414; text-decoration: none; }
+.end-l:last-of-type { border-bottom: 1px solid rgba(17,17,17,.16); }
+.end-l .end-m { font: 400 clamp(44px, 7.2vw, 112px)/1 'Lora', Georgia, serif; letter-spacing: -.02em; text-transform: uppercase; transition: transform .5s var(--glide); }
+.end-l:hover .end-m { transform: translateX(14px); }
+.end-n { font: 600 12px/1 'Archivo', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: #6e6b66; white-space: nowrap; }
+.end-x { align-self: flex-start; margin-top: 34px; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0; border: 0; background: none; font: 600 12px/1 'Archivo', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: #141414; cursor: pointer; }
+@media (max-width: 760px) { .end-card { padding: 0 22px; } .end-l { flex-direction: column; gap: 10px; } .end-l .end-m { font-size: 15vw; } }
