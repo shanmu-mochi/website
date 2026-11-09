@@ -5,6 +5,7 @@ import { ABSTRACTS } from './data/abstracts'
 import SELECTED from './selected'
 import COLORS from './colorsData'
 import { PAPERS } from './data/papers'
+import PUB_COVERS from './data/pubCovers'
 
 export const META = {
   'ravivarma2.jpg':     { title: 'Lady in a Black Saree', artist: 'Raja Ravi Varma', year: 'c. 1893' },
@@ -174,7 +175,7 @@ export const STORY_PAINTING = {
 }
 
 const WHITE_PAPERS = [
-  { title: 'Healthcare’s AI Trap', sub: 'AI automates them first, severing both supports at once.', authors: 'Shanmugesh Raja, MS', href: '/papers/ai-trap', doi: '10.2139/ssrn.7119078', pdf: '/papers/healthcares-ai-trap.pdf', kindLabel: 'White paper', venue: 'Economics' },
+  { title: 'Healthcare’s AI Trap', sub: 'AI automates them first, severing both supports at once.', authors: 'Shanmugesh Raja, MS', href: '/papers/ai-trap', doi: '10.2139/ssrn.7119078', pdf: '/papers/healthcares-ai-trap.pdf', kindLabel: 'White paper', venue: 'Economics', year: '2026' /* 'Draft, June 2026', src/pages/AiTrap.jsx */ },
   { title: 'Mapping Medi-Cal Deserts in California', sub: 'Provider shortages, preventable hospitalizations, and the limits of workforce policy in Medi-Cal: an empirical study of California’s 58 counties, with five causal identification strategies and a portfolio policy response.', authors: 'Shanmugesh Raja', href: '/papers/medi-cal-deserts', pdf: '/papers/medi-cal-deserts.pdf', kindLabel: 'White paper · Master’s Thesis', venue: 'UCSF · Health Policy & Law · April 2026' },
 ]
 
@@ -239,6 +240,21 @@ const prose = STORIES.map((s) => {
     meta: [['Kind', s.kind.replace(' · ', ', ')], ['Venue', s.venue], ['Published', s.published], ['Painting', creditText(src)]],
   }
 })
+// the publication cover (src/data/pubCovers.js): its colours and drawing, and a short venue, the year and the
+// byline, each read from the record itself
+function coverOf(p) {
+  const ab = ABSTRACTS[p.title] || {}
+  const coverVenue = p.tex ? 'Draft'
+    : p.doiVia === 'medRxiv' ? 'medRxiv'
+    : p.badge === 'Pub.' ? String(ab.cite || p.doiVia || '').split('.')[0]
+    : p.badge === 'WIP' ? ''
+    : /ssrn/i.test(p.doi || '') ? 'SSRN'
+    : String(p.venue || '').split(' · ')[0]
+  const yr = (x) => (String(x || '').match(/\b(19|20)\d\d\b/) || [''])[0]
+  const coverYear = ab.year || p.year || yr(p.date) || yr(p.authors) || yr(p.venue) || ''
+  const coverBy = String(p.authors || '').replace(/\s*·\s*in preparation$/i, '').replace(/\s*·\s*(19|20)\d\d$/, '')
+  return { coverArt: PUB_COVERS[slugify(p.title)] || null, coverVenue, coverYear, coverBy }
+}
 const pubs = [...PAPERS.map((p) => ({ ...p, kindLabel: BADGE_LABEL[p.badge] || p.badge })), ...WHITE_PAPERS, ...TEX_PAPERS].map((p) => {
   const href = p.href ? p.href.replace(/^\/papers\/(ai-trap|medi-cal-deserts)$/, '/papers/$1.html') : p.doi ? `https://doi.org/${p.doi}` : null
   return {
@@ -252,6 +268,7 @@ const pubs = [...PAPERS.map((p) => ({ ...p, kindLabel: BADGE_LABEL[p.badge] || p
     href, cta: !href ? 'In preparation' : p.href && p.href.endsWith('.pdf') ? 'Open the PDF' : p.href ? 'Read the white paper' : `Read via DOI`,
     ...(p.tex ? { tex: p.tex, affil: p.affil, date: p.date, status: p.status, supp: p.supp, finding: p.finding, n: p.n, excerpt: p.excerpt, venueFull: null, href: p.pdf, cta: 'Read the paper' } : {}),
     meta: [['Kind', p.kindLabel], ['Authors', p.authors], ['Venue', (ABSTRACTS[p.title] || {}).journal || p.doiVia || p.venue], ['DOI', p.doi]],
+    ...coverOf(p),
   }
 })
 // wheel meta stays two rows (Kind, Authors + affiliation) so it clears the card stack; date and status are on the card back and the page

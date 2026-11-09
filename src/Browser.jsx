@@ -15,6 +15,7 @@ import NOTES from './pieceNotes'
 import PaperPage from './PaperPage'
 import TEASERS from './storyTeasers'
 import { GLIDE, plateSize, SECTIONS } from './gallery/shared'
+import { drawArt } from './components/coverArt'
 import './styles/globals.css'
 import './styles/a24.css'
 import './styles/iter18.css'
@@ -186,33 +187,35 @@ const faceKey = (it, side) => `${it.cat}:${it.slug}:${side}`
 function faceCanvas(it, side) {
   const sec = SECTIONS[it.cat === 'deep' ? 'publications' : it.cat] || SECTIONS.prose, [w, h] = plateSize({ aspect: it.src ? aspectOf(it.src) : 0.74 }, sec), aspect = w / h
   const key = faceKey(it, side)
+  // the publication cover (Quanta): a colour field with a drawing of the paper's idea (src/data/pubCovers.js,
+  // src/components/coverArt.js), then a kicker on a coloured rule, the title in bold Lora and the byline, on paper
   if ((it.cat === 'publications' || it.cat === 'deep') && side === 'front') return drawFace(key, aspect, (ctx, W, H) => {
-    ctx.fillStyle = '#f9f8f4'; ctx.fillRect(0, 0, W, H)
-    ctx.fillStyle = 'rgba(0,0,0,.05)'; ctx.fillRect(0, 0, 14, H)            // the fold by the spine
-    grain(ctx, W, H, 9)
-    const m = W * 0.1
-    ctx.fillStyle = '#151515'
-    smallCaps(ctx, 20); ctx.fillText(String(it.kind || '').toUpperCase(), m, m)
-    ctx.fillRect(m, m + 38, W - 2 * m, 2)
+    const cov = it.coverArt, Hf = Math.round(H * 0.59), m = Math.round(W * 0.08)
+    ctx.fillStyle = '#fbf9f4'; ctx.fillRect(0, 0, W, H)
+    drawArt(ctx, W, Hf, cov)
+    grain(ctx, W, H, 8)
+    const ink = '#111', rule = cov ? (cov.accent === '#173f33' || cov.accent === '#1d2a44' || cov.accent === '#1e3a5f' ? cov.bg : cov.accent) : ink
+    let y = Hf + 46
+    const kicker = [it.kind, it.coverVenue].filter(Boolean).join(' \u00b7 ').toUpperCase()
+    ctx.fillStyle = ink; smallCaps(ctx, 19, 3)
+    let kw = ctx.measureText(kicker).width
+    const kl = kw > W - 2 * m ? wrap(ctx, kicker, W - 2 * m).slice(0, 2) : [kicker]
+    kl.forEach((l, k) => ctx.fillText(l, m, y + k * 26)); kw = Math.min(W - 2 * m, Math.max(...kl.map((l) => ctx.measureText(l).width)))
     ctx.letterSpacing = '0px'
-    const { fs, lines } = fitTitle(ctx, it.title, W - 2 * m, H * (it.excerpt ? 0.34 : 0.5), 76, 32, 1.08)
-    lines.forEach((l, k) => ctx.fillText(l, m, m + 80 + k * fs * 1.08))
-    // iteration 15: who and where, then a line from the abstract, so no card front is near-empty
-    let y = m + 80 + lines.length * fs * 1.08 + 4
-    const who = String(it.authors || '').replace(/\s*·\s*in preparation$/, '')
-    if (who) { ctx.font = `400 22px ${BOOK}`; ctx.fillStyle = '#4a4a4a'; wrap(ctx, who, W - 2 * m).slice(0, 2).forEach((l) => { ctx.fillText(l, m, y); y += 30 }); ctx.fillStyle = '#151515' }
-    const room = H - m - 110 - y
-    if (it.excerpt && room > 80) {
-      y += 22; ctx.fillRect(m, y - 4, 60, 1.5); y += 34
-      let efs = 28, ls
-      for (; efs > 20; efs -= 2) { ctx.font = `italic 400 ${efs}px ${BOOK}`; ls = wrap(ctx, it.excerpt, W - 2 * m); if (ls.length * efs * 1.3 < room - 60) break }
-      const max = Math.max(1, Math.floor((room - 60) / (efs * 1.3)))
-      ls.slice(0, max).forEach((l, k) => ctx.fillText(k === max - 1 && ls.length > max ? `${l.replace(/[\s,.;:]+\S*$/, '')}…` : l, m, y + k * efs * 1.3))
-    }
-    ctx.fillRect(m, H - m - 78, W - 2 * m, 2)
-    smallCaps(ctx, 18, 3)
-    wrap(ctx, String(it.cover || '').toUpperCase(), W - 2 * m).slice(0, 2).forEach((l, k) => ctx.fillText(l, m, H - m - 60 + k * 26))
-    ctx.textAlign = 'right'; ctx.fillText('SHANMU RAJA', W - m, H - m - 6)
+    y += kl.length * 26 + 4
+    ctx.fillStyle = rule; ctx.fillRect(m, y, kw, 3.5); y += 30
+    // the byline first, so the title knows its room
+    ctx.font = `400 22px ${LABEL}`; ctx.fontStretch = 'normal'
+    const by = [it.coverBy, it.coverYear].filter(Boolean).join(' \u00b7 ')
+    let bl = wrap(ctx, by, W - 2 * m)
+    if (bl.length > 2) { bl = bl.slice(0, 2); bl[1] = `${bl[1].replace(/[\s,.;:]+\S*$/, '')}\u2026` }
+    const byTop = H - m - bl.length * 30 + 6
+    const { fs, lines } = fitTitle(ctx, it.title, W - 2 * m, byTop - y - 26, 64, 30, 1.1, 700)
+    ctx.fillStyle = ink
+    lines.forEach((l, k) => ctx.fillText(l, m, y + k * fs * 1.1))
+    ctx.font = `400 22px ${LABEL}`; ctx.fillStyle = '#585858'
+    const yb = Math.min(byTop, y + lines.length * fs * 1.1 + 22)
+    bl.forEach((l, k) => ctx.fillText(l, m, yb + k * 30))
   })
   if (it.cat === 'luck' && side === 'front') return drawFace(key, aspect, (ctx, W, H) => {
     ctx.fillStyle = '#fbf6ea'; ctx.fillRect(0, 0, W, H)
