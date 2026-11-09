@@ -923,7 +923,11 @@ function Home({ cat, go }) {
     let raf = 0, last = ''
     const tick = () => {
       const g = gal.current, b = mainRef.current && mainRef.current.getBoundingClientRect()
-      const r = g && b && g.rectOf(hv)
+      // iteration 64: the pen circles the words under the front painting, not the painting; other plates get no circle
+      const q = qRef.current, front = g && hv === g.index()
+      const qb = front && q ? q.getBoundingClientRect() : null
+      const r = qb && qb.width ? { x: qb.left - 40, y: qb.top - 30, w: qb.width + 80, h: qb.height + 52 } : null
+      if (!r && last) { last = ''; setHr(null) }
       if (r) { const k = `${r.x | 0},${r.y | 0},${r.w | 0},${r.h | 0}`; if (k !== last) { last = k; setHr({ x: r.x - b.left, y: r.y - b.top, w: r.w, h: r.h }) } }
       raf = requestAnimationFrame(tick)
     }
@@ -962,7 +966,7 @@ function Home({ cat, go }) {
       {/* iteration 18: the pen circles the plate under the pointer, and a story writes out its first line */}
       {hIt && hr && (
         <div className="h-hov" style={{ left: hr.x, top: hr.y, width: hr.w, height: hr.h }} aria-hidden="true">
-          <Scribble w={hr.w} h={hr.h} on pad={0.07} redraw={hv} />
+          <Scribble w={hr.w} h={hr.h} on pad={0.04} redraw={hv} />
         </div>)}
 
       {/* iteration 20: the vertical run stops at the end of Luck; the art page is one clear click away */}
