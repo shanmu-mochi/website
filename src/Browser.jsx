@@ -586,7 +586,7 @@ const SCROLL = { lenis: null, tick: null }
 function startLenis() {
   if (SCROLL.lenis || reduced()) return
   const coarse = window.matchMedia('(pointer: coarse)').matches
-  SCROLL.lenis = new Lenis({ lerp: coarse ? 1 : 0.165, wheelMultiplier: 1, touchMultiplier: 1, allowNestedScroll: true })
+  SCROLL.lenis = new Lenis({ lerp: coarse ? 1 : 0.165, wheelMultiplier: 1.3, touchMultiplier: 1, allowNestedScroll: true })
   SCROLL.tick = (s) => { if (SCROLL.lenis) SCROLL.lenis.raf(s * 1000) }
   gsap.ticker.add(SCROLL.tick); gsap.ticker.lagSmoothing(0)
 }
@@ -1095,11 +1095,15 @@ function Piece({ cat, i, go, via }) {
         if (!a || !img || reduced()) return fadeOutPage()
         const b = a.getBoundingClientRect()
         if (b.bottom < 0 || b.top > window.innerHeight) return fadeOutPage()
-        const n = flyNode(rectOfEl(a), it, false, 0)
-        if (cat === 'prose' && a.parentElement) {
-          const s = a.parentElement.getBoundingClientRect(), f = a.getBoundingClientRect(), pc = (v, d) => `${Math.max(0, (v / d) * 100).toFixed(3)}%`
-          n.style.clipPath = `inset(${pc(s.top - f.top, f.height)} ${pc(f.right - s.right, f.width)} ${pc(f.bottom - s.bottom, f.height)} ${pc(s.left - f.left, f.width)})`
-        }
+        // iteration 63: the copy takes the painting's own shape (the part of the cover-fitted image), not the frame's, so
+        // flying into the book is an even scale; the frame's shape squashed it on the way
+        const fr = a.getBoundingClientRect(), ar0 = img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : fr.width / fr.height
+        const iw = Math.max(fr.width, fr.height * ar0), ih = iw / ar0
+        const R = { x: fr.left + (fr.width - iw) / 2, y: fr.top + (fr.height - ih) / 2, w: iw, h: ih }
+        const n = flyNode(R, it, false, 0)
+        const slot = cat === 'prose' && a.parentElement ? a.parentElement.getBoundingClientRect() : fr
+        const pc = (v, d) => `${Math.max(0, (v / d) * 100).toFixed(3)}%`
+        n.style.clipPath = `inset(${pc(slot.top - R.y, R.h)} ${pc(R.x + R.w - slot.right, R.w)} ${pc(R.y + R.h - slot.bottom, R.h)} ${pc(slot.left - R.x, R.w)})`
         await Promise.all([...n.querySelectorAll('img')].map(decoded))
         a.style.visibility = 'hidden'
         FLY.dir = 'out'; FLY.data = { cat, i, back: false, mode: 'home' }
