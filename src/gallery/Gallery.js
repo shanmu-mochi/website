@@ -28,7 +28,7 @@ const pressure = (v) => {
 const HOLD_MS = 350   // a finger still this long on the centred book is a hold (look), not a tap (open)
 const NUDGE_MS = 4000   // after this long without input, the centred book turns a little and back, once
 // A24's disc-gallery wheel (a24.raviklaassens.com), unchanged
-const WHEEL = { noiseFloor: 0.3, stepThreshold: 6, eventCap: 24, envelopeTau: 550, riseFactor: 1.2, tickGap: 34, tickRatio: 1, pauseGap: 130, idleReset: 150, minStepTick: 90, minStepFlick: 190, sustainDelay: 480, sustainRatio: 0.8, carry: 900, carryGap: 420 }
+const WHEEL = { noiseFloor: 0.3, stepThreshold: 6, eventCap: 24, envelopeTau: 550, riseFactor: 1.2, tickGap: 34, tickRatio: 1, pauseGap: 130, idleReset: 150, minStepTick: 90, minStepFlick: 190, sustainDelay: 480, sustainRatio: 0.8, carry: 900, carryGap: 420, edge: Infinity, edgeArm: 1400 }
 export const CFG = {
   galleryScale: 1.08, camDist: 4.4, fov: 40,
   hoverTilt: 0.21, dragSens: 0.95, dragSmooth: 0.32, dragMaxV: 0.5, dragStart: 5,
@@ -578,12 +578,24 @@ export default class Gallery {
     const dir = d > 0 ? 1 : -1
     if (dir !== s.dir) { s.acc = 0; s.dir = dir }
     s.acc += Math.min(s.surge ? Math.max(0, a - env0) : a, W.eventCap)
+    // iteration 63: crossing into the next section takes a deliberate push. At the end of a row the first swipe only
+    // leans the row out; a long swipe (edge px) or a second swipe soon after (within edgeArm ms) carries you across
+    const atEdge = (dir > 0 && this.settled() >= this.N - 1) || (dir < 0 && this.settled() <= 0)
+    if (atEdge) {
+      const armed = s.edgeArm && now - s.edgeArm < W.edgeArm && s.edgeDir === dir
+      if (!armed && s.acc < W.edge) {
+        if (s.acc >= W.stepThreshold && !s.leaned) { s.leaned = true; this.nudge(dir) }
+        return
+      }
+      if (!armed && s.acc >= W.stepThreshold) { /* a long swipe goes straight through */ }
+    }
     if (s.acc < W.stepThreshold) return
+    if (atEdge) { s.edgeArm = 0 } 
     s.free = false; s.surge = false; s.acc = 0; s.stepT = now; s.n = 0; s.peak = a; s.travel = 0
     this.dbg.kind = 'step'; this.dbg.d = d
     this.step(dir, 'wheel')
   }
-  wheelReset() { const s = this.ws || (this.ws = {}); clearTimeout(s.idle); Object.assign(s, { free: true, surge: false, acc: 0, dir: 0, env: 0, peak: 0, n: 0, stepT: 0, t: 0, seen: false, idle: 0 }) }
+  wheelReset() { const s = this.ws || (this.ws = {}); clearTimeout(s.idle); if (s.leaned) { s.edgeArm = s.t || performance.now(); s.edgeDir = s.dir } Object.assign(s, { leaned: false, free: true, surge: false, acc: 0, dir: 0, env: 0, peak: 0, n: 0, stepT: 0, t: 0, seen: false, idle: 0 }) }
   push(inc, notch) {
     if (notch) { const b = Math.round(this.T); this.T = (Math.sign(inc) === Math.sign(this.T - b) ? this.T : b) + inc } else this.T += inc
     this.T = Math.round(this.T * 1e4) / 1e4

@@ -622,3 +622,4 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 - Busy paintings: no black bars; the painting dims under the words and the words carry a soft shadow.
 - Birds Do Not Sing in Caves: Eakins, The Gross Clinic (1875), replacing Sargent's Gassed, which was too wide to crop.
 - Fugue State pull quote: "The stones are the hills are the fog is the sky."
+- Crossing into the next section takes two swipes: at the end of a row the first only leans it out; a second within 1.4s carries you across.
