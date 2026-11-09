@@ -51,233 +51,229 @@ const axes = (x, X, Y, W, H) => { x.strokeStyle = RULE; x.lineWidth = 1.5; x.set
 const gridY = (x, X, Y, W, H, n) => { x.strokeStyle = FAINT; x.lineWidth = 1; for (let k = 0; k < n; k++) line(x, [[X, Y + (H * k) / n], [X + W, Y + (H * k) / n]]) }
 const key = (x, h, items, X, Y) => { let cx = X; items.forEach(([t, color, kind]) => { x.fillStyle = color; x.strokeStyle = color; x.lineWidth = 3; if (kind === 'line') line(x, [[cx, Y + 7], [cx + 22, Y + 7]]); else if (kind === 'ring') { x.lineWidth = 2; dot(x, cx + 7, Y + 7, 5.5, false) } else dot(x, cx + 7, Y + 7, 6); lab(x, h, t, cx + (kind === 'line' ? 30 : 20), Y); h.caps(x, 13, 1.6); cx += (kind === 'line' ? 30 : 20) + x.measureText(t).width + 28; x.letterSpacing = '0px' }) }
 
-/* ------------------------------------------------ the figures, each in its box ------------------------------------------------ */
+/* ------------------------------------------------ the illustrations, each in its box ------------------------------------------------ */
+// iteration 60: editorial illustrations, not charts. One flat picture per paper in its two colours on a tinted panel,
+// like a magazine's opinion pages; the caption under it says what the paper found.
+const INK = '#161616', PAPER = '#fbfaf7'
+const rr = (x, a, b, w, hh, r) => { x.beginPath(); x.roundRect(a, b, w, hh, r); x.fill() }
+const big = (x, h, t, px, py, size, color, align = 'center', weight = 700) => { x.font = `${weight} ${size}px ${h.BOOK}`; x.fillStyle = color; x.textAlign = align; x.fillText(t, px, py); x.textAlign = 'left' }
+const panel = (x, X, Y, W, H, c) => { x.fillStyle = tint(c.ac, 0.1); x.fillRect(X, Y, W, H) }
+const pen = (x, cx, top, len, wd, body, cap, label) => {
+  rr(x, cx - wd / 2, top + len * 0.16, wd, len * 0.84, wd * 0.28)
+  x.fillStyle = cap; rr(x, cx - wd * 0.42, top, wd * 0.84, len * 0.18, wd * 0.2)
+  x.fillStyle = PAPER; x.fillRect(cx - wd * 0.3, top + len * 0.46, wd * 0.6, len * 0.2)
+  x.fillStyle = body; x.fillRect(cx - wd * 0.3, top + len * 0.58, wd * 0.6, len * 0.08)
+  if (label) { x.fillStyle = label; x.fillRect(cx - wd / 2, top + len * 0.28, wd, len * 0.1) }
+  x.fillStyle = INK; x.fillRect(cx - 2, top + len, 4, len * 0.06)
+}
 const MOTIFS = {
-  // weight loss on both formulations (one curve over the other), then what branded costs at each price a patient can reach
+  // two identical pens, two price tags nothing alike
   twin(x, X, Y, W, H, c, h) {
-    const h1 = H * 0.42, ax = X + 34, aw = W - 34
-    lab(x, h, 'A · WEIGHT LOST', X, Y)
-    const top = Y + 34, ch = h1 - 40
-    gridY(x, ax, top, aw, ch, 3); axes(x, ax, top, aw, ch)
-    const f = (t) => top + ch * 0.06 + ch * 0.86 * (1 - Math.exp(-3.1 * t))
-    x.lineWidth = 3.5; x.strokeStyle = c.ac; line(x, Array.from({ length: 41 }, (_, k) => [ax + (aw * k) / 40, f(k / 40)]))
-    x.setLineDash([9, 7]); x.strokeStyle = c.ac2; line(x, Array.from({ length: 41 }, (_, k) => [ax + (aw * k) / 40, f(k / 40) + 3])); x.setLineDash([])
-    lab(x, h, '0', ax - 10, top + ch + 8, 'right'); lab(x, h, '6 MO', ax + aw, top + ch + 10, 'right')
-    key(x, h, [['COMPOUNDED', c.ac, 'line'], ['BRANDED', c.ac2, 'line']], ax + 14, top + ch - 30)
-    const y2 = Y + h1 + 40
-    lab(x, h, 'B · BRANDED PRICE PER MONTH', X, y2)
-    const tiers = [['INSURANCE COPAY', 25, 150], ['LILLYDIRECT SELF-PAY', 299, 449], ['RETAIL CASH', 1000, 1200]], rowH = (H - h1 - 110) / 3, sx = (v) => X + (W * v) / 1200
-    tiers.forEach(([t, a, b], k) => {
-      const ry = y2 + 36 + k * rowH
-      lab(x, h, t, X, ry, 'left', GREY, 12)
-      lab(x, h, `$${a.toLocaleString('en-US')}–${b.toLocaleString('en-US')}`, X + W, ry, 'right', '#2a2a2a', 12)
-      x.fillStyle = FAINT; x.fillRect(X, ry + 22, W, 12)
-      x.fillStyle = c.ac2; x.fillRect(sx(a), ry + 22, Math.max(8, sx(b) - sx(a)), 12)
+    panel(x, X, Y, W, H, c)
+    const len = H * 0.62, wd = W * 0.13, top = Y + H * 0.24
+    ;[[X + W * 0.3, '$25', 0.1], [X + W * 0.7, '$1,200', 0.02]].forEach(([cx, t, dy]) => {
+      x.fillStyle = c.ac; pen(x, cx, top, len, wd, c.ac, INK)
+      const tx = cx + wd * 0.9, ty = Y + H * dy + 20
+      x.strokeStyle = INK; x.lineWidth = 2; line(x, [[cx + wd * 0.3, top + 6], [tx + 10, ty + 18]])
+      x.fillStyle = c.ac2; poly(x, [[tx, ty + 18], [tx + 24, ty], [tx + 128, ty], [tx + 128, ty + 36], [tx + 24, ty + 36]])
+      x.fillStyle = PAPER; dot(x, tx + 22, ty + 18, 5)
+      big(x, h, t, tx + 78, ty + 7, 24, PAPER)
     })
-    x.strokeStyle = RULE; x.lineWidth = 1.5; line(x, [[X, Y + H - 26], [X + W, Y + H - 26]])
-    ;[0, 600, 1200].forEach((v, k) => lab(x, h, `$${v.toLocaleString('en-US')}`, sx(v), Y + H - 18, k === 0 ? 'left' : k === 2 ? 'right' : 'center', GREY, 12))
   },
-  // individual trajectories in grey, the two drugs' means in colour
-  cloud(x, X, Y, W, H, c, h) {
-    const ax = X + 30, aw = W - 30, top = Y + 10, ch = H - 50, r = rng('cloud')
-    gridY(x, ax, top, aw, ch, 4); axes(x, ax, top, aw, ch)
-    x.lineWidth = 1.2
-    for (let n = 0; n < 64; n++) {
-      const end = 0.2 + r() * 0.8, cut = 0.25 + r() * 0.75, pts = []; let v = 0
-      for (let k = 0; k <= 40 * cut; k++) { const t = k / 40; v += (r() - 0.5) * 0.01; pts.push([ax + t * aw, top + ch * 0.04 + ch * 0.8 * end * (1 - Math.exp(-2.6 * t)) + v * ch]) }
-      x.strokeStyle = 'rgba(40,40,40,.16)'; line(x, pts)
-    }
-    const mean = (d) => Array.from({ length: 41 }, (_, k) => { const t = k / 40; return [ax + t * aw, top + ch * 0.04 + ch * d * (1 - Math.exp(-2.6 * t))] })
-    x.lineWidth = 4.5; x.strokeStyle = c.ac; line(x, mean(0.62)); x.strokeStyle = c.ac2; line(x, mean(0.5))
-    lab(x, h, '0', ax - 10, top + ch + 8, 'right'); lab(x, h, '12 MO', ax + aw, top + ch + 10, 'right')
-    key(x, h, [['TIRZEPATIDE', c.ac, 'line'], ['SEMAGLUTIDE', c.ac2, 'line']], ax + 14, top + ch + 34)
+  // a lab flask tipped over, its contents running out into the world as a winding path
+  cloud(x, X, Y, W, H, c) {
+    panel(x, X, Y, W, H, c)
+    x.save(); x.translate(X + W * 0.3, Y + H * 0.28); x.rotate(-0.95)
+    x.fillStyle = PAPER; x.strokeStyle = INK; x.lineWidth = 5
+    x.beginPath(); x.moveTo(-18, -90); x.lineTo(18, -90); x.lineTo(18, -30); x.lineTo(70, 60); x.lineTo(-70, 60); x.lineTo(-18, -30); x.closePath(); x.fill(); x.stroke()
+    x.fillStyle = c.ac; x.beginPath(); x.moveTo(-50, 25); x.lineTo(50, 25); x.lineTo(70, 60); x.lineTo(-70, 60); x.closePath(); x.fill()
+    x.restore()
+    x.strokeStyle = c.ac; x.lineWidth = 30; x.lineCap = 'round'
+    x.beginPath(); x.moveTo(X + W * 0.38, Y + H * 0.33); x.bezierCurveTo(X + W * 0.9, Y + H * 0.42, X + W * 0.05, Y + H * 0.62, X + W * 0.55, Y + H * 0.72); x.bezierCurveTo(X + W * 0.85, Y + H * 0.79, X + W * 0.7, Y + H * 0.92, X + W * 0.92, Y + H * 0.97); x.stroke(); x.lineCap = 'butt'
+    const r = rng('walkers')
+    for (let k = 0; k < 9; k++) { const t = 0.1 + k * 0.1, px = X + W * (0.25 + 0.6 * r()), py = Y + H * (0.4 + 0.55 * t); x.fillStyle = k % 3 ? INK : c.ac2; dot(x, px, py - 16, 6); rr(x, px - 5, py - 9, 10, 20, 4) }
   },
-  // a decision tree: one slow responder, four strategies
+  // a signpost at a fork in the road
   fork(x, X, Y, W, H, c, h) {
-    const rx = X + 10, ry = Y + H * 0.5, ex = X + W * 0.46
-    const br = [['CONTINUE', GREY], ['ESCALATE DOSE', c.ac], ['SWITCH, EQUIPOTENT', c.ac2], ['SWITCH, HIGHER POTENCY', c.ac3]]
-    lab(x, h, 'SLOW RESPONDER', rx, Y); lab(x, h, '< 5% AT 4 WK ON DOSE', rx, Y + 20, 'left', '#9a968f', 11)
-    x.strokeStyle = RULE; x.lineWidth = 1; line(x, [[rx + 10, Y + 42], [rx + 10, ry - 16]])
-    br.forEach(([t, color], k) => {
-      const ey = Y + H * (0.1 + 0.8 * k / 3)
-      x.strokeStyle = color; x.lineWidth = 4; x.lineCap = 'round'
-      x.beginPath(); x.moveTo(rx + 10, ry); x.bezierCurveTo(rx + (ex - rx) * 0.55, ry, rx + (ex - rx) * 0.45, ey, ex, ey); x.stroke(); x.lineCap = 'butt'
-      x.fillStyle = color; dot(x, ex, ey, 9)
-      lab(x, h, t, ex + 22, ey - 7, 'left', '#2a2a2a', 13)
-    })
-    x.fillStyle = '#161616'; dot(x, rx + 10, ry, 11)
+    panel(x, X, Y, W, H, c)
+    const cx = X + W / 2, base = Y + H
+    x.fillStyle = tint(INK, 0.1); poly(x, [[cx - W * 0.16, base], [cx + W * 0.16, base], [cx + W * 0.05, Y + H * 0.66], [X + W * 0.98, Y + H * 0.5], [X + W * 0.98, Y + H * 0.58], [cx, Y + H * 0.72], [X + W * 0.02, Y + H * 0.58], [X + W * 0.02, Y + H * 0.5], [cx - W * 0.05, Y + H * 0.66]])
+    x.strokeStyle = PAPER; x.lineWidth = 4; x.setLineDash([16, 14]); line(x, [[cx, base], [cx, Y + H * 0.7]]); x.setLineDash([])
+    x.fillStyle = INK; x.fillRect(cx - 8, Y + H * 0.06, 16, H * 0.74)
+    x.fillStyle = c.ac; poly(x, [[cx - 8, Y + H * 0.12], [cx - W * 0.4, Y + H * 0.12], [cx - W * 0.46, Y + H * 0.18], [cx - W * 0.4, Y + H * 0.24], [cx - 8, Y + H * 0.24]])
+    x.fillStyle = c.ac2; poly(x, [[cx + 8, Y + H * 0.29], [cx + W * 0.4, Y + H * 0.29], [cx + W * 0.46, Y + H * 0.35], [cx + W * 0.4, Y + H * 0.41], [cx + 8, Y + H * 0.41]])
+    big(x, h, 'ESCALATE', cx - W * 0.22, Y + H * 0.18 - 12, 22, PAPER)
+    big(x, h, 'SWITCH', cx + W * 0.22, Y + H * 0.35 - 12, 22, PAPER)
   },
-  // observed to week 8, then the forecast with its 10th to 90th percentile band
+  // a calendar torn open at week 8, month 6 showing through
   week8(x, X, Y, W, H, c, h) {
-    const ax = X + 30, aw = W - 30, top = Y + 6, ch = H - 60, w8 = 8 / 26, xw = ax + aw * w8
-    const f = (t) => top + ch * 0.06 + ch * 0.66 * (1 - Math.exp(-2.6 * t))
-    gridY(x, ax, top, aw, ch, 4); axes(x, ax, top, aw, ch)
-    x.fillStyle = tint(c.ac, 0.16); x.beginPath()
-    for (let k = 0; k <= 30; k++) { const t = w8 + (1 - w8) * k / 30; x.lineTo(ax + t * aw, f(t) - ch * 0.26 * (t - w8)) }
-    for (let k = 30; k >= 0; k--) { const t = w8 + (1 - w8) * k / 30; x.lineTo(ax + t * aw, f(t) + ch * 0.26 * (t - w8)) }
-    x.closePath(); x.fill()
-    x.strokeStyle = '#161616'; x.lineWidth = 4; line(x, Array.from({ length: 13 }, (_, k) => { const t = w8 * k / 12; return [ax + t * aw, f(t)] }))
-    x.strokeStyle = c.ac; x.lineWidth = 3.5; x.setLineDash([10, 8]); line(x, Array.from({ length: 31 }, (_, k) => { const t = w8 + (1 - w8) * k / 30; return [ax + t * aw, f(t)] })); x.setLineDash([])
-    x.strokeStyle = RULE; x.lineWidth = 1.5; x.setLineDash([3, 5]); line(x, [[xw, top], [xw, top + ch]]); x.setLineDash([])
-    x.fillStyle = c.ac; dot(x, xw, f(w8), 8)
-    lab(x, h, 'WK 0', ax, top + ch + 10); lab(x, h, 'WK 8', xw, top + ch + 10, 'center'); lab(x, h, 'WK 26', ax + aw, top + ch + 10, 'right')
-    lab(x, h, '10TH–90TH PERCENTILE', ax + aw, f(1) + ch * 0.2 + 12, 'right', c.ac, 12)
-    lab(x, h, 'FORECAST R² 0.65', xw + 16, top + 8, 'left', '#2a2a2a', 12)
+    panel(x, X, Y, W, H, c)
+    const cx = X + W / 2, cw = W * 0.7, ch = H * 0.86, l = cx - cw / 2, t = Y + H * 0.07
+    x.fillStyle = PAPER; rr(x, l + 14, t + 14, cw, ch, 10); x.fillStyle = c.ac; rr(x, l + 14, t + 14, cw, ch * 0.16, 10)
+    big(x, h, 'MONTH 6', l + 14 + cw / 2, t + ch * 0.6, 40, c.ac)
+    x.fillStyle = PAPER; x.strokeStyle = INK; x.lineWidth = 3
+    const tear = [[l, t], [l + cw, t], [l + cw, t + ch * 0.36]]; for (let k = 0; k <= 10; k++) tear.push([l + cw - (cw * k) / 10, t + ch * (0.36 + 0.22 * (k / 10)) + (k % 2 ? 14 : -10)])
+    x.beginPath(); tear.forEach(([a, b], k) => (k ? x.lineTo(a, b) : x.moveTo(a, b))); x.lineTo(l, t); x.closePath(); x.fill(); x.stroke()
+    x.fillStyle = INK; x.fillRect(l, t, cw, ch * 0.13)
+    ;[0.25, 0.5, 0.75].forEach((f) => { x.fillStyle = c.ac; dot(x, l + cw * f, t, 9) })
+    big(x, h, 'WEEK 8', l + cw / 2, t + ch * 0.17, 46, INK)
   },
-  // a dissection seen as two lumens twisting round each other
-  helix(x, X, Y, W, H, c, h) {
-    const mx = X + W / 2, amp = W * 0.26, turns = 2, top = Y + 34, hh = H - 40
-    lab(x, h, 'TRUE LUMEN', X, Y, 'left', c.ac); lab(x, h, 'FALSE LUMEN', X + W, Y, 'right', c.ac2)
-    x.lineWidth = 1.2; x.strokeStyle = FAINT
-    for (let k = 1; k < 48; k++) { const t = k / 48, a = t * turns * Math.PI * 2; line(x, [[mx + amp * Math.sin(a), top + t * hh], [mx - amp * Math.sin(a), top + t * hh]]) }
-    for (let s = 0; s < 2; s++) { x.strokeStyle = s ? c.ac2 : c.ac; x.lineWidth = 6; line(x, Array.from({ length: 121 }, (_, k) => { const t = k / 120; return [mx + amp * Math.sin(t * turns * Math.PI * 2 + s * Math.PI), top + t * hh] })) }
-  },
-  // the thoracic aorta: arch, descending aorta, stent graft and the bare stent below it
-  arch(x, X, Y, W, H, c, h) {
-    const R = Math.min(W * 0.24, H * 0.24), cx = X + W * 0.36, cy = Y + R + 20, t = R * 0.42, bottom = Y + H - 10
-    x.strokeStyle = '#2a2a2a'; x.lineWidth = 2.5
-    const tube = (r) => { x.beginPath(); x.arc(cx, cy, r, Math.PI, 0); x.lineTo(cx + r, bottom); x.stroke(); x.beginPath(); x.moveTo(cx - r, cy); x.lineTo(cx - r, cy + H * 0.18); x.stroke() }
-    tube(R + t / 2); tube(R - t / 2)
-    const gx = cx + R - t / 2, gTop = cy + 6, gBot = cy + (bottom - cy) * 0.45
-    x.fillStyle = tint(c.ac2, 0.28); x.fillRect(gx, gTop, t, gBot - gTop)
-    x.strokeStyle = c.ac; x.lineWidth = 2
-    for (let yy = gBot + 12; yy < bottom - 8; yy += 26) line(x, [[gx, yy], [gx + t / 2, yy + 13], [gx + t, yy]])
-    lab(x, h, 'STENT GRAFT', gx + t + 22, gTop + (gBot - gTop) / 2 - 6, 'left', c.ac2)
-    lab(x, h, 'BARE STENT', gx + t + 22, gBot + (bottom - gBot) / 2 - 6, 'left', c.ac)
-    x.strokeStyle = RULE; x.lineWidth = 1; line(x, [[gx + t + 4, gTop + (gBot - gTop) / 2], [gx + t + 16, gTop + (gBot - gTop) / 2]]); line(x, [[gx + t + 4, gBot + (bottom - gBot) / 2], [gx + t + 16, gBot + (bottom - gBot) / 2]])
-  },
-  // cross-sections down the aorta, the true lumen filled
-  lumen(x, X, Y, W, H, c, h) {
-    const n = 6, cxs = X + W * 0.4
-    lab(x, h, 'PROXIMAL', X + W, Y + 6, 'right'); lab(x, h, 'DISTAL', X + W, Y + H - 18, 'right')
-    x.strokeStyle = RULE; x.lineWidth = 1; x.setLineDash([3, 5]); line(x, [[cxs, Y], [cxs, Y + H]]); x.setLineDash([])
+  // the dissection as a twisted ribbon
+  helix(x, X, Y, W, H, c) {
+    panel(x, X, Y, W, H, c)
+    const cx = X + W / 2, L = W * 0.32, n = 90, turns = 1.75
     for (let k = 0; k < n; k++) {
-      const yy = Y + H * (k + 0.5) / n, rw = W * 0.3 * (1 - k * 0.05), rh = (H / n) * 0.3, f = 0.42 + 0.4 * Math.abs(Math.sin(k * 0.9 + 0.4))
-      x.strokeStyle = '#2a2a2a'; x.lineWidth = 2.5; x.beginPath(); x.ellipse(cxs, yy, rw, rh, 0, 0, Math.PI * 2); x.stroke()
-      x.fillStyle = c.ac; x.beginPath(); x.ellipse(cxs - rw * (1 - f) * 0.5, yy, rw * f * 0.85, rh * 0.72, 0, 0, Math.PI * 2); x.fill()
+      const a0 = (k / n) * turns * Math.PI * 2, a1 = ((k + 1) / n) * turns * Math.PI * 2, y0 = Y + H * 0.04 + (H * 0.92 * k) / n, y1 = Y + H * 0.04 + (H * 0.92 * (k + 1)) / n
+      const w0 = L * Math.cos(a0), w1 = L * Math.cos(a1)
+      x.fillStyle = (w0 + w1) / 2 >= 0 ? c.ac : c.ac2
+      poly(x, [[cx - w0, y0], [cx + w0, y0], [cx + w1, y1 + 0.6], [cx - w1, y1 + 0.6]])
     }
-    lab(x, h, 'TRUE LUMEN', X + W, Y + H * 0.5 - 7, 'right', c.ac, 12)
   },
-  // a stent graft over a bare-metal stent, in outline
+  // the PETTICOAT technique, taken at its word: a petticoat whose net is the stent's mesh
+  arch(x, X, Y, W, H, c) {
+    panel(x, X, Y, W, H, c)
+    const cx = X + W / 2, wt = Y + H * 0.14, hem = Y + H * 0.92, w0 = W * 0.12, w1 = W * 0.44, fans = 8
+    x.fillStyle = tint(c.ac, 0.18); poly(x, [[cx - w0, wt], [cx + w0, wt], [cx + w1, hem], [cx - w1, hem]])
+    const at = (i, f) => { const xt = cx - w0 + (2 * w0 * i) / fans, xb = cx - w1 + (2 * w1 * i) / fans; return [xt + (xb - xt) * f, wt + (hem - wt) * f] }
+    x.strokeStyle = c.ac; x.lineWidth = 2.5
+    for (let row = 0; row < 7; row++) for (let i = 0; i < fans; i++) { const f0 = row / 7, f1 = (row + 1) / 7, a = at(i, f0), b = at(i + 1, (f0 + f1) / 2), d = at(i, f1), e = at(i + 1, f0 - (f1 - f0) / 2 > 0 ? f0 - (f1 - f0) / 2 : 0); line(x, [a, b, d]); void e }
+    x.fillStyle = c.ac; for (let i = 0; i <= fans * 2; i++) { const [px] = at(i / 2, 1); dot(x, px, hem, W * 0.03) }
+    x.fillStyle = c.ac2; rr(x, cx - w0 - 10, wt - 34, (w0 + 10) * 2, 40, 8)
+    x.fillStyle = INK; poly(x, [[cx - 22, wt - 30], [cx, wt - 14], [cx + 22, wt - 30], [cx + 22, wt + 2], [cx, wt - 14], [cx - 22, wt + 2]])
+  },
+  // the aorta sliced like a loaf and fanned out, the true lumen in each slice
+  lumen(x, X, Y, W, H, c) {
+    panel(x, X, Y, W, H, c)
+    const n = 7
+    for (let k = n - 1; k >= 0; k--) {
+      const cx = X + W * (0.3 + 0.07 * k), cy = Y + H * (0.14 + 0.115 * k), rw = W * 0.26, rh = H * 0.07
+      x.fillStyle = PAPER; x.strokeStyle = INK; x.lineWidth = 3; x.beginPath(); x.ellipse(cx, cy, rw, rh, 0, 0, Math.PI * 2); x.fill(); x.stroke()
+      const f = 0.45 + 0.35 * Math.abs(Math.sin(k * 0.9 + 0.4))
+      x.fillStyle = tint(c.ac, 0.35); x.beginPath(); x.ellipse(cx + rw * 0.18, cy, rw * 0.62, rh * 0.7, 0, 0, Math.PI * 2); x.fill()
+      x.fillStyle = c.ac; x.beginPath(); x.ellipse(cx - rw * (1 - f) * 0.45, cy, rw * f * 0.6, rh * 0.62, 0, 0, Math.PI * 2); x.fill()
+    }
+  },
+  // a tailor's tape measure wound round a vessel: fitting the graft
   stent(x, X, Y, W, H, c, h) {
-    const L = X + W * 0.3, R = X + W * 0.62, step = (R - L) / 3, mid = Y + H * 0.42
-    x.fillStyle = tint(c.ac2, 0.2); x.fillRect(L, Y, R - L, mid - Y)
-    x.strokeStyle = '#2a2a2a'; x.lineWidth = 2.5; line(x, [[L, Y], [L, Y + H]]); line(x, [[R, Y], [R, Y + H]])
-    x.strokeStyle = c.ac; x.lineWidth = 2
-    for (let yy = mid; yy < Y + H - step; yy += step * 1.3) for (let k = 0; k < 3; k++) { const a = L + k * step; line(x, [[a, yy + step * 0.65], [a + step / 2, yy], [a + step, yy + step * 0.65], [a + step / 2, yy + step * 1.3], [a, yy + step * 0.65]]) }
-    lab(x, h, 'STENT GRAFT', R + 26, Y + (mid - Y) / 2 - 6, 'left', c.ac2); lab(x, h, 'PETTICOAT BARE STENT', R + 26, mid + (Y + H - mid) / 2 - 6, 'left', c.ac)
-  },
-  // three models against guidance: each dot an encounter, open where the model disagreed
-  grid(x, X, Y, W, H, c, h) {
-    const names = ['CLAUDE', 'GPT-4O', 'GEMINI'], gw = W / 3, cols = 3, rows = 9, r = rng('grid'), dy = (H - 70) / rows
-    names.forEach((t, g) => {
-      lab(x, h, t, X + gw * g + gw / 2, Y, 'center', '#2a2a2a')
-      for (let j = 0; j < rows; j++) for (let k = 0; k < cols; k++) {
-        const px = X + gw * g + gw * (0.25 + k * 0.25), py = Y + 40 + j * dy + dy / 2, off = r() < 0.13
-        if (off) { x.strokeStyle = c.ac2; x.lineWidth = 2.5; dot(x, px, py, Math.min(dy, gw / 4) * 0.28, false) } else { x.fillStyle = c.ac; dot(x, px, py, Math.min(dy, gw / 4) * 0.3) }
-      }
-    })
-    key(x, h, [['MATCHES GUIDANCE', c.ac, 'dot'], ['DOES NOT', c.ac2, 'ring']], X, Y + H - 18)
-  },
-  // the published result: the difference sits inside the equivalence margin, and adherence favours compounded
-  equiv(x, X, Y, W, H, c, h) {
-    lab(x, h, 'A · WEIGHT-LOSS DIFFERENCE, POINTS', X, Y)
-    const sx = (v) => X + W * (v + 2) / 4, py = Y + 70
-    x.fillStyle = tint(c.ac, 0.12); x.fillRect(sx(-1.5), py - 30, sx(1.5) - sx(-1.5), 60)
-    x.strokeStyle = RULE; x.lineWidth = 1.5; line(x, [[X, py + 44], [X + W, py + 44]]); x.setLineDash([3, 4]); line(x, [[sx(0), py - 30], [sx(0), py + 30]]); x.setLineDash([])
-    x.strokeStyle = c.ac; x.lineWidth = 4; line(x, [[sx(-0.59), py], [sx(0.464), py]]); line(x, [[sx(-0.59), py - 9], [sx(-0.59), py + 9]]); line(x, [[sx(0.464), py - 9], [sx(0.464), py + 9]])
-    x.fillStyle = c.ac; poly(x, [[sx(-0.063), py - 11], [sx(-0.063) + 11, py], [sx(-0.063), py + 11], [sx(-0.063) - 11, py]])
-    ;[[-1.5, '−1.5'], [0, '0'], [1.5, '+1.5']].forEach(([v, t]) => lab(x, h, t, sx(v), py + 54, 'center', GREY, 12))
-    lab(x, h, 'EQUIVALENCE MARGIN ±1.5', sx(-1.5) + 10, py - 24, 'left', c.ac, 11)
-    lab(x, h, '−0.06 (−0.59 TO 0.46)', sx(-0.063), py + 16, 'center', '#2a2a2a', 11)
-    const y2 = py + 110
-    lab(x, h, 'B · STILL ON TREATMENT AT 20–28 WK', X, y2)
-    const bw = Math.min(W * 0.18, 90), base = Y + H - 26, top = y2 + 40, sc = (v) => (base - top) * v / 40
-    ;[['COMPOUNDED', 35.7, c.ac], ['WEGOVY', 22.9, c.ac2]].forEach(([t, v, color], k) => {
-      const bx = X + W * (0.22 + k * 0.4) - bw / 2
-      x.fillStyle = color; x.fillRect(bx, base - sc(v), bw, sc(v))
-      lab(x, h, `${v}%`, bx + bw / 2, base - sc(v) - 22, 'center', '#2a2a2a', 13); lab(x, h, t, bx + bw / 2, base + 10, 'center', GREY, 12)
-    })
-    x.strokeStyle = RULE; x.lineWidth = 1.5; line(x, [[X, base], [X + W, base]])
-  },
-  // payment spread inside one DRG, by what drives it
-  boxes(x, X, Y, W, H, c, h) {
-    const rows = ['LENGTH OF STAY', 'INSURER', 'IMPLANT'], r = rng('drg'), lx = X + W * 0.34, lw = W - (lx - X), gy = (H - 40) / rows.length
-    rows.forEach((t, k) => {
-      const cy = Y + gy * (k + 0.5), a = 0.1 + r() * 0.2, b = a + 0.3 + r() * 0.3, m = a + (b - a) * (0.35 + r() * 0.3), lo = Math.max(0, a - 0.1), hi = Math.min(1, b + 0.12)
-      lab(x, h, t, X, cy - 7, 'left', '#2a2a2a', 12)
-      x.strokeStyle = '#2a2a2a'; x.lineWidth = 2; line(x, [[lx + lo * lw, cy], [lx + hi * lw, cy]]); line(x, [[lx + lo * lw, cy - 10], [lx + lo * lw, cy + 10]]); line(x, [[lx + hi * lw, cy - 10], [lx + hi * lw, cy + 10]])
-      x.fillStyle = tint(c.ac, 0.3); x.fillRect(lx + a * lw, cy - gy * 0.2, (b - a) * lw, gy * 0.4); x.strokeStyle = c.ac; x.strokeRect(lx + a * lw, cy - gy * 0.2, (b - a) * lw, gy * 0.4)
-      x.lineWidth = 4; line(x, [[lx + m * lw, cy - gy * 0.2], [lx + m * lw, cy + gy * 0.2]])
-    })
-    x.strokeStyle = RULE; x.lineWidth = 1.5; line(x, [[lx, Y + H - 24], [X + W, Y + H - 24]])
-    lab(x, h, 'REIMBURSEMENT WITHIN ONE DRG', X + W, Y + H - 14, 'right', GREY, 12)
-  },
-  // as AI takes the routine cases, the remaining panel's average cost climbs past the flat fee
-  trap(x, X, Y, W, H, c, h) {
-    const ax = X + 30, aw = W - 30, top = Y + 30, ch = H - 90, fee = top + ch * 0.55, cross = 1 / 3
-    const cost = (t) => fee + ch * 0.18 * (1 - (t / cross) ** 1.2)
-    gridY(x, ax, top, aw, ch, 4); axes(x, ax, top, aw, ch)
-    x.fillStyle = tint(c.ac, 0.1); x.beginPath(); x.moveTo(ax + cross * aw, fee); for (let k = 0; k <= 30; k++) { const t = cross + (1 - cross) * k / 30; x.lineTo(ax + t * aw, Math.max(top, cost(t))) } x.lineTo(ax + aw, fee); x.closePath(); x.fill()
-    x.strokeStyle = '#2a2a2a'; x.lineWidth = 2; x.setLineDash([10, 7]); line(x, [[ax, fee], [ax + aw, fee]]); x.setLineDash([])
-    x.strokeStyle = c.ac; x.lineWidth = 4.5; line(x, Array.from({ length: 41 }, (_, k) => { const t = k / 40; return [ax + t * aw, Math.max(top, cost(t))] }))
-    x.fillStyle = c.ac; dot(x, ax + cross * aw, fee, 8)
-    lab(x, h, 'FLAT FEE', ax + 8, fee + 12, 'left', '#2a2a2a', 12)
-    lab(x, h, 'COST OF THE PANEL LEFT BEHIND', ax + aw, top - 24, 'right', c.ac, 12)
-    lab(x, h, 'ROUTINE CASES TAKEN BY AI', ax + aw, top + ch + 12, 'right', GREY, 12)
-    lab(x, h, '0', ax, top + ch + 12, 'left'); lab(x, h, '1/3', ax + cross * aw, top + ch + 12, 'center', c.ac)
-  },
-  // California as people: blue where there are doctors, rust where the county is a desert
-  desert(x, X, Y, W, H, c) {
-    const CA = [[0.06, 0], [0.46, 0], [0.46, 0.34], [0.96, 0.74], [0.98, 0.8], [0.9, 0.9], [0.88, 1], [0.58, 0.98], [0.5, 0.88], [0.36, 0.8], [0.3, 0.7], [0.18, 0.56], [0.12, 0.42], [0.1, 0.3], [0, 0.16], [0.02, 0.06]]
-    const s = Math.min(W * 0.86, H / 1.12), ox = X + (W - s) / 2, oy = Y
-    const pts = CA.map(([a, b]) => [ox + a * s, oy + b * s * 1.12])
-    const inside = (px, py) => { let ins = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if ((yi > py) !== (yj > py) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) ins = !ins } return ins }
-    const step = s / 24
-    for (let py = oy; py < oy + s * 1.12; py += step) for (let px = ox; px < ox + s; px += step) {
-      if (!inside(px, py)) continue
-      const u = (px - ox) / s, v = (py - oy) / (s * 1.12)
-      const desert = (u > 0.42 && v < 0.62) || (u > 0.55 && v > 0.62 && v < 0.85) || (v < 0.18 && u > 0.2)
-      x.fillStyle = desert ? c.ac : c.ac2; dot(x, px, py, step * 0.32)
+    panel(x, X, Y, W, H, c)
+    const L = X + W * 0.34, R = X + W * 0.66, rh = (R - L) * 0.2
+    x.fillStyle = tint(c.ac2, 0.3); x.fillRect(L, Y + H * 0.05, R - L, H * 0.9)
+    x.fillStyle = tint(c.ac2, 0.45); x.beginPath(); x.ellipse((L + R) / 2, Y + H * 0.05, (R - L) / 2, rh, 0, 0, Math.PI * 2); x.fill()
+    x.strokeStyle = INK; x.lineWidth = 3; line(x, [[L, Y + H * 0.05], [L, Y + H * 0.95]]); line(x, [[R, Y + H * 0.05], [R, Y + H * 0.95]])
+    for (let k = 0; k < 5; k++) {
+      const y0 = Y + H * (0.14 + k * 0.17), tw = 30
+      x.fillStyle = '#e8c04a'; poly(x, [[L - 4, y0], [R + 4, y0 + 46], [R + 4, y0 + 46 + tw], [L - 4, y0 + tw]])
+      x.strokeStyle = INK; x.lineWidth = 1.5
+      for (let t = 0; t <= 12; t++) { const px = L + ((R - L) * t) / 12, py = y0 + (46 * t) / 12; line(x, [[px, py], [px, py + (t % 4 ? 8 : 15)]]) }
     }
+    x.fillStyle = '#e8c04a'; poly(x, [[R + 4, Y + H * 0.82 + 46], [X + W * 0.94, Y + H * 0.9], [X + W * 0.94, Y + H * 0.9 + 30], [R + 4, Y + H * 0.82 + 76]])
   },
-  // each change measured by outside clinicians, split into the part explained by weight and the part beyond it
-  decomp(x, X, Y, W, H, c, h) {
-    const rows = [['SYSTOLIC BP', '−4.85 MMHG', 0.42], ['HBA1C', '−0.57 POINTS', 0.46]], lx = X, bw = W, gy = (H - 80) / 2
-    rows.forEach(([t, v, share], k) => {
-      const yy = Y + k * gy + 10
-      lab(x, h, t, lx, yy, 'left', '#2a2a2a', 13); lab(x, h, v, X + W, yy, 'right', '#2a2a2a', 13)
-      const by = yy + 34, bh = Math.min(48, gy * 0.38)
-      x.fillStyle = c.ac; x.fillRect(lx, by, bw * share, bh); x.fillStyle = c.ac2; x.fillRect(lx + bw * share, by, bw * (1 - share), bh)
-      lab(x, h, `${Math.round(share * 100)}%`, lx + 12, by + bh / 2 - 7, 'left', '#ffffff', 13)
-      lab(x, h, `${Math.round((1 - share) * 100)}%`, lx + bw - 12, by + bh / 2 - 7, 'right', '#5a2a30', 13)
+  // three robot hands up in class; one is holding the wrong answer
+  grid(x, X, Y, W, H, c, h) {
+    panel(x, X, Y, W, H, c)
+    ;[0.2, 0.5, 0.8].forEach((f, k) => {
+      const cx = X + W * f, aw = W * 0.08, top = Y + aw * 3.6 + H * (0.1 + (k === 1 ? 0 : 0.06))
+      x.fillStyle = tint(INK, 0.85); x.fillRect(cx - aw / 2, top + aw * 1.4, aw, Y + H - top - aw * 1.4)
+      x.fillStyle = PAPER; dot(x, cx, top + aw * 3.2, aw * 0.32); dot(x, cx, top + aw * 6, aw * 0.32)
+      x.fillStyle = INK; rr(x, cx - aw * 0.75, top, aw * 1.5, aw * 1.6, 8)
+      for (let j = 0; j < 3; j++) rr(x, cx - aw * 0.6 + j * aw * 0.45, top - aw * 0.7, aw * 0.3, aw * 0.8, 5)
+      const wrong = k === 2, cardY = top - aw * 3.4
+      x.fillStyle = PAPER; x.strokeStyle = INK; x.lineWidth = 3; x.beginPath(); x.roundRect(cx - aw * 1.1, cardY, aw * 2.2, aw * 2.4, 8); x.fill(); x.stroke()
+      big(x, h, wrong ? '✕' : '✓', cx, cardY + aw * 0.5, aw * 1.3, wrong ? c.ac2 : c.ac)
     })
-    key(x, h, [['EXPLAINED BY WEIGHT', c.ac, 'dot'], ['BEYOND WEIGHT', c.ac2, 'dot']], X, Y + H - 30)
   },
-  // the price walks to the decision date, then jumps up with probability q or down with 1 − q
+  // the branded pen and its reflection, plain: the same medicine in the mirror
+  equiv(x, X, Y, W, H, c, h) {
+    panel(x, X, Y, W, H, c)
+    const mid = Y + H * 0.54, l = X + W * 0.1, len = W * 0.8, th = H * 0.15
+    const hpen = (y, dir, label) => {
+      const y0 = dir > 0 ? y - th : y, cap = len * 0.16
+      x.fillStyle = INK; rr(x, l, y0 + th * 0.12, cap, th * 0.76, 8)
+      x.fillStyle = c.ac; rr(x, l + cap - 6, y0, len - cap - len * 0.06, th, th * 0.3)
+      x.fillStyle = PAPER; x.fillRect(l + len * 0.5, y0 + th * 0.22, len * 0.18, th * 0.56)
+      x.fillStyle = c.ac; x.fillRect(l + len * 0.6, y0 + th * 0.22, len * 0.04, th * 0.56)
+      x.fillStyle = INK; x.fillRect(l + len * 0.94 - 6, y0 + th * 0.45, len * 0.06, th * 0.1)
+      if (label) { x.fillStyle = c.ac2; x.fillRect(l + len * 0.24, y0, len * 0.2, th); big(x, h, 'BRANDED', l + len * 0.34, y0 + th / 2 - 9, 15, PAPER, 'center') }
+    }
+    hpen(mid - 10, 1, true)
+    x.fillStyle = INK; x.fillRect(X, mid, W, 3)
+    x.save(); x.globalAlpha = 0.32; hpen(mid + 10, -1, false); x.restore()
+  },
+  // three receipts for the same procedure, printed at very different lengths
+  boxes(x, X, Y, W, H, c, h) {
+    panel(x, X, Y, W, H, c)
+    ;[0.42, 0.68, 0.95].forEach((f, k) => {
+      const rw = W * 0.26, l = X + W * (0.05 + k * 0.32), t = Y + H * 0.02, b = t + H * f * 0.96, teeth = 8
+      x.fillStyle = PAPER; x.strokeStyle = INK; x.lineWidth = 2.5
+      x.beginPath(); x.moveTo(l, t); x.lineTo(l + rw, t); x.lineTo(l + rw, b); for (let j = teeth; j >= 0; j--) x.lineTo(l + (rw * j) / teeth, b + (j % 2 ? 10 : 0)); x.closePath(); x.fill(); x.stroke()
+      x.fillStyle = c.ac; x.fillRect(l + 12, t + 14, rw - 24, 10)
+      x.fillStyle = tint(INK, 0.25); for (let y = t + 40; y < b - 40; y += 18) x.fillRect(l + 12, y, (rw - 24) * (0.5 + ((y * 7) % 5) / 10), 6)
+      x.fillStyle = INK; x.fillRect(l + 12, b - 26, rw - 24, 3)
+    })
+  },
+  // a mousetrap baited with a stethoscope
+  trap(x, X, Y, W, H, c) {
+    panel(x, X, Y, W, H, c)
+    const l = X + W * 0.06, r = X + W * 0.94, by = Y + H * 0.72, bh = H * 0.14
+    x.fillStyle = '#c9a072'; rr(x, l, by, r - l, bh, 10); x.fillStyle = '#a97f52'; x.fillRect(l, by + bh * 0.72, r - l, bh * 0.28)
+    x.strokeStyle = INK; x.lineWidth = 6; x.beginPath(); x.moveTo(l + W * 0.12, by); x.lineTo(l + W * 0.12, by - H * 0.36); x.lineTo(l + W * 0.5, by - H * 0.36); x.stroke()
+    x.lineWidth = 5; x.beginPath(); x.arc(l + W * 0.22, by - 6, 26, Math.PI, 0); x.stroke()
+    x.fillStyle = INK; rr(x, X + W * 0.62, by - 10, W * 0.2, 14, 4)
+    x.strokeStyle = INK; x.lineWidth = 7; x.lineCap = 'round'
+    x.beginPath(); x.moveTo(X + W * 0.64, by - 18); x.bezierCurveTo(X + W * 0.5, Y + H * 0.2, X + W * 0.95, Y + H * 0.15, X + W * 0.86, Y + H * 0.45); x.stroke()
+    x.beginPath(); x.moveTo(X + W * 0.64, by - 18); x.bezierCurveTo(X + W * 0.6, Y + H * 0.3, X + W * 0.7, Y + H * 0.1, X + W * 0.76, Y + H * 0.1); x.stroke(); x.lineCap = 'butt'
+    x.fillStyle = c.ac; dot(x, X + W * 0.86, Y + H * 0.47, W * 0.06); x.fillStyle = PAPER; dot(x, X + W * 0.86, Y + H * 0.47, W * 0.03)
+  },
+  // California as dunes; one small clinic and its long shadow
+  desert(x, X, Y, W, H, c) {
+    x.fillStyle = tint(c.ac2, 0.12); x.fillRect(X, Y, W, H)
+    x.fillStyle = c.ac; dot(x, X + W * 0.78, Y + H * 0.2, W * 0.1)
+    const dune = (y0, amp, col) => { x.fillStyle = col; x.beginPath(); x.moveTo(X, Y + H); x.lineTo(X, y0); x.bezierCurveTo(X + W * 0.3, y0 - amp, X + W * 0.6, y0 + amp, X + W, y0 - amp * 0.4); x.lineTo(X + W, Y + H); x.closePath(); x.fill() }
+    dune(Y + H * 0.5, H * 0.12, tint(c.ac, 0.35)); dune(Y + H * 0.66, H * 0.1, tint(c.ac, 0.6)); dune(Y + H * 0.82, H * 0.08, c.ac)
+    const hx = X + W * 0.3, hy = Y + H * 0.62, hw = W * 0.12
+    x.fillStyle = tint(INK, 0.35); poly(x, [[hx, hy], [hx + hw, hy], [hx - W * 0.25, hy + H * 0.14], [hx - W * 0.37, hy + H * 0.14]])
+    x.fillStyle = PAPER; x.fillRect(hx, hy - hw * 0.8, hw, hw * 0.8); x.fillStyle = c.ac2; poly(x, [[hx - 6, hy - hw * 0.8], [hx + hw / 2, hy - hw * 1.3], [hx + hw + 6, hy - hw * 0.8]])
+    x.fillStyle = c.ac2; x.fillRect(hx + hw / 2 - 4, hy - hw * 0.65, 8, 24); x.fillRect(hx + hw / 2 - 12, hy - hw * 0.65 + 8, 24, 8)
+  },
+  // a heart in a blood-pressure cuff, outside lab slips pinned to it
+  decomp(x, X, Y, W, H, c, h) {
+    panel(x, X, Y, W, H, c)
+    const cx = X + W * 0.45, cy = Y + H * 0.42, s = Math.min(W, H) * 0.34
+    x.fillStyle = c.ac; x.beginPath(); x.moveTo(cx, cy + s * 1.05); x.bezierCurveTo(cx - s * 1.5, cy + s * 0.1, cx - s * 0.9, cy - s * 1.0, cx, cy - s * 0.35); x.bezierCurveTo(cx + s * 0.9, cy - s * 1.0, cx + s * 1.5, cy + s * 0.1, cx, cy + s * 1.05); x.fill()
+    x.fillStyle = '#5b6470'; x.fillRect(cx - s * 1.05, cy - s * 0.05, s * 2.1, s * 0.42)
+    x.strokeStyle = '#3a414a'; x.lineWidth = 2; for (let k = 1; k < 6; k++) line(x, [[cx - s * 1.05 + (s * 2.1 * k) / 6, cy - s * 0.05], [cx - s * 1.05 + (s * 2.1 * k) / 6, cy + s * 0.37]])
+    x.strokeStyle = INK; x.lineWidth = 4; x.beginPath(); x.moveTo(cx + s * 1.05, cy + s * 0.16); x.bezierCurveTo(cx + s * 1.6, cy + s * 0.2, cx + s * 1.4, cy + s * 1.1, cx + s * 1.25, cy + s * 1.3); x.stroke()
+    x.fillStyle = PAPER; x.strokeStyle = INK; x.lineWidth = 4; x.beginPath(); x.arc(cx + s * 1.25, cy - s * 0.75, s * 0.34, 0, Math.PI * 2); x.fill(); x.stroke()
+    x.lineWidth = 3; line(x, [[cx + s * 1.25, cy - s * 0.75], [cx + s * 1.4, cy - s * 0.92]]); line(x, [[cx + s * 1.05, cy - s * 0.4], [cx + s * 1.05, cy + s * 0.05]])
+    ;[[-1.15, 0.75], [-0.55, 1.05], [0.35, 0.95]].forEach(([dx, dy], k) => { const px = cx + s * dx, py = cy + s * dy; x.fillStyle = PAPER; x.strokeStyle = INK; x.lineWidth = 2; x.beginPath(); x.rect(px, py, s * 0.55, s * 0.4); x.fill(); x.stroke(); x.fillStyle = tint(INK, 0.3); x.fillRect(px + 8, py + 12, s * 0.38, 4); x.fillRect(px + 8, py + 22, s * 0.28, 4); x.fillStyle = c.ac2; dot(x, px + s * 0.27, py + 4, 6) })
+  },
+  // a coin in the air over a calendar with one day circled
   jump(x, X, Y, W, H, c, h) {
-    const r = rng('jump'), d = X + W * 0.58, mid = Y + H * 0.5, pts = []; let v = 0
-    for (let k = 0; k <= 60; k++) { v += (r() - 0.5) * 0.045; pts.push([X + (d - X) * k / 60, mid + v * H * 0.5]) }
-    x.strokeStyle = RULE; x.lineWidth = 1.5; x.setLineDash([3, 5]); line(x, [[d, Y + 10], [d, Y + H - 30]]); x.setLineDash([])
-    x.strokeStyle = '#2a2a2a'; x.lineWidth = 3; line(x, pts)
-    const [ex, ey] = pts[pts.length - 1], up = Y + H * 0.14, dn = Y + H * 0.82
-    x.lineWidth = 3.5; x.strokeStyle = c.ac; line(x, [[ex, ey], [ex + 30, up], [X + W, up]]); x.strokeStyle = c.ac2; line(x, [[ex, ey], [ex + 30, dn], [X + W, dn]])
-    lab(x, h, 'APPROVED · q', X + W, up - 26, 'right', c.ac, 13); lab(x, h, 'NOT APPROVED · 1 − q', X + W, dn + 14, 'right', c.ac2, 13)
-    lab(x, h, 'DECISION DAY', d, Y + H - 18, 'center', GREY, 12)
+    panel(x, X, Y, W, H, c)
+    const l = X + W * 0.1, t = Y + H * 0.52, cw = W * 0.8, ch = H * 0.44, cols = 7, rows = 4
+    x.fillStyle = PAPER; rr(x, l, t, cw, ch, 10); x.fillStyle = INK; rr(x, l, t, cw, ch * 0.16, 10); x.fillRect(l, t + ch * 0.08, cw, ch * 0.08)
+    for (let j = 0; j < rows; j++) for (let k = 0; k < cols; k++) { const px = l + (cw * (k + 0.5)) / cols, py = t + ch * 0.28 + (ch * 0.68 * j) / rows; x.fillStyle = tint(INK, 0.22); dot(x, px, py + 8, 5) }
+    const dx = l + (cw * 4.5) / cols, dy = t + ch * 0.28 + (ch * 0.68 * 2) / rows + 8
+    x.strokeStyle = c.ac2; x.lineWidth = 5; dot(x, dx, dy, 24, false)
+    x.strokeStyle = INK; x.lineWidth = 2.5; x.setLineDash([8, 9]); x.beginPath(); x.moveTo(dx - 6, dy - 30); x.bezierCurveTo(dx - W * 0.25, Y + H * 0.35, dx - W * 0.2, Y + H * 0.08, X + W * 0.42, Y + H * 0.2); x.stroke(); x.setLineDash([])
+    const ccx = X + W * 0.46, ccy = Y + H * 0.2
+    x.fillStyle = '#8a6a1f'; x.beginPath(); x.ellipse(ccx + 5, ccy + 9, W * 0.16, W * 0.06, -0.35, 0, Math.PI * 2); x.fill()
+    x.fillStyle = c.ac; x.beginPath(); x.ellipse(ccx, ccy, W * 0.16, W * 0.06, -0.35, 0, Math.PI * 2); x.fill()
+    x.strokeStyle = PAPER; x.lineWidth = 3; x.beginPath(); x.ellipse(ccx, ccy, W * 0.11, W * 0.035, -0.35, 0, Math.PI * 2); x.stroke()
   },
-  // stakes against verifiability: where a decision belongs
+  // a waiting-room door: a person and a robot behind the frosted glass
   ladder(x, X, Y, W, H, c, h) {
-    const ax = X + 30, aw = W - 30, top = Y + 6, ch = H - 50
-    const zone = (a, b, alpha) => { x.fillStyle = tint(c.ac, alpha); poly(x, [[ax + aw * a[0], top + ch * a[1]], ...b.map(([p, q]) => [ax + aw * p, top + ch * q])]) }
-    zone([0, 0], [[0.55, 0], [0, 0.75]], 0.62)
-    zone([0.55, 0], [[1, 0], [1, 0.3], [0.3, 1], [0, 1], [0, 0.75]], 0.28)
-    zone([1, 0.3], [[1, 1], [0.3, 1]], 0.08)
-    axes(x, ax, top, aw, ch)
-    lab(x, h, 'HUMAN DECIDES', ax + 16, top + 18, 'left', '#ffffff', 12)
-    lab(x, h, 'AI DRAFTS, HUMAN APPROVES', ax + aw * 0.47, top + ch * 0.46, 'center', '#1e2a3a', 12)
-    lab(x, h, 'AI ACTS ALONE', ax + aw - 14, top + ch - 30, 'right', '#1e2a3a', 12)
-    lab(x, h, 'EASY TO CHECK →', ax + aw, top + ch + 12, 'right', GREY, 12)
-    x.save(); x.translate(ax - 16, top + ch); x.rotate(-Math.PI / 2); lab(x, h, 'STAKES IF WRONG →', 0, -6, 'left', GREY, 12); x.restore()
+    panel(x, X, Y, W, H, c)
+    const dw = W * 0.56, l = X + (W - dw) / 2, t = Y + H * 0.02, dh = H * 0.98
+    x.fillStyle = INK; x.fillRect(l - 14, t - 14, dw + 28, dh + 14)
+    x.fillStyle = c.ac; x.fillRect(l, t, dw, dh)
+    const gl = l + dw * 0.12, gt = t + dh * 0.1, gw = dw * 0.76, gh = dh * 0.44
+    x.fillStyle = tint('#ffffff', 0.62); x.fillRect(gl, gt, gw, gh)
+    x.fillStyle = tint(INK, 0.28); dot(x, gl + gw * 0.3, gt + gh * 0.5, gw * 0.12); rr(x, gl + gw * 0.12, gt + gh * 0.66, gw * 0.36, gh * 0.34, 24)
+    x.fillStyle = tint(c.ac, 0.65); rr(x, gl + gw * 0.58, gt + gh * 0.36, gw * 0.24, gw * 0.22, 8); x.fillRect(gl + gw * 0.69, gt + gh * 0.22, 5, gh * 0.14); dot(x, gl + gw * 0.7, gt + gh * 0.22, 7); x.fillRect(gl + gw * 0.54, gt + gh * 0.68, gw * 0.32, gh * 0.32)
+    x.fillStyle = PAPER; x.fillRect(gl, gt + gh + dh * 0.06, gw, dh * 0.12)
+    h.caps(x, 13, 2); x.fillStyle = INK; x.textAlign = 'center'; x.fillText('THE DOCTOR', gl + gw / 2, gt + gh + dh * 0.06 + 12); x.fillText('WILL SEE YOU NOW', gl + gw / 2, gt + gh + dh * 0.06 + 34); x.textAlign = 'left'; x.letterSpacing = '0px'
+    x.fillStyle = '#d8b26a'; dot(x, l + dw * 0.86, t + dh * 0.66, 12)
   },
 }
 
@@ -291,11 +287,11 @@ const CAPTION = {
   'geometric-analysis-of-aortic-remodeling-after-petticoat-type-b-dissection': 'Geometric remodeling of the aorta after TEVAR with the PETTICOAT technique.',
   'longitudinal-mapping-of-true-lumen-morphology-for-endograft-oversizing': 'True-lumen morphology mapped along the aorta, for sizing the endograft.',
   'aortic-remodeling-after-tevar-and-petticoat-complicated-type-b-dissection': 'True- and false-lumen remodeling in the first 30 days after repair.',
-  'concordance-of-llms-with-guidelines-at-the-week-8-glp-1-follow-up': '714 week-8 encounters, three models, FDA and AGA guidance. Illustrative.',
+  'concordance-of-llms-with-guidelines-at-the-week-8-glp-1-follow-up': 'Three language models graded against FDA and AGA guidance on 714 week-8 visits.',
   'branded-wegovy-vs-compounded-semaglutide-cyanocobalamin': 'Equivalent weight loss at 20–28 weeks, with higher adherence on compounded.',
-  'variation-of-reimbursements-within-drgs-in-orthopedic-trauma': 'What moves payment inside one DRG. Illustrative.',
+  'variation-of-reimbursements-within-drgs-in-orthopedic-trauma': 'The same procedure, the same DRG, very different bills.',
   'healthcares-ai-trap': 'Skimming routine visits pushes the remaining panel past the flat fee.',
-  'mapping-medi-cal-deserts-in-california': 'An access index for all 58 counties, 2008–2024. Schematic.',
+  'mapping-medi-cal-deserts-in-california': 'Where Medi-Cal patients cannot reliably find a doctor, across all 58 counties.',
   'third-party-cardiometabolic-outcomes-in-a-glp-1-telehealth-cohort': 'Changes recorded by outside clinicians, split by how much weight loss explains.',
   'scheduled-jumps-recovering-the-option-implied-probability-of-fda-approval': 'Option prices imply approval chances of 0.08 to 0.36 for eight pending decisions.',
   'the-doctor-will-see-you-now-stakes-verifiability-and-the-supervision-of-clinical-ai': 'Stakes and verifiability, not the technology, set the rung a decision belongs on.',

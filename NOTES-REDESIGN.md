@@ -599,3 +599,10 @@ Ink removed (inkBloom.js, iter34/36/37.css deleted). One painting per page, beha
 ## Iteration 58: opening a story
 - A story opens through its painting: the copy grows in one motion to cover the screen (a sharp 1200px+ copy swaps in on the way), then fades over the page as the head rises. It used to land in the painting's strip low on the page, so the picture blew up to the full screen and was then shoved down into the strip, over a grey band of the section's placeholder colour.
 - The carousel's face-on turn before the flight is 0.42s (was 0.55s). Click to readable page is about 1.4s.
+
+## Iteration 59-60
+- Intro: the name rises in 0.6s, holds briefly, glides to the bar in 0.8s; the row rises in 1.2s. Carousel in ~3.2s (was ~4.8s).
+- Opening a story is a fade-through: the face-on painting eases up a little and dissolves while the row's grey melts into the page and the head rises; the painting is already in its place. Two frames' wait before hiding the plate so the copy is painted first.
+- Awards pages: no quoted lines.
+- Back to the carousel from any page (nav or back link): it lands on the piece you were on, then glides to the first piece of that section. It used to swap to the first piece under the landing copy.
+- Paper covers are editorial illustrations (src/covers.js MOTIFS): two pens with $25 and $1,200 tags; a tipped flask spilling a winding path; a signpost (Escalate / Switch); a calendar torn at week 8; a twisted ribbon; a petticoat of stent mesh; the aorta sliced and fanned; a tape measure round a vessel; three robot hands with answer cards; a branded pen and its plain reflection; three receipts of different lengths; a mousetrap baited with a stethoscope; dunes with one small clinic; a heart in a blood-pressure cuff; a coin over a circled date; a waiting-room door with a person and a robot in the glass.
