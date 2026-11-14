@@ -282,10 +282,18 @@ AWARDS.forEach((a, n) => {
   it.meta.splice(1, 0, ['Recognition', text])
 })
 const pubRank = (x) => /^White paper/.test(x.kind || '') ? 0 : /aortic|petticoat|tevar|lumen/i.test(x.slug) ? 1 : 2
+// The new GLP-1 outcomes paper sits third in the Publications carousel (user's request, 2026-11-14)
+const PUB_THIRD = 'glp-1s-and-reductions-in-blood-pressure-hba1c-and-lipids-in-us-telehealth-patients'
+const pubOrder = () => {
+  const list = [...pubs].sort((a, b) => pubRank(a) - pubRank(b))
+  const i = list.findIndex((x) => x.slug === PUB_THIRD)
+  if (i >= 0) list.splice(Math.min(2, list.length - 1), 0, list.splice(i, 1)[0])
+  return list
+}
 export const CATS = [
   { id: 'prose', label: 'Prose', items: prose },
   // iteration 62: Deep Dives first, then the vascular surgery papers, then the rest
-  { id: 'publications', label: 'Publications', items: [...pubs].sort((a, b) => pubRank(a) - pubRank(b)) },
+  { id: 'publications', label: 'Publications', items: pubOrder() },
   { id: 'luck', label: 'Luck', items: luck },
   // iteration 18: Deep Dives, the economics takes. Only the two white papers qualify from the data:
   // Healthcare's AI Trap (SSRN working paper) and the Medi-Cal deserts thesis (UCSF Health Policy & Law,
