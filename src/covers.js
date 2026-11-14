@@ -18,7 +18,7 @@ const P = {
   'variation-of-reimbursements-within-drgs-in-orthopedic-trauma': { ac: '#8a6a3a', motif: 'boxes' },
   'healthcares-ai-trap': { ac: '#b23a2a', motif: 'trap' },
   'mapping-medi-cal-deserts-in-california': { ac: '#b0532d', ac2: '#2f5f9a', motif: 'desert' },
-  'third-party-cardiometabolic-outcomes-in-a-glp-1-telehealth-cohort': { ac: '#a84a55', ac2: '#e8b4ba', motif: 'decomp' },
+  'glp-1s-and-reductions-in-blood-pressure-hba1c-and-lipids-in-us-telehealth-patients': { ac: '#a84a55', ac2: '#e8b4ba', motif: 'decomp' },
   'scheduled-jumps-recovering-the-option-implied-probability-of-fda-approval': { ac: '#2f6f5e', ac2: '#b23a2a', motif: 'jump' },
   'the-doctor-will-see-you-now-stakes-verifiability-and-the-supervision-of-clinical-ai': { ac: '#4f6a8c', motif: 'ladder' },
 }
@@ -292,7 +292,7 @@ const CAPTION = {
   'variation-of-reimbursements-within-drgs-in-orthopedic-trauma': 'The same procedure, the same DRG, very different bills.',
   'healthcares-ai-trap': 'Skimming routine visits pushes the remaining panel past the flat fee.',
   'mapping-medi-cal-deserts-in-california': 'Where Medi-Cal patients cannot reliably find a doctor, across all 58 counties.',
-  'third-party-cardiometabolic-outcomes-in-a-glp-1-telehealth-cohort': 'Changes recorded by outside clinicians, split by how much weight loss explains.',
+  'glp-1s-and-reductions-in-blood-pressure-hba1c-and-lipids-in-us-telehealth-patients': 'Readings from outside clinicians, set against members who had not started yet.',
   'scheduled-jumps-recovering-the-option-implied-probability-of-fda-approval': 'Option prices imply approval chances of 0.08 to 0.36 for eight pending decisions.',
   'the-doctor-will-see-you-now-stakes-verifiability-and-the-supervision-of-clinical-ai': 'Stakes and verifiability, not the technology, set the rung a decision belongs on.',
 }

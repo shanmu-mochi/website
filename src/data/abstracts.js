@@ -12,6 +12,7 @@ export const ABSTRACTS = {
   'Off-Trial: Real-World Weight Loss on Tirzepatide & Semaglutide': { excerpt: 'GLP-1 receptor agonist trials are tightly controlled. The real world is none of those things.' },
   'Escalate or Switch? The Post-Titration GLP-1 Non-Responder': { excerpt: 'When a GLP-1 patient stops responding, should the clinician push the dose or change the drug?' },
   'What Week 8 Knows: Forecasting Six-Month GLP-1 Outcomes': { excerpt: 'Patients on GLP-1 medications lose very different amounts of weight.' },
+  'GLP-1s and Reductions in Blood Pressure, HbA1c and Lipids in US Telehealth Patients': { excerpt: 'Telehealth GLP-1 programs report outcomes from self-reported or program-ordered measurements, usually without a comparison group.' },
   'Healthcare’s AI Trap': { excerpt: 'In clinical care the routine cases do double duty. AI automates them first, severing both supports at once.' },
   'Mapping Medi-Cal Deserts in California': { excerpt: 'Having health insurance does not guarantee access to healthcare.' },
   'Helical Classification of Type B Aortic Dissections': {

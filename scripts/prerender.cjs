@@ -12,6 +12,7 @@ const ROUTES = [
   { url: '/papers/', file: 'papers/index.html' },
   { url: '/papers/ai-trap', file: 'papers/ai-trap.html', md: 'papers/ai-trap.md' },
   { url: '/papers/medi-cal-deserts', file: 'papers/medi-cal-deserts.html', md: 'papers/medi-cal-deserts.md' },
+  { url: '/papers/glp1-outcomes', file: 'papers/glp1-outcomes.html', md: 'papers/glp1-outcomes.md' },
 ]
 
 const MIME = {

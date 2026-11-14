@@ -1,7 +1,7 @@
 /* A publication opened as a white paper. Three sources, all from the repo:
-   1. the two hand-built papers (AI Trap, Medi-Cal) mounted in place,
+   1. the three hand-built papers (AI Trap, Medi-Cal, GLP-1 outcomes) mounted in place,
    2. the four medRxiv PDFs, extracted to paperDocs.json + figure crops by a script,
-   3. the three drafts (iteration 16), rendered from main.tex -> texDocs/<slug>.json (components/paper/TexBody.jsx),
+   3. the drafts (iteration 16), rendered from main.tex -> texDocs/<slug>.json (components/paper/TexBody.jsx),
    4. everything else: a typeset partial page with what we hold and a link to the full paper. */
 import Arrow from './components/Arrow'
 import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
@@ -10,6 +10,7 @@ import { useSpy, useReveal, sentences } from './lib/wpHooks.js'
 const EMBED = {
   'healthcares-ai-trap': lazy(() => import('./pages/AiTrap.jsx')),
   'mapping-medi-cal-deserts-in-california': lazy(() => import('./pages/MediCal.jsx')),
+  'glp-1s-and-reductions-in-blood-pressure-hba1c-and-lipids-in-us-telehealth-patients': lazy(() => import('./pages/Glp1Outcomes.jsx')),
 }
 let DOCS = null
 const TexBody = lazy(() => import('./components/paper/TexBody.jsx'))

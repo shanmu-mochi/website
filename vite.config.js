@@ -63,7 +63,8 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         papers: resolve(__dirname, 'papers/index.html'),
         aiTrap: resolve(__dirname, 'papers/ai-trap.html'),
-        mediCal: resolve(__dirname, 'papers/medi-cal-deserts.html')
+        mediCal: resolve(__dirname, 'papers/medi-cal-deserts.html'),
+        glp1: resolve(__dirname, 'papers/glp1-outcomes.html')
       }
     }
   }

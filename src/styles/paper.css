@@ -349,3 +349,12 @@ a.pp-row:hover h4 { text-decoration: underline; text-decoration-color: var(--lin
 }
 /* phones: the top-bar links (PDF, Essay, All papers) get a full thumb target without moving */
 @media (max-width: 760px) { .pp-top-act a { padding-left: 9px; padding-right: 9px; margin-left: -9px; margin-right: -9px; } }
+
+/* GLP-1 outcomes figures */
+.figure .g1-n { font-family: var(--mono); font-size: 17px; fill: var(--ink); font-variant-numeric: tabular-nums; }
+.figure .lf-lite { stroke-dasharray: 3 3; }
+.figure .g1-hollow { fill: var(--paper); stroke: var(--ink); stroke-width: 1.3; }
+.figure .g1-band { fill: rgba(0, 0, 0, 0.06); }
+.figure .g1-row { opacity: clamp(0, calc((var(--p, 1) - var(--i) * 0.07) * 3), 1); }
+.figure .g1-grow { transform: scaleX(clamp(0, calc((var(--p, 1) - 0.1) * 1.6), 1)); }
+@media (prefers-reduced-motion: reduce) { .figure .g1-row { opacity: 1; } .figure .g1-grow { transform: none; } }

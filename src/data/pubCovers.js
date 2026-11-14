@@ -20,7 +20,7 @@ export default {
   'variation-of-reimbursements-within-drgs-in-orthopedic-trauma':  { bg: '#8c6d1f', accent: '#1e3a5f', ink: '#4d3b0c', art: 'binsOfDots' },
   'healthcares-ai-trap':                                           { bg: '#2c2a6b', accent: '#f3a43b', ink: '#1b1946', art: 'pulledSupports' },
   'mapping-medi-cal-deserts-in-california':                        { bg: '#d4892f', accent: '#173f33', ink: '#8a4e14', art: 'distanceRings' },
-  'third-party-cardiometabolic-outcomes-in-a-glp-1-telehealth-cohort': { bg: '#a3324f', accent: '#ffe0a3', ink: '#5c1426', art: 'linkedRecords' },
+  'glp-1s-and-reductions-in-blood-pressure-hba1c-and-lipids-in-us-telehealth-patients': { bg: '#a3324f', accent: '#ffe0a3', ink: '#5c1426', art: 'linkedRecords' },
   'scheduled-jumps-recovering-the-option-implied-probability-of-fda-approval': { bg: '#3a1d5c', accent: '#ff7a3d', ink: '#24103d', art: 'scheduledJump' },
   'the-doctor-will-see-you-now-stakes-verifiability-and-the-supervision-of-clinical-ai': { bg: '#3d6b2f', accent: '#ffd166', ink: '#1f3a16', art: 'ladder' },
 }

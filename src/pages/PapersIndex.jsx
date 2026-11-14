@@ -7,6 +7,12 @@ import { PAPERS } from '../data/papers'
 
 const DEEP = [
   {
+    k: 'Real-world evidence · Preprint',
+    t: 'GLP-1s and the Numbers Outside',
+    d: 'Blood pressure, HbA1c and lipids for 193,932 telehealth patients, measured by their own outside clinicians and set against patients who had not started yet. The effects are real, and most of the drop usually quoted is regression to the mean.',
+    href: '/papers/glp1-outcomes',
+  },
+  {
     k: 'Health economics · Working paper',
     t: 'Healthcare’s AI Trap',
     d: 'Automating routine care is efficient and pays for itself. The way a competitive market captures that gain defunds complex care and starves the pipeline that produces the clinicians the system will still need.',
@@ -28,9 +34,9 @@ export default function PapersIndex() {
       <Hero
         eyebrow="Research"
         title="Papers"
-        deck="Clinical research, health economics, and policy. Two of them have a full walkthrough here, with the figures rebuilt and the argument laid out section by section."
+        deck="Clinical research, health economics, and policy. Three of them have a full walkthrough here, with the figures rebuilt and the argument laid out section by section."
         facts={[
-          { k: 'Walkthroughs', v: '2' },
+          { k: 'Walkthroughs', v: '3' },
           { k: 'Listed', v: String(PAPERS.length) },
         ]}
       />

@@ -28,29 +28,4 @@ FRAME = {
    'The model is built to be tested, and it says what to measure.',
   ],
  },
- 'cwm-cardiometabolic': {
-  'status': 'Observational analysis of a treated population. It is not peer reviewed, not externally audited.',
-  'pull': 'These are not causal effect estimates.',
-  'head': [
-   ['Systolic blood pressure fell 4.85 mmHg (hypertension)', '16,008', 'Paired outside-clinician measures, Table {tab:fullpop}'],
-   ['LDL-C fell 8.55 mg/dL (high cholesterol)', '8,294', 'Table {tab:fullpop}'],
-   ['HbA1c fell 0.57 points (type 2 diabetes)', '953', 'Table {tab:fullpop}'],
-   ['HbA1c fell 0.35 points (prediabetes)', '4,891', 'Table {tab:fullpop}'],
-   ['42% of the systolic step and 46% of the HbA1c step attributed to weight', '—', 'Within-member fixed-effects decomposition, Table {tab:decomp}'],
-   ['Members with a measure paired across the first fill', '49,896 of 417,307', 'Section 2 (12.0% paired ascertainment)'],
-  ],
-  'steps': [
-   ['Link', 'With member consent we linked a U.S. telehealth obesity program to outside clinical records.'],
-   ['Retrieve', 'It returns the laboratory values and vital signs that members’ own outside clinicians recorded.'],
-   ['Pair', 'We define disease groups by an outside diagnosis recorded before treatment. We report paired changes.'],
-   ['Decompose', 'We then decompose each improvement into a weight-mediated part and a part beyond weight, using within-member fixed-effects models.'],
-  ],
-  'limits': [
-   'There is no untreated comparison group.',
-   'So the paired changes are not effect estimates against a counterfactual, and only the within-member gradient and the trajectory break carry inferential weight.',
-   'The measures are laboratory values rather than clinical events, so no count of events prevented, years gained, or cost avoided follows from them.',
-   'Safety and discontinuation were not in scope.',
-  ],
-  'chart': 'cwm',
- },
 }

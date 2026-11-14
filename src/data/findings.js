@@ -21,6 +21,10 @@ export const FINDINGS = {
     finding: 'Observed week-8 weight loss is the strongest predictor of six-month outcome.',
     n: '22,538 patients',
   },
+  'GLP-1s and Reductions in Blood Pressure, HbA1c and Lipids in US Telehealth Patients': {
+    finding: 'Six to twelve months after starting, systolic blood pressure was 4.9 mmHg lower than expected, HbA1c 0.21 points lower and LDL cholesterol 5 mg/dL lower, 11% to 28% smaller than simple before-and-after changes in the same data.',
+    n: '193,932 members; 23.7 million outside readings',
+  },
   'Healthcare’s AI Trap': {
     finding: 'The cases AI takes first are at once the money that funds hard care and the making of the people who provide it.',
   },

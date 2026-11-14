@@ -15,7 +15,6 @@ PANDOC = '/home/box/.local/lib/python3.13/site-packages/pypandoc/files/pandoc'
 PAPERS = {
   'scheduled-jumps-fda': {'date': '2026-10-19', 'supp': ['worked_problem.pdf', 'derivations.pdf']},
   'ai-human-care': {'date': '2026-10-18', 'supp': []},
-  'cwm-cardiometabolic': {'date': '2026-10-21', 'supp': []},
 }
 issues = []
 # Key findings: verbatim sentences of each abstract (cwm: its own Results paragraph, split by the page)

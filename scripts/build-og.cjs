@@ -6,6 +6,7 @@ const fs = require('fs')
 const CARDS = [
   { out: 'ai-trap.png', eyebrow: 'Working paper · Health economics', title: "Healthcare’s<br>AI Trap", deck: 'Automating routine care is efficient. The way a market captures that gain is what defunds complex care.' },
   { out: 'medi-cal-deserts.png', eyebrow: 'Master’s thesis · UCSF Health Policy and Law', title: 'Mapping<br>Medicaid Deserts', deck: 'Eleven California counties where 1.7 million people hold a Medi-Cal card and cannot reliably find a doctor.' },
+  { out: 'glp1-outcomes.png', eyebrow: 'Preprint · Real-world evidence', title: 'GLP-1s and the<br>Numbers Outside', deck: 'Blood pressure, HbA1c and lipids for 193,932 telehealth patients, measured by their own outside clinicians.' },
   { out: 'papers.png', eyebrow: 'Research', title: 'Papers', deck: 'Clinical research, health economics, and policy.' },
 ]
 
